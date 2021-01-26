@@ -1,23 +1,23 @@
-@testable import SwiftReduxRouting
+@testable import SwiftReduxRouter
 import SwiftUI
 import XCTest
 
 final class RouterTests: XCTestCase {
     func testSetupViews() {
         let sessions = [
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab1",
-                path: RouterModels.Path(path: "/one/awesome"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/one/awesome"),
+                tab: NavigationTab(
                     name: "First",
                     icon: "tab_search",
                     selectedIcon: "tab_search_selected"
                 )
             ),
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab2",
-                path: RouterModels.Path(path: "/two"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/two"),
+                tab: NavigationTab(
                     name: "Second",
                     icon: "tab_favorite",
                     selectedIcon: "tab_favorite_selected"
@@ -25,31 +25,31 @@ final class RouterTests: XCTestCase {
             ),
         ]
 
-        let state = RouterState(sessions: sessions)
+        let state = NavigationState(sessions: sessions)
 
-        _ = Router(
-            routerState: state,
+        _ = RouterView(
+            navigationState: state,
             routes: [
-                Router.Route(
+                RouterView.Route(
                     path: "/one/<string:item>",
                     onWillAppear: { path, params in
                         XCTAssertEqual(path.path, "/one/awesome")
                         let item = params["item"] as! String
                         XCTAssertEqual(item, "awesome")
                     },
-                    render: { path, params -> AnyView in
+                    render: { path, params, _ -> AnyView in
                         XCTAssertEqual(path.path, "/one/awesome")
                         let item = params["item"] as! String
                         XCTAssertEqual(item, "awesome")
                         return AnyView(Text("first route"))
                     }
                 ),
-                Router.Route(
+                RouterView.Route(
                     path: "/two",
                     onWillAppear: { path, params in
                         XCTAssertEqual(path.path, "/two")
                     },
-                    render: { path, params -> AnyView in
+                    render: { path, params, _ -> AnyView in
                         XCTAssertEqual(path.path, "/two")
                         return AnyView(Text("Second route"))
                     }

@@ -1,41 +1,39 @@
-@testable import SwiftReduxRouting
+@testable import SwiftReduxRouter
 import XCTest
 
 final class StateTests: XCTestCase {
     func testNewState() {
-        let routerState = RouterState()
+        let state = NavigationState()
 
-        let newState = routerReducer(
-            action: RouterActions.SetNextPath(
-                path: RouterModels.Path(
-                    path: "/whatever"
-                ),
+        let newState = navigationReducer(
+            action: NavigationActions.Push(
+                path: NavigationPath("/whatever"),
                 target: "whatever"
             ),
-            state: routerState
+            state: state
         )
 
         XCTAssertEqual(newState.sessions.last!.name, "whatever")
         XCTAssertEqual(newState.sessions.last!.nextPath.path, "/whatever")
         XCTAssertEqual(newState.sessions.last!.selectedPath.path, "")
-        XCTAssertEqual(routerState.selectedSessionId, newState.sessions.last!.id)
+        XCTAssertEqual(state.selectedSessionId, newState.sessions.last!.id)
     }
 
     func testUpdateSelectedRoute() throws {
         let sessions = [
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab1",
-                path: RouterModels.Path(path: "/one"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/one"),
+                tab: NavigationTab(
                     name: "First",
                     icon: "tab_search",
                     selectedIcon: "tab_search_selected"
                 )
             ),
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab2",
-                path: RouterModels.Path(path: "/two"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/two"),
+                tab: NavigationTab(
                     name: "Second",
                     icon: "tab_favorite",
                     selectedIcon: "tab_favorite_selected"
@@ -43,7 +41,7 @@ final class StateTests: XCTestCase {
             ),
         ]
 
-        var state = RouterState(sessions: sessions)
+        var state = NavigationState(sessions: sessions)
 
         let session = state.sessions[0]
         XCTAssertNotEqual(state.selectedSessionId, session.id)
@@ -51,11 +49,9 @@ final class StateTests: XCTestCase {
         XCTAssertEqual(session.nextPath.path, "/one")
         XCTAssertEqual(session.presentedPaths.first!.path, "/one")
 
-        state = routerReducer(
-            action: RouterActions.SetNextPath(
-                path: RouterModels.Path(
-                    path: "/whatever"
-                ),
+        state = navigationReducer(
+            action: NavigationActions.Push(
+                path: NavigationPath("/whatever"),
                 target: "tab1"
             ),
             state: state
@@ -74,8 +70,8 @@ final class StateTests: XCTestCase {
         XCTAssertEqual(state.sessions[0].presentedPaths.first!.path, "/one")
         XCTAssertEqual(state.sessions[0].presentedPaths.last!.path, "/whatever")
 
-        state = routerReducer(
-            action: RouterActions.SetSelectedPath(
+        state = navigationReducer(
+            action: NavigationActions.SetSelectedPath(
                 session: state.sessions[0]
             ),
             state: state
@@ -85,11 +81,9 @@ final class StateTests: XCTestCase {
 
         // Push a new view to section session
         let secondTabSession = state.sessions[1]
-        state = routerReducer(
-            action: RouterActions.SetNextPath(
-                path: RouterModels.Path(
-                    path: "/nextViewTabTwo"
-                ),
+        state = navigationReducer(
+            action: NavigationActions.Push(
+                path: NavigationPath("/nextViewTabTwo"),
                 target: "tab2"
             ),
             state: state
@@ -107,8 +101,8 @@ final class StateTests: XCTestCase {
         XCTAssertEqual(state.sessions[1].presentedPaths.last!.path, "/nextViewTabTwo")
 
         // GoBack on the first tab whilte first session is in the background
-        state = routerReducer(
-            action: RouterActions.GoBack(
+        state = navigationReducer(
+            action: NavigationActions.GoBack(
                 target: "tab1",
                 destination: .back
             ),
@@ -119,8 +113,8 @@ final class StateTests: XCTestCase {
         XCTAssertEqual(state.sessions[0].selectedPath.path, "/whatever")
 
         // This action simulates the action that are made from the router when the back action has been executed
-        state = routerReducer(
-            action: RouterActions.SetSelectedPath(
+        state = navigationReducer(
+            action: NavigationActions.SetSelectedPath(
                 session: session
             ),
             state: state
@@ -135,33 +129,31 @@ final class StateTests: XCTestCase {
 
     func testPresentView() {
         let sessions = [
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab1",
-                path: RouterModels.Path(path: "/one"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/one"),
+                tab: NavigationTab(
                     name: "Annonser",
                     icon: "tab_search",
                     selectedIcon: "tab_search_selected"
                 )
             ),
-            RouterModels.Session(
+            NavigationSession(
                 name: "tab2",
-                path: RouterModels.Path(path: "/two"),
-                tab: RouterModels.Tab(
+                path: NavigationPath("/two"),
+                tab: NavigationTab(
                     name: "Sparade",
                     icon: "tab_favorite",
                     selectedIcon: "tab_favorite_selected"
                 )
             ),
         ]
-        var state = RouterState(sessions: sessions)
+        var state = NavigationState(sessions: sessions)
         // Push a new view in a new session (Simulates a presented view)
 
-        state = routerReducer(
-            action: RouterActions.SetNextPath(
-                path: RouterModels.Path(
-                    path: "/presented"
-                ),
+        state = navigationReducer(
+            action: NavigationActions.Push(
+                path: NavigationPath("/presented"),
                 target: "newSession"
             ),
             state: state
@@ -174,8 +166,8 @@ final class StateTests: XCTestCase {
         XCTAssertEqual(state.selectedSessionId, presentedSession.id)
 
         // Dismiss the session
-        state = routerReducer(
-            action: RouterActions.SessionDismissed(
+        state = navigationReducer(
+            action: NavigationActions.SessionDismissed(
                 session: presentedSession
             ),
             state: state

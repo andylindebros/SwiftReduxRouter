@@ -27,6 +27,6 @@ let package = Package(
             ]),
         .testTarget(
             name: "SwiftReduxRouterTests",
-            dependencies: ["SwiftReduxRouting"]),
+            dependencies: ["SwiftReduxRouter"]),
     ]
 )
