@@ -2,13 +2,13 @@
 
 SwiftReduxRouter maps navigation to routes that provides SwiftUI views. A
 convenient way of controlling navigation and views. The navigation part is still
-managed by UIKit since SwiftUI.
+managed by UIKit since SwiftUI still is immature.
 
 It is written with the [ReSwift](https://github.com/ReSwift/ReSwift) Framework
 that is based on a Redux pattern. But it can be used as standalone feature
 without any a Redux integration.
 
-This package provides a ReSwift State, reducer and Actions together with the
+This package provides a Navigation State, reducer and Actions together with the
 `RouterView` written with SwiftUI and UIKit.
 
 ## Install with Swift Package Manager
