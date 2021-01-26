@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 import ReSwift
 
 // MARK: State
@@ -12,7 +12,7 @@ public class NavigationState: StateType, ObservableObject {
 
     /// Available sessions. Tab sessions are defined here.
     @Published fileprivate(set) var sessions = [NavigationSession]()
-    
+
     public init(sessions: [NavigationSession]? = nil) {
         if let sessions = sessions {
             self.sessions = sessions

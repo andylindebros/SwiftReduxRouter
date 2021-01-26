@@ -107,15 +107,14 @@ public struct RouterView: UIViewControllerRepresentable {
         // UITabBar
         if session.nextPath.id != session.selectedPath.id {
             if let selectedIndex = navigationState.sessions.filter({ $0.tab != nil || $0.id == navigationState.sessions.first?.id }).firstIndex(where: { $0.id == session.id }) {
-                
                 var nc: NavigationController!
                 if let tc = tc as? UITabBarController, let tnc = tc.selectedViewController as? NavigationController {
                     tc.selectedIndex = selectedIndex
                     nc = tnc
-                }else if let nnc = tc as? NavigationController {
+                } else if let nnc = tc as? NavigationController {
                     nc = nnc
                 }
-                
+
                 nc.session = session
 
                 switch session.nextPath.path {

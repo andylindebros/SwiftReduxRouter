@@ -1,39 +1,38 @@
-import SwiftUI
 import ReSwift
+import SwiftUI
 
 /**
  Use Router if you not indend to integrate the navigation state with your store.
  */
 public struct Router: View {
-    
     private let store: NavigationStore
     private let routes: [RouterView.Route]
-    
+
     public init(routes: [RouterView.Route], sessions: [NavigationSession] = []) {
         self.routes = routes
-        
+
         var sessions = sessions
-        
+
         if sessions.count == 0 {
             sessions.append(NavigationSession(name: "root", path: NavigationPath("root")))
         }
-        
-        self.store = NavigationStore(sessions: sessions)
+
+        store = NavigationStore(sessions: sessions)
     }
-    
+
     public func push(path: NavigationPath, target: String) {
         store.store.dispatch(NavigationActions.Push(path: path, target: target))
     }
-    
+
     public func goBack(target: String, destination: NavigationGoBackIdentifier) {
         store.store.dispatch(NavigationActions.GoBack(target: target, destination: destination))
     }
-    
+
     public func dismiss(target: String) {
         push(path: NavigationPath(RouterView.dismissActionIdentifier), target: target)
     }
-    
-    public var body: some View{
+
+    public var body: some View {
         RouterView(
             navigationState: store.store.state.navigation,
             routes: routes,
@@ -48,6 +47,7 @@ public struct Router: View {
         ).edgesIgnoringSafeArea([.top, .bottom])
     }
 }
+
 private struct NavigationMainState: StateType {
     private(set) var navigation: NavigationState
 }

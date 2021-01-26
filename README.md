@@ -7,7 +7,10 @@ This package provides a ReSwift State, reducer and Actions together with the `Ro
 
 ## Install with Swift Package Manager
 ```Bash
-https://github.com/lindebros/SwiftReduxRouting.git
+
+dependencies: [
+    .package(url: "https://github.com/lindebrothers/SwiftReduxRouting.git", .upToNextMajor(from: "1.0.0"))
+]
 ```
 
 ## Simple usage
@@ -137,8 +140,8 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
     If you need to customize the UIViewController that holds the SwiftUI View you can use the renderController instead of the render method.
     ```Swift
     class MyController<Content: View>: RouteViewController<Content> {
-        override func configureBeforePushed() {
-           // make adjustments to your view    
+        func customConfiguration() {
+           // make adjustments to your controller    
         }
     }
     
@@ -149,7 +152,7 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
             AnyView(
               Text("Awesome!")
             )
-          controller.configureBeforePushed()
+          controller.customConfiguration()
           return controller
         }
       },
@@ -157,14 +160,14 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
     ```
 
 ## URL Routing.
-The router uses  URL routing just like a web page. URL routing makes it easy to work with deep links and Universal links. 
-Choose a path to your view. Make sure the path is unique, otherwise will the user be routed to the first match of the requested path. 
+The router uses  URL routing just like a web page. URL routing makes it easy to organize your project and to work with deep links and Universal links. 
+Choose a path to your route. Make sure the path is unique, the router maps the first matching route to a path.
 
 ```
 mypath/to/a/route
 ```
 
-You can make parts of the URL dynamic and attach multiple rules to a function
+You can make parts of the URL dynamic and attach multiple rules
 ```
 user/<string:username>
 ```
@@ -172,8 +175,10 @@ The `render` and `renderController` closures of `Router.Route` will provide the 
 ```Swift
 render: { path, parameters, router in
     let username = parameters["username"] as? String
+    return Text(username ?? "unknown")
 }
 ```
+
 Supported dynamic parameters are:
 
 - string - `user/<strng:username>`
