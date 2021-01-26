@@ -10,7 +10,8 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "SwiftReduxRouter",
-            targets: ["SwiftReduxRouter"]),
+            targets: ["SwiftReduxRouter"]
+        ),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -24,9 +25,12 @@ let package = Package(
             name: "SwiftReduxRouter",
             dependencies: [
                 .product(name: "ReSwift", package: "ReSwift"),
-            ]),
+            ],
+            exclude: ["SwiftReduxRouterExample"]
+        ),
         .testTarget(
             name: "SwiftReduxRouterTests",
-            dependencies: ["SwiftReduxRouter"]),
+            dependencies: ["SwiftReduxRouter"]
+        ),
     ]
 )
