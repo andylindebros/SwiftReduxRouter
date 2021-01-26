@@ -1,5 +1,5 @@
-# SwiftReduxRouting
-SwiftReduxRouting maps navigation to routes that provides SwiftUI views. A convenient way of controlling navigation and views. The navigation part is still managed by UIKit since SwiftUI.
+# SwiftReduxRouter
+SwiftReduxRouter maps navigation to routes that provides SwiftUI views. A convenient way of controlling navigation and views. The navigation part is still managed by UIKit since SwiftUI.
 
 It is written with the [ReSwift](https://github.com/ReSwift/ReSwift) Framework that is based on a Redux pattern. But it can be used as standalone feature without any a Redux integration.
 
@@ -9,13 +9,13 @@ This package provides a ReSwift State, reducer and Actions together with the `Ro
 ```Bash
 
 dependencies: [
-    .package(url: "https://github.com/lindebrothers/SwiftReduxRouting.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "1.0.0"))
 ]
 ```
 
 ## Simple usage
 ```Swift
-import SwiftReduxRouting
+import SwiftReduxRouter
 import SwiftUI
 
 struct StandAloneView: View {
@@ -51,7 +51,7 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
 
     ```Swift
     import ReSwift
-    import SwiftReduxRouting
+    import SwiftReduxRouter
 
     struct AppState: StateType {
       private(set) var navigation: NavigationState
@@ -60,7 +60,7 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
 1. Add a initial navigationState to your store.
     ```Swift
     import ReSwift
-    import SwiftReduxRouting
+    import SwiftReduxRouter
 
     final class AppStore {
       lazy var initNavigationState: NavigationState = {
@@ -84,7 +84,7 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
 1. Add the Navigation reducer to your main reducer
     ```Swift
     import ReSwift
-    import SwiftReduxRouting
+    import SwiftReduxRouter
 
 
     func appReducer(action: Action, state: AppState?) -> AppState {
@@ -95,7 +95,7 @@ If you use ReSwift and Redux you can integrate the NavigationState with your app
     ```
 1. Connect the navigation State to your views
     ``` Swift
-    import SwiftReduxRouting
+    import SwiftReduxRouter
     import SwiftUI
 
     struct ContentView: View {
