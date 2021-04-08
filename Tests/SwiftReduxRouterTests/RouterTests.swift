@@ -37,8 +37,8 @@ final class RouterTests: XCTestCase {
                         let item = params["item"] as! String
                         XCTAssertEqual(item, "awesome")
                     },
-                    render: { path, params, _ -> AnyView in
-                        XCTAssertEqual(path.path, "/one/awesome")
+                    render: { session, params, _ -> AnyView in
+                        XCTAssertEqual(session.nextPath.path, "/one/awesome")
                         let item = params["item"] as! String
                         XCTAssertEqual(item, "awesome")
                         return AnyView(Text("first route"))
@@ -49,8 +49,8 @@ final class RouterTests: XCTestCase {
                     onWillAppear: { path, params in
                         XCTAssertEqual(path.path, "/two")
                     },
-                    render: { path, params, _ -> AnyView in
-                        XCTAssertEqual(path.path, "/two")
+                    render: { session, params, _ -> AnyView in
+                        XCTAssertEqual(session.nextPath.path, "/two")
                         return AnyView(Text("Second route"))
                     }
                 ),

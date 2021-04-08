@@ -183,9 +183,9 @@ public struct RouterView: UIViewControllerRepresentable {
             let route = routes.first(where: { $0.path == match.pattern }) {
             let vc: RouteViewController<AnyView>!
             if let renderController = route.renderController {
-                vc = renderController(session.nextPath, match.values, standaloneRouter)
+                vc = renderController(session, match.values, standaloneRouter)
             } else if let render = route.render {
-                var view = render(session.nextPath, match.values, standaloneRouter)
+                var view = render(session, match.values, standaloneRouter)
                 view = AnyView(view.edgesIgnoringSafeArea(.all))
                 vc = RouteViewController(rootView: view)
             } else {
@@ -206,14 +206,14 @@ public extension RouterView {
     struct Route {
         public var path: String
         public var onWillAppear: ((_ path: NavigationPath, _ values: [String: Any]) -> Void)?
-        public var render: ((_ path: NavigationPath, _ values: [String: Any], _ router: Router?) -> AnyView)?
-        public var renderController: ((_ path: NavigationPath, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)?
+        public var render: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> AnyView)?
+        public var renderController: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)?
 
         public init(
             path: String,
             onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
-            render: ((NavigationPath, [String: Any], _ router: Router?) -> AnyView)? = nil,
-            renderController: ((_ path: NavigationPath, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)? = nil
+            render: ((NavigationSession, [String: Any], _ router: Router?) -> AnyView)? = nil,
+            renderController: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)? = nil
         )
         {
             self.path = path
