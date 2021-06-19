@@ -186,7 +186,7 @@ public struct RouterView: UIViewControllerRepresentable {
                 vc = renderController(session, match.values, standaloneRouter)
             } else if let render = route.render {
                 var view = render(session, match.values, standaloneRouter)
-                view = AnyView(view.edgesIgnoringSafeArea(.all))
+                view = AnyView(view)
                 vc = RouteViewController(rootView: view)
             } else {
                 vc = RouteViewController(rootView: AnyView(EmptyView()))
