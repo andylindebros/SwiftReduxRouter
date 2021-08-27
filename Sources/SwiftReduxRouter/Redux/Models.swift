@@ -28,6 +28,28 @@ public struct NavigationSession: Encodable, Equatable {
     }
 }
 
+public struct NavigationRoute: Encodable {
+    public var path: String
+
+    public func reverse(params: [String: String] = [:]) -> NavigationPath? {
+        let urlMatcher = URLMatcher()
+        let components = urlMatcher.pathComponents(from: path)
+        var parameters: [String] = []
+        for component in components {
+            switch component {
+            case .plain:
+                parameters.append(component.value)
+            case .placeholder:
+                guard let value = params[component.value] else {
+                    return nil
+                }
+                parameters.append(value)
+            }
+        }
+        return NavigationPath(parameters.joined(separator: "/"))
+    }
+}
+
 public struct NavigationPath: Encodable {
     public var id: UUID
     public var path: String
