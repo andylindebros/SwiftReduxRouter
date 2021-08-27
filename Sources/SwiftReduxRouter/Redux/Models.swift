@@ -29,6 +29,10 @@ public struct NavigationSession: Encodable, Equatable {
 }
 
 public struct NavigationRoute: Encodable {
+    public init(_ path: String) {
+        self.path = path
+    }
+
     public var path: String
 
     public func reverse(params: [String: String] = [:]) -> NavigationPath? {
