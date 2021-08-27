@@ -1,4 +1,5 @@
 import Foundation
+import ReSwift
 
 public struct NavigationSession: Encodable, Equatable {
     public static func == (lhs: NavigationSession, rhs: NavigationSession) -> Bool {
@@ -61,6 +62,10 @@ public struct NavigationPath: Encodable {
     public init(id: UUID = UUID(), _ path: String) {
         self.id = id
         self.path = path
+    }
+
+    public func pushAction(to target: String) -> Action {
+        return NavigationActions.Push(path: self, target: target)
     }
 }
 
