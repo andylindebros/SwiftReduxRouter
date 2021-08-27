@@ -5,7 +5,7 @@ struct StandAloneView: View {
     var router = Router(
         routes: [
             RouterView.Route(
-                path: "root",
+                route: NavigationRoute("root"),
                 render: { _, _, router in
                     AnyView(
                         Button(action: {

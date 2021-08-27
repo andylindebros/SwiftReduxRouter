@@ -13,7 +13,7 @@ enum AppRoutes: CaseIterable {
         switch self {
         case .root:
             return RouterView.Route(
-                path: "root",
+                route: NavigationRoute("root"),
                 render: { _, _, _ in
                     AnyView(
                         HStack {
@@ -41,7 +41,7 @@ enum AppRoutes: CaseIterable {
             )
         case .helloWorld:
             return RouterView.Route(
-                path: "hello/<string:name>",
+                route: NavigationRoute("hello/<string:name>"),
                 render: { _, params, _ in
 
                     let name = params["name"] as? String ?? "sunknwon"
