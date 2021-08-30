@@ -1,7 +1,7 @@
 import Foundation
 
 /// A type which can be converted to an URL string.
-public protocol URLConvertible {
+protocol URLConvertible {
     var urlValue: URL? { get }
     var urlStringValue: String { get }
 
@@ -16,7 +16,7 @@ public protocol URLConvertible {
 }
 
 extension URLConvertible {
-    public var queryParameters: [String: String] {
+    var queryParameters: [String: String] {
         var parameters = [String: String]()
         urlValue?.query?.components(separatedBy: "&").forEach { component in
             guard let separatorIndex = component.firstIndex(of: "=") else { return }
@@ -30,13 +30,13 @@ extension URLConvertible {
     }
 
     @available(iOS 8, *)
-    public var queryItems: [URLQueryItem]? {
+    var queryItems: [URLQueryItem]? {
         return URLComponents(string: urlStringValue)?.queryItems
     }
 }
 
 extension String: URLConvertible {
-    public var urlValue: URL? {
+    var urlValue: URL? {
         if let url = URL(string: self) {
             return url
         }
@@ -48,17 +48,17 @@ extension String: URLConvertible {
         return addingPercentEncoding(withAllowedCharacters: set).flatMap { URL(string: $0) }
     }
 
-    public var urlStringValue: String {
+    var urlStringValue: String {
         return self
     }
 }
 
 extension URL: URLConvertible {
-    public var urlValue: URL? {
+    var urlValue: URL? {
         return self
     }
 
-    public var urlStringValue: String {
+    var urlStringValue: String {
         return absoluteString
     }
 }
@@ -67,8 +67,8 @@ extension URL: URLConvertible {
 ///
 /// URLMatcher extracts the pattern and the values from the URL if possible.
 open class URLMatcher {
-    public typealias URLPattern = String
-    public typealias URLValueConverter = (_ pathComponents: [String], _ index: Int) -> Any?
+    typealias URLPattern = String
+    typealias URLValueConverter = (_ pathComponents: [String], _ index: Int) -> Any?
 
     static let defaultURLValueConverters: [String: URLValueConverter] = [
         "string": { pathComponents, index in
@@ -88,9 +88,9 @@ open class URLMatcher {
         },
     ]
 
-    open var valueConverters: [String: URLValueConverter] = URLMatcher.defaultURLValueConverters
+    var valueConverters: [String: URLValueConverter] = URLMatcher.defaultURLValueConverters
 
-    public init() {}
+    init() {}
 
     /// Returns a matching URL pattern and placeholder values from the specified URL and patterns.
     /// It returns `nil` if the given URL is not contained in the URL patterns.
@@ -107,7 +107,7 @@ open class URLMatcher {
     ///
     /// - returns: A `URLMatchComponents` struct that holds the URL pattern string, a dictionary of
     ///            the URL placeholder values.
-    open func match(_ url: URLConvertible, from candidates: [URLPattern]) -> URLMatchResult? {
+    func match(_ url: URLConvertible, from candidates: [URLPattern]) -> URLMatchResult? {
         let url = normalizeURL(url)
         let scheme = url.urlValue?.scheme
         let stringPathComponents = self.stringPathComponents(from: url)
@@ -237,12 +237,12 @@ open class URLMatcher {
 }
 
 /// Represents an URL match result.
-public struct URLMatchResult {
+struct URLMatchResult {
     /// The url pattern that was matched.
-    public let pattern: String
+    let pattern: String
 
     /// The values extracted from the URL placeholder.
-    public let values: [String: Any]
+    let values: [String: Any]
 }
 
 enum URLPathComponentMatchResult {
