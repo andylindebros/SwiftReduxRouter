@@ -4,7 +4,7 @@ import ReSwift
 
 // MARK: State
 
-public class NavigationState: StateType, ObservableObject {
+public class NavigationState: ObservableObject {
     // MARK: Published vars
 
     /// Active session. It can only be one sessin at the time
@@ -23,7 +23,7 @@ public class NavigationState: StateType, ObservableObject {
 // MARK: Reducer
 
 public func navigationReducer(action: Action, state: NavigationState?) -> NavigationState {
-    let state = state ?? NavigationState()
+    var state = state ?? NavigationState()
 
     switch action {
     case let a as NavigationActions.SetSelectedPath:
@@ -38,17 +38,10 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
                 state.sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
             }
         }
+    case let a as NavigationActions.Dismiss:
+        setupPushState(state: &state, path: a.path, target: a.target)
     case let a as NavigationActions.Push:
-        if let index = state.sessions.firstIndex(where: { $0.name == a.target }) {
-            state.sessions[index].nextPath = a.path
-            state.sessions[index].presentedPaths.append(a.path)
-            state.selectedSessionId = state.sessions[index].id
-
-        } else {
-            let session = NavigationSession(name: a.target, path: a.path, selectedPath: NavigationPath(""))
-            state.sessions.append(session)
-            state.selectedSessionId = session.id
-        }
+        setupPushState(state: &state, path: a.path, target: a.target)
     case let a as NavigationActions.SessionDismissed:
         if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
             state.sessions.remove(at: index)
@@ -61,5 +54,19 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
     default:
         break
     }
+    print(state)
     return state
+}
+
+private func setupPushState(state: inout NavigationState, path: NavigationPath, target: String) {
+    if let index = state.sessions.firstIndex(where: { $0.name == target }) {
+        state.sessions[index].nextPath = path
+        state.sessions[index].presentedPaths.append(path)
+        state.selectedSessionId = state.sessions[index].id
+
+    } else {
+        let session = NavigationSession(name: target, path: path, selectedPath: NavigationPath(""))
+        state.sessions.append(session)
+        state.selectedSessionId = session.id
+    }
 }

@@ -69,15 +69,37 @@ public struct NavigationPath: Encodable {
     }
 }
 
-public struct NavigationTab: Codable {
+public struct NavigationTab: Encodable {
     public var name: String
-    public var icon: String
-    public var selectedIcon: String?
+    public var icon: Icon
+    public var selectedIcon: Icon?
 
-    public init(name: String, icon: String, selectedIcon: String? = nil) {
+    public init(name: String, icon: Icon, selectedIcon: Icon? = nil) {
         self.name = name
         self.icon = icon
         self.selectedIcon = selectedIcon
+    }
+}
+
+public extension NavigationTab {
+    enum Icon: Encodable {
+        case local(name: String)
+        case system(name: String)
+
+        enum CodingKeys: CodingKey {
+            case local, system
+        }
+
+        public func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+
+            switch self {
+            case let .local(name):
+                try container.encode(name, forKey: .local)
+            case let .system(name):
+                try container.encode(name, forKey: .system)
+            }
+        }
     }
 }
 

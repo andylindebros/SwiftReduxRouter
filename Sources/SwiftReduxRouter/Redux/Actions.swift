@@ -1,7 +1,7 @@
 import Foundation
 import ReSwift
 
-public struct NavigationActions {
+public enum NavigationActions {
     /// Action tha will push the next view. Dispatch this action if you will present or push a view.
     public struct Push: Action {
         /// The path of the route that will be pushed
@@ -12,6 +12,15 @@ public struct NavigationActions {
 
         public init(path: NavigationPath, target: String) {
             self.path = path
+            self.target = target
+        }
+    }
+
+    public struct Dismiss: Action {
+        public var path: NavigationPath
+        public var target: String
+        public init(target: String) {
+            path = NavigationPath(RouterView.dismissActionIdentifier)
             self.target = target
         }
     }

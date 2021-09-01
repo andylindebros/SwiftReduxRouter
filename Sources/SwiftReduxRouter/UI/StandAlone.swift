@@ -48,7 +48,7 @@ public struct Router: View {
     }
 }
 
-private struct NavigationMainState: StateType {
+private struct NavigationMainState {
     private(set) var navigation: NavigationState
 }
 

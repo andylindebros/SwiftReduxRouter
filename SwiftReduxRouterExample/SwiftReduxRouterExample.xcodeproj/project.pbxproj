@@ -17,6 +17,7 @@
 		E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6625C0477C000CF73B /* ContentView.swift */; };
 		E625CD6D25C0477C000CF73B /* StandAloneView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6725C0477C000CF73B /* StandAloneView.swift */; };
 		E625CD6E25C0477C000CF73B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6825C0477C000CF73B /* Routes.swift */; };
+		E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6769F9D26E020AD00E493F1 /* MyViewController.swift */; };
 		E6A2BF1126D935BF005EA357 /* SwiftReduxRouter in Frameworks */ = {isa = PBXBuildFile; productRef = E6A2BF1026D935BF005EA357 /* SwiftReduxRouter */; };
 /* End PBXBuildFile section */
 
@@ -54,6 +55,7 @@
 		E625CD6625C0477C000CF73B /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		E625CD6725C0477C000CF73B /* StandAloneView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StandAloneView.swift; sourceTree = "<group>"; };
 		E625CD6825C0477C000CF73B /* Routes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
+		E6769F9D26E020AD00E493F1 /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -165,6 +167,7 @@
 				E625CD6625C0477C000CF73B /* ContentView.swift */,
 				E625CD6725C0477C000CF73B /* StandAloneView.swift */,
 				E625CD6825C0477C000CF73B /* Routes.swift */,
+				E6769F9D26E020AD00E493F1 /* MyViewController.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -313,6 +316,7 @@
 				E625CD6D25C0477C000CF73B /* StandAloneView.swift in Sources */,
 				E625CD6E25C0477C000CF73B /* Routes.swift in Sources */,
 				E625CD6925C0477C000CF73B /* AppState.swift in Sources */,
+				E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */,
 				E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */,
 				E625CD6A25C0477C000CF73B /* AppReducer.swift in Sources */,
 				E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */,

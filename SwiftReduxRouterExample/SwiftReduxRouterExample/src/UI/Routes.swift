@@ -1,102 +1,98 @@
 import SwiftReduxRouter
 import SwiftUI
 
-enum AppRoutes: CaseIterable {
-    static let names = ["Alejandro", "Camila", "Diego", "Luciana", "Luis", "Sofía"]
+enum AppRoutes: String, CaseIterable {
+    static let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
 
     static let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
 
-    case root
-    case helloWorld
+    case viewControllerRoute
+    case helloWorld = "hello/<string:name>"
+
+    var navigationRoute: NavigationRoute {
+        NavigationRoute(rawValue)
+    }
 
     var route: RouterView.Route {
         switch self {
-        case .root:
+        case .viewControllerRoute:
             return RouterView.Route(
-                route: NavigationRoute("root"),
-                render: { _, _, _ in
-                    AnyView(
+                route: navigationRoute,
+                renderController: { _, _, _ in
+                    MyViewController()
+                }
+            )
+        case .helloWorld:
+            return RouterView.Route(
+                route: navigationRoute,
+                renderView: { session, params, _ in
+                    let presentedName = params["name"] as? String ?? "not known"
+                    let name = Self.names.randomElement() ?? "unknown"
+                    return AnyView(
                         HStack {
                             Spacer()
-                            VStack {
+                            VStack(spacing: 10) {
                                 Spacer()
+
+                                Text("Presenting \(presentedName)")
+                                    .font(.system(size: 50)).bold()
+                                    .foregroundColor(.black)
                                 Button(action: {
                                     AppStore.shared.store.dispatch(
                                         NavigationActions.Push(
-                                            path: NavigationPath("hello/\(Self.names.randomElement() ?? "unknown")"),
-                                            target: "presented"
+                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            target: session.name
                                         )
                                     )
                                 }) {
-                                    Text("Open Helloworld")
+                                    Text("Push \(name) to current session").foregroundColor(.black)
+                                }
+                                Button(action: {
+                                    AppStore.shared.store.dispatch(
+                                        NavigationActions.Push(
+                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            target: "tab1"
+                                        )
+                                    )
+                                }) {
+                                    Text("Push \(name) to Tab 1").foregroundColor(.black)
+                                }
+
+                                Button(action: {
+                                    AppStore.shared.store.dispatch(
+                                        NavigationActions.Push(
+                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            target: "tab2"
+                                        )
+                                    )
+                                }) {
+                                    Text("Push \(name) to Tab 2").foregroundColor(.black)
+                                }
+
+                                Button(action: {
+                                    AppStore.shared.store.dispatch(
+                                        NavigationActions.Push(
+                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            target: UUID().uuidString
+                                        )
+                                    )
+                                }) {
+                                    Text("Present \(name)").foregroundColor(.black)
                                 }
                                 Spacer()
                             }
                             Spacer()
                         }
-                        .navigationTitle("Main")
-                        .background(Self.backgrounds.randomElement() ?? Color.white)
-                    )
-                }
-            )
-        case .helloWorld:
-            return RouterView.Route(
-                route: NavigationRoute("hello/<string:name>"),
-                render: { _, params, _ in
 
-                    let name = params["name"] as? String ?? "sunknwon"
-                    return AnyView(
-                        HStack {
-                            Spacer()
-                            VStack {
-                                Spacer()
-                                Text("Hello \(name)")
-                                HStack {
-                                    Button(action: {
-                                        AppStore.shared.store.dispatch(
-                                            NavigationActions.GoBack(
-                                                target: "presented",
-                                                destination: .root
-                                            )
-                                        )
-                                    }) {
-                                        Text("Back to befinning")
-                                    }
-                                    Button(action: {
-                                        AppStore.shared.store.dispatch(
-                                            NavigationActions.GoBack(
-                                                target: "presented",
-                                                destination: .back
-                                            )
-                                        )
-                                    }) {
-                                        Text("Back")
-                                    }
-                                    Button(action: {
-                                        AppStore.shared.store.dispatch(
-                                            NavigationActions.Push(
-                                                path: NavigationPath("hello/\(Self.names.randomElement() ?? "unknown")"),
-                                                target: "presented"
-                                            )
-                                        )
-                                    }) {
-                                        Text("Next")
-                                    }
-                                }.padding(.top, 20)
-                                Spacer()
-                            }
-                            Spacer()
-                        }
-                        .navigationTitle("Hello \(name)")
+                        .background(Self.backgrounds.randomElement() ?? Color.white)
+
+                        .navigationTitle("\(presentedName)")
                         .navigationBarItems(trailing: Button(action: {
                             AppStore.shared.store.dispatch(
-                                NavigationActions.Push(
-                                    path: NavigationPath(RouterView.dismissActionIdentifier),
-                                    target: "presented"
-                                )
+                                NavigationActions.Dismiss(target: session.name)
                             )
                         }) {
-                            Text("Close")
+                            Text(session.tab == nil ? "Close" : "")
                         })
 
                         .background(Self.backgrounds.randomElement() ?? Color.white)
@@ -107,6 +103,6 @@ enum AppRoutes: CaseIterable {
     }
 }
 
-class MyController<Content: View>: RouteViewController<Content> {
-    override func configureBeforePushed() {}
+class MyController: UIViewController, UIRouteViewController {
+    var session: NavigationSession?
 }

@@ -61,12 +61,29 @@ public struct RouterView: UIViewControllerRepresentable {
                 nc.onDismiss = onDismiss
 
                 if let tab = session.tab {
+                    var icon: UIImage?
+                    var selectedImage: UIImage?
+
+                    if let selectedIcon = tab.selectedIcon {
+                        switch selectedIcon {
+                        case let .local(name):
+                            selectedImage = UIImage(named: name)
+                        case let .system(name: name):
+                            selectedImage = UIImage(systemName: name)
+                        }
+                    }
+
+                    switch tab.icon {
+                    case let .local(name):
+                        icon = UIImage(named: name)
+                    case let .system(name: name):
+                        icon = UIImage(systemName: name)
+                    }
+
                     nc.tabBarItem = UITabBarItem(
                         title: tab.name,
-                        image: UIImage(named: tab.icon),
-                        selectedImage: UIImage(
-                            named: tab.selectedIcon ?? tab.icon
-                        )
+                        image: icon,
+                        selectedImage: selectedImage == nil ? icon : selectedImage
                     )
                 }
                 ncs.append(nc)
@@ -103,18 +120,23 @@ public struct RouterView: UIViewControllerRepresentable {
         guard let session = navigationState.sessions.first(where: { $0.id == navigationState.selectedSessionId }) else {
             return
         }
-
-        // UITabBar
         if session.nextPath.id != session.selectedPath.id {
             if let selectedIndex = navigationState.sessions.filter({ $0.tab != nil || $0.id == navigationState.sessions.first?.id }).firstIndex(where: { $0.id == session.id }) {
-                var nc: NavigationController!
-                if let tc = tc as? UITabBarController, let tnc = tc.selectedViewController as? NavigationController {
+                var ncRaw: NavigationController?
+                if let tc = tc as? UITabBarController {
                     tc.selectedIndex = selectedIndex
-                    nc = tnc
+
+                    if let tnc = tc.selectedViewController as? NavigationController {
+                        ncRaw = tnc
+                    }
+
                 } else if let nnc = tc as? NavigationController {
-                    nc = nnc
+                    ncRaw = nnc
                 }
 
+                guard let nc = ncRaw else {
+                    return
+                }
                 nc.session = session
 
                 switch session.nextPath.path {
@@ -175,24 +197,22 @@ public struct RouterView: UIViewControllerRepresentable {
         }
     }
 
-    public func getViewByPath(_ session: NavigationSession) -> RouteViewController<AnyView>? {
+    public func getViewByPath(_ session: NavigationSession) -> UIRouteViewController? {
         let patterns = routes.map { $0.route.path }
-
         if
             let match = URLMatcher().match(session.nextPath.path, from: patterns),
-            let route = routes.first(where: { $0.route.path == match.pattern }) {
-            let vc: RouteViewController<AnyView>!
-            if let renderController = route.renderController {
-                vc = renderController(session, match.values, standaloneRouter)
-            } else if let render = route.render {
-                var view = render(session, match.values, standaloneRouter)
-                view = AnyView(view)
+            let route = routes.first(where: { $0.route.path == match.pattern })
+        {
+            let vc: UIRouteViewController!
+            if let render = route.renderView {
+                let view = render(session, match.values, standaloneRouter)
                 vc = RouteViewController(rootView: view)
+            } else if let renderController = route.renderController {
+                vc = renderController(session, match.values, standaloneRouter)
             } else {
                 vc = RouteViewController(rootView: AnyView(EmptyView()))
             }
             vc.session = session
-            vc.configureBeforePushed()
 
             route.onWillAppear?(session.nextPath, match.values)
             return vc
@@ -206,30 +226,29 @@ public extension RouterView {
     struct Route {
         public var route: NavigationRoute
         public var onWillAppear: ((_ path: NavigationPath, _ values: [String: Any]) -> Void)?
-        public var render: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> AnyView)?
-        public var renderController: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)?
+        public var renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)?
+        public var renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController)?
 
         public init(
             route: NavigationRoute,
             onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
-            render: ((NavigationSession, [String: Any], _ router: Router?) -> AnyView)? = nil,
-            renderController: ((_ session: NavigationSession, _ values: [String: Any], _ router: Router?) -> RouteViewController<AnyView>)? = nil
-        )
-        {
+            renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)? = nil,
+            renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController)? = nil
+        ) {
             self.route = route
             self.onWillAppear = onWillAppear
-            self.render = render
+            self.renderView = renderView
             self.renderController = renderController
         }
     }
 }
 
 public class TabController: UITabBarController {
-    public override func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
+    override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
         super.dismiss(animated: flag, completion: completion)
     }
 
-    public override func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
     }
 }
@@ -239,7 +258,7 @@ public class NavigationController: UINavigationController, UINavigationControlle
     var willShow: ((_ session: NavigationSession) -> Void)?
     var onDismiss: ((_ session: NavigationSession) -> Void)?
 
-    public override func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
         delegate = self
         presentationController?.delegate = self
@@ -253,13 +272,16 @@ public class NavigationController: UINavigationController, UINavigationControlle
     }
 
     public func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
-        if let vc = viewController as? RouteViewController<AnyView>, let session = vc.session {
+        if let vc = viewController as? UIRouteViewController, let session = vc.session {
             willShow?(session)
         }
     }
 }
 
-open class RouteViewController<Content: View>: UIHostingController<Content> {
+public protocol UIRouteViewController: UIViewController {
+    var session: NavigationSession? { get set }
+}
+
+open class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     public var session: NavigationSession?
-    open func configureBeforePushed() {}
 }
