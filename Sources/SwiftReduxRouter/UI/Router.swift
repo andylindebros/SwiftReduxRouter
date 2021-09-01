@@ -203,7 +203,7 @@ public struct RouterView: UIViewControllerRepresentable {
             let match = URLMatcher().match(session.nextPath.path, from: patterns),
             let route = routes.first(where: { $0.route.path == match.pattern })
         {
-            let vc: UIRouteViewController!
+            let vc: UIRouteViewController?
             if let render = route.renderView {
                 let view = render(session, match.values, standaloneRouter)
                 vc = RouteViewController(rootView: view)
@@ -212,10 +212,13 @@ public struct RouterView: UIViewControllerRepresentable {
             } else {
                 vc = RouteViewController(rootView: AnyView(EmptyView()))
             }
-            vc.session = session
+            guard let viewController = vc else {
+                return nil
+            }
+            viewController.session = session
 
             route.onWillAppear?(session.nextPath, match.values)
-            return vc
+            return viewController
         }
 
         return nil
@@ -227,13 +230,13 @@ public extension RouterView {
         public var route: NavigationRoute
         public var onWillAppear: ((_ path: NavigationPath, _ values: [String: Any]) -> Void)?
         public var renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)?
-        public var renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController)?
+        public var renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController?)?
 
         public init(
             route: NavigationRoute,
             onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
             renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)? = nil,
-            renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController)? = nil
+            renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController?)? = nil
         ) {
             self.route = route
             self.onWillAppear = onWillAppear
