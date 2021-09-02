@@ -54,7 +54,6 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
     default:
         break
     }
-    print(state)
     return state
 }
 
