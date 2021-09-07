@@ -103,7 +103,7 @@ public extension NavigationTab {
     }
 }
 
-public enum NavigationGoBackIdentifier: String {
+public enum NavigationGoBackIdentifier: String, Encodable {
     case back = ":back"
     case root = ":root"
 }

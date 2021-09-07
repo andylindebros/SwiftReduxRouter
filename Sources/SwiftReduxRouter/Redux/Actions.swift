@@ -3,7 +3,7 @@ import ReSwift
 
 public enum NavigationActions {
     /// Action tha will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: Action {
+    public struct Push: Action, Encodable {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
@@ -16,7 +16,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Dismiss: Action {
+    public struct Dismiss: Action, Encodable {
         public var path: NavigationPath
         public var target: String
         public init(target: String) {
@@ -26,7 +26,7 @@ public enum NavigationActions {
     }
 
     /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: Action {
+    public struct SetSelectedPath: Action, Encodable {
         /// The session that is presenting the view
         public var session: NavigationSession
 
@@ -36,7 +36,7 @@ public enum NavigationActions {
     }
 
     /// Action that dismisses a presented view
-    public struct SessionDismissed: Action {
+    public struct SessionDismissed: Action, Encodable {
         /// The session that should dismiss the view
         public var session: NavigationSession
 
@@ -46,7 +46,7 @@ public enum NavigationActions {
     }
 
     /// Action that will push a navigation backwards
-    public struct GoBack: Action {
+    public struct GoBack: Action, Encodable {
         /// The session that should go backwards
         public var target: String
 
