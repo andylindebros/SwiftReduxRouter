@@ -1,7 +1,7 @@
 import Foundation
 import ReSwift
 
-public struct NavigationSession: Encodable, Equatable {
+public struct NavigationSession: Codable, Equatable {
     public static func == (lhs: NavigationSession, rhs: NavigationSession) -> Bool {
         lhs.id == rhs.id
     }
@@ -29,7 +29,7 @@ public struct NavigationSession: Encodable, Equatable {
     }
 }
 
-public struct NavigationRoute: Encodable {
+public struct NavigationRoute: Codable {
     public init(_ path: String) {
         self.path = path
     }
@@ -55,7 +55,7 @@ public struct NavigationRoute: Encodable {
     }
 }
 
-public struct NavigationPath: Encodable {
+public struct NavigationPath: Codable {
     public var id: UUID
     public var path: String
 
@@ -69,7 +69,7 @@ public struct NavigationPath: Encodable {
     }
 }
 
-public struct NavigationTab: Encodable {
+public struct NavigationTab: Codable {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
@@ -82,12 +82,29 @@ public struct NavigationTab: Encodable {
 }
 
 public extension NavigationTab {
-    enum Icon: Encodable {
+    enum Icon: Codable {
         case local(name: String)
         case system(name: String)
 
-        enum CodingKeys: CodingKey {
+        private enum CodingKeys: String, CodingKey {
+            case name, type
+        }
+
+        private enum IconType: String, Codable {
             case local, system
+        }
+
+        public init(from decoder: Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            let type = try values.decode(IconType.self, forKey: .type)
+            let name = try values.decode(String.self, forKey: .name)
+
+            switch type {
+            case .local:
+                self = Icon.local(name: name)
+            case .system:
+                self = Icon.system(name: name)
+            }
         }
 
         public func encode(to encoder: Encoder) throws {
@@ -95,15 +112,17 @@ public extension NavigationTab {
 
             switch self {
             case let .local(name):
-                try container.encode(name, forKey: .local)
+                try container.encode(IconType.local, forKey: .type)
+                try container.encode(name, forKey: .name)
             case let .system(name):
-                try container.encode(name, forKey: .system)
+                try container.encode(IconType.system, forKey: .type)
+                try container.encode(name, forKey: .name)
             }
         }
     }
 }
 
-public enum NavigationGoBackIdentifier: String, Encodable {
+public enum NavigationGoBackIdentifier: String, Codable {
     case back = ":back"
     case root = ":root"
 }

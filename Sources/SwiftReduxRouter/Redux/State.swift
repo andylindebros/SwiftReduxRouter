@@ -4,7 +4,7 @@ import ReSwift
 
 // MARK: State
 
-public class NavigationState: ObservableObject {
+public class NavigationState: ObservableObject, Codable {
     // MARK: Published vars
 
     /// Active session. It can only be one sessin at the time
@@ -18,6 +18,22 @@ public class NavigationState: ObservableObject {
             self.sessions = sessions
         }
     }
+
+    public required init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        selectedSessionId = try values.decode(UUID.self, forKey: .selectedSessionId)
+        sessions = try values.decode([NavigationSession].self, forKey: .sessions)
+    }
+
+    enum CodingKeys: CodingKey {
+        case selectedSessionId, sessions
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sessions, forKey: .sessions)
+        try container.encode(selectedSessionId, forKey: .selectedSessionId)
+    }
 }
 
 // MARK: Reducer
@@ -26,6 +42,10 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
     var state = state ?? NavigationState()
 
     switch action {
+    case let a as NavigationJumpStateAction:
+        state.sessions = a.navigationState.sessions
+        state.selectedSessionId = a.navigationState.selectedSessionId
+
     case let a as NavigationActions.SetSelectedPath:
         if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
             state.sessions[index].nextPath = a.session.nextPath
@@ -67,18 +87,5 @@ private func setupPushState(state: inout NavigationState, path: NavigationPath, 
         let session = NavigationSession(name: target, path: path, selectedPath: NavigationPath(""))
         state.sessions.append(session)
         state.selectedSessionId = session.id
-    }
-}
-
-
- extension NavigationState: Encodable {
-    enum CodingKeys: CodingKey {
-        case selectedSessionId, sessions
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(sessions, forKey: .sessions)
-        try container.encode(selectedSessionId, forKey: .selectedSessionId)
     }
 }

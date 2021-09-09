@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "ReduxMonitor",
+        "repositoryURL": "https://github.com/Lindebrothers/ReduxMonitor",
+        "state": {
+          "branch": null,
+          "revision": "0ac8bc6334356953ee71df005fa8c4903f4a03fb",
+          "version": "2.0.1"
+        }
+      },
+      {
         "package": "ReSwift",
         "repositoryURL": "https://github.com/ReSwift/ReSwift.git",
         "state": {
