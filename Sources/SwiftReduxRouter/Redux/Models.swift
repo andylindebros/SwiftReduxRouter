@@ -55,7 +55,7 @@ public struct NavigationRoute: Codable {
     }
 }
 
-public struct NavigationPath: Codable {
+public struct NavigationPath: Identifiable, Codable {
     public var id: UUID
     public var path: String
 

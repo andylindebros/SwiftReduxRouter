@@ -7,7 +7,7 @@ enum AppRoutes: String, CaseIterable {
     static let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
 
     case viewControllerRoute
-    case helloWorld = "hello/<string:name>"
+    case helloWorld = "hello/<int:name>"
 
     var navigationRoute: NavigationRoute {
         NavigationRoute(rawValue)
@@ -26,8 +26,8 @@ enum AppRoutes: String, CaseIterable {
             return RouterView.Route(
                 route: navigationRoute,
                 renderView: { session, params, _ in
-                    let presentedName = params["name"] as? String ?? "not known"
-                    let name = Self.names.randomElement() ?? "unknown"
+                    let presentedName = params["name"] as? Int ?? 0
+                    let next = presentedName + 1
                     return AnyView(
                         HStack {
                             Spacer()
@@ -40,44 +40,44 @@ enum AppRoutes: String, CaseIterable {
                                 Button(action: {
                                     AppStore.shared.store.dispatch(
                                         NavigationActions.Push(
-                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            path: navigationRoute.reverse(params: ["name": "\(next)"])!,
                                             target: session.name
                                         )
                                     )
                                 }) {
-                                    Text("Push \(name) to current session").foregroundColor(.black)
+                                    Text("Push \(next) to current session").foregroundColor(.black)
                                 }
                                 Button(action: {
                                     AppStore.shared.store.dispatch(
                                         NavigationActions.Push(
-                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            path: navigationRoute.reverse(params: ["name": "\(next)"])!,
                                             target: "tab1"
                                         )
                                     )
                                 }) {
-                                    Text("Push \(name) to Tab 1").foregroundColor(.black)
+                                    Text("Push \(next) to Tab 1").foregroundColor(.black)
                                 }
 
                                 Button(action: {
                                     AppStore.shared.store.dispatch(
                                         NavigationActions.Push(
-                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            path: navigationRoute.reverse(params: ["name": "\(next)"])!,
                                             target: "tab2"
                                         )
                                     )
                                 }) {
-                                    Text("Push \(name) to Tab 2").foregroundColor(.black)
+                                    Text("Push \(next) to Tab 2").foregroundColor(.black)
                                 }
 
                                 Button(action: {
                                     AppStore.shared.store.dispatch(
                                         NavigationActions.Push(
-                                            path: navigationRoute.reverse(params: ["name": name])!,
+                                            path: navigationRoute.reverse(params: ["name": "\(next)"])!,
                                             target: UUID().uuidString
                                         )
                                     )
                                 }) {
-                                    Text("Present \(name)").foregroundColor(.black)
+                                    Text("Present \(next)").foregroundColor(.black)
                                 }
                                 Spacer()
                             }
@@ -105,4 +105,5 @@ enum AppRoutes: String, CaseIterable {
 
 class MyController: UIViewController, UIRouteViewController {
     var session: NavigationSession?
+    var navigationPath: NavigationPath?
 }

@@ -12,6 +12,10 @@ struct JumpState: NavigationJumpStateAction, Action {
     let navigationState: NavigationState
 }
 
+struct Launch: Action, Encodable {
+    
+}
+
 final class AppStore {
     // MARK: Public
 
@@ -19,7 +23,7 @@ final class AppStore {
         NavigationState(sessions: [
             NavigationSession(
                 name: "tab1",
-                path: AppRoutes.helloWorld.navigationRoute.reverse(params: ["name": AppRoutes.names.first!])!,
+                path: AppRoutes.helloWorld.navigationRoute.reverse(params: ["name": "\(1)"])!,
                 tab: NavigationTab(
                     name: "First Tab",
                     icon: NavigationTab.Icon.system(name: "star.fill")
@@ -27,7 +31,7 @@ final class AppStore {
             ),
             NavigationSession(
                 name: "tab2",
-                path: AppRoutes.viewControllerRoute.navigationRoute.reverse()!,
+                path: AppRoutes.viewControllerRoute.navigationRoute.reverse(params: ["name": "\(1)"])!,
                 tab: NavigationTab(
                     name: "Second Tab",
                     icon: NavigationTab.Icon.system(name: "heart.fill")
@@ -37,10 +41,14 @@ final class AppStore {
     }()
 
     private(set) lazy var store: Store<AppState> = {
-        Store<AppState>(reducer: appReducer, state: AppState(navigation: initNavigationState), middleware: [
+        let store = Store<AppState>(reducer: appReducer, state: AppState(navigation: initNavigationState), middleware: [
             loggerMiddleware,
             AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()),
         ])
+        
+        store.dispatch(Launch())
+        
+        return store
     }()
 
     static let shared = AppStore()

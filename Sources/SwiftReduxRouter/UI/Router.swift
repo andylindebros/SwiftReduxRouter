@@ -12,7 +12,6 @@ public struct RouterView: UIViewControllerRepresentable {
     @ObservedObject private var navigationState: NavigationState
 
     /// The root controller of the router
-    private var tc: UIViewController
 
     /// Available routes
     private var routes: [Route]
@@ -25,6 +24,7 @@ public struct RouterView: UIViewControllerRepresentable {
 
     private var standaloneRouter: Router?
 
+    private var tintColor: UIColor?
     /// Public init
     public init(
         navigationState: NavigationState,
@@ -39,26 +39,56 @@ public struct RouterView: UIViewControllerRepresentable {
         self.setSelectedPath = setSelectedPath
         self.onDismiss = onDismiss
         self.standaloneRouter = standaloneRouter
+        self.tintColor = tintColor
+    }
 
-        tc = NavigationController()
+    public func makeUIViewController(context _: Context) -> UIViewController {
+        return recreateViewControllerBasedOnState()
+    }
 
+//    public func makeCoordinator() -> () {
+//        return RouterCoordinator(navigtionState: navigationState)
+//    }
+
+    /**
+     Updates the SwiftUI View when the state changes
+     */
+
+    private func asTabBarController(_ controller: UIViewController?) -> UITabBarController {
+        guard let crlr = controller as? UITabBarController else {
+            return UITabBarController()
+        }
+        return crlr
+    }
+
+    private func asNavigationController(_ controller: UIViewController?) -> NavigationController {
+        guard let crlr = controller as? NavigationController else {
+            return NavigationController()
+        }
+        return crlr
+    }
+
+    func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
         // Appear as a tabbar. Initial state has more than one session
         if navigationState.sessions.count > 1 {
-            let tc = TabController()
+            let tc = asTabBarController(rootController)
             if let tintColor = tintColor {
                 tc.tabBar.tintColor = tintColor
             }
             var ncs = [NavigationController]()
             for session in navigationState.sessions.filter({ $0.tab != nil }) {
-                let nc: NavigationController
-                if let vc = getViewByPath(session) {
-                    nc = NavigationController(rootViewController: vc)
-                } else {
-                    nc = NavigationController()
-                }
-                nc.session = session
-                nc.willShow = setSelectedPath
-                nc.onDismiss = onDismiss
+                let nc: NavigationController = tc.viewControllers?.compactMap { $0 as? NavigationController }.first(where: { $0.session?.id == session.id }) ?? NavigationController()
+                recreateSession(nc: nc, session: session)
+
+//                let nc: NavigationController
+//                if let vc = getViewByPath(session, navigationPath: ) {
+//                    nc = NavigationController(rootViewController: vc)
+//                } else {
+//                    nc = NavigationController()
+//                }
+//                nc.session = session
+//                nc.willShow = setSelectedPath
+//                nc.onDismiss = onDismiss
 
                 if let tab = session.tab {
                     var icon: UIImage?
@@ -90,117 +120,125 @@ public struct RouterView: UIViewControllerRepresentable {
             }
             tc.viewControllers = ncs
 
-            self.tc = tc
+            return tc
 
             // Appear as a NavigationController. Initial state has only one session
         } else {
-            var tc: NavigationController!
-            guard let session = navigationState.sessions.first else { return }
-            if let vc = getViewByPath(session) {
-                tc = NavigationController(rootViewController: vc)
+            var tnc = asNavigationController(rootController)
+            guard let session = navigationState.sessions.first else { return tnc }
+            if let vc = getViewByPath(session, navigationPath: session.nextPath) {
+                tnc = NavigationController(rootViewController: vc)
             } else {
-                tc = NavigationController()
+                tnc = NavigationController()
             }
-            tc.session = session
-            tc.willShow = setSelectedPath
-            tc.onDismiss = onDismiss
+            tnc.session = session
+            tnc.willShow = setSelectedPath
+            tnc.onDismiss = onDismiss
 
-            self.tc = tc
+            return tnc
         }
     }
 
-    public func makeUIViewController(context _: Context) -> UIViewController {
-        return tc
+    func recreateSession(nc: NavigationController, session: NavigationSession) {
+        nc.session = session
+        nc.willShow = setSelectedPath
+        nc.onDismiss = onDismiss
+        // session.presentedPaths.compactMap(T##transform: (NavigationPath) throws -> ElementOfResult?##(NavigationPath) throws -> ElementOfResult?)
+        let vcs = session.presentedPaths.compactMap{ path in
+           nc.viewControllers.compactMap{ $0 as? UIRouteViewController }.first(where: { $0.navigationPath?.id == path.id }) ?? getViewByPath(session, navigationPath: path)
+        }
+        nc.viewControllers = vcs
     }
 
-    /**
-     Updates the SwiftUI View when the state changes
-     */
-    public func updateUIViewController(_ tc: UIViewController, context _: Context) {
-        guard let session = navigationState.sessions.first(where: { $0.id == navigationState.selectedSessionId }) else {
-            return
-        }
-        if session.nextPath.id != session.selectedPath.id {
-            if let selectedIndex = navigationState.sessions.filter({ $0.tab != nil || $0.id == navigationState.sessions.first?.id }).firstIndex(where: { $0.id == session.id }) {
-                var ncRaw: NavigationController?
-                if let tc = tc as? UITabBarController {
-                    tc.selectedIndex = selectedIndex
+    public func updateUIViewController(_ vc: UIViewController, context _: Context) {
+        
+        //_ = recreateViewControllerBasedOnState(rootController: vc)
+        // context.coordinator.update(navigationState: navigationState)
 
-                    if let tnc = tc.selectedViewController as? NavigationController {
-                        ncRaw = tnc
-                    }
-
-                } else if let nnc = tc as? NavigationController {
-                    ncRaw = nnc
-                }
-
-                guard let nc = ncRaw else {
-                    return
-                }
-                nc.session = session
-
-                switch session.nextPath.path {
-                case NavigationGoBackIdentifier.back.rawValue:
-                    nc.popViewController(animated: true)
-                    return
-                case NavigationGoBackIdentifier.root.rawValue:
-                    nc.popToRootViewController(animated: true)
-                    return
-                default:
-                    if let vc = getViewByPath(session) {
-                        nc.pushViewController(vc, animated: true)
-                        return
-                    }
-                }
-            }
-
-            guard let keyWindow = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
-                return
-            }
-
-            var topController = keyWindow.rootViewController
-            while topController?.presentedViewController != nil {
-                topController = topController?.presentedViewController
-
-                if let nc = topController as? NavigationController, let ncSession = nc.session, ncSession.id == session.id {
-                    nc.session = session
-                    switch session.nextPath.path {
-                    case NavigationGoBackIdentifier.back.rawValue:
-                        nc.popViewController(animated: true)
-                        return
-                    case NavigationGoBackIdentifier.root.rawValue:
-                        nc.popToRootViewController(animated: true)
-                        return
-                    case Self.dismissActionIdentifier:
-                        nc.dismiss(animated: true, completion: {
-                            nc.onDismiss?(session)
-                        })
-                        return
-                    default:
-                        if let vc = getViewByPath(session) {
-                            nc.pushViewController(vc, animated: true)
-                            return
-                        }
-                    }
-                }
-            }
-
-            guard let vc = getViewByPath(session) else { return }
-
-            let nc = NavigationController(rootViewController: vc)
-            nc.session = session
-            nc.willShow = setSelectedPath
-            nc.onDismiss = onDismiss
-
-            topController?.present(nc, animated: true)
-            setSelectedPath(session)
-        }
+//        guard let session = navigationState.sessions.first(where: { $0.id == navigationState.selectedSessionId }) else {
+//            return
+//        }
+//        if session.nextPath.id != session.selectedPath.id {
+//            if let selectedIndex = navigationState.sessions.filter({ $0.tab != nil || $0.id == navigationState.sessions.first?.id }).firstIndex(where: { $0.id == session.id }) {
+//                var ncRaw: NavigationController?
+//                if let tc = tc as? UITabBarController {
+//                    tc.selectedIndex = selectedIndex
+//
+//                    if let tnc = tc.selectedViewController as? NavigationController {
+//                        ncRaw = tnc
+//                    }
+//
+//                } else if let nnc = tc as? NavigationController {
+//                    ncRaw = nnc
+//                }
+//
+//                guard let nc = ncRaw else {
+//                    return
+//                }
+//                nc.session = session
+//
+//                switch session.nextPath.path {
+//                case NavigationGoBackIdentifier.back.rawValue:
+//                    nc.popViewController(animated: true)
+//                    return
+//                case NavigationGoBackIdentifier.root.rawValue:
+//                    nc.popToRootViewController(animated: true)
+//                    return
+//                default:
+//                    if let vc = getViewByPath(session, navigationPath: session.nextPath) {
+//                        nc.pushViewController(vc, animated: true)
+//                        return
+//                    }
+//                }
+//            }
+//
+//            guard let keyWindow = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first else {
+//                return
+//            }
+//
+//            var topController = keyWindow.rootViewController
+//            while topController?.presentedViewController != nil {
+//                topController = topController?.presentedViewController
+//
+//                if let nc = topController as? NavigationController, let ncSession = nc.session, ncSession.id == session.id {
+//                    nc.session = session
+//                    switch session.nextPath.path {
+//                    case NavigationGoBackIdentifier.back.rawValue:
+//                        nc.popViewController(animated: true)
+//                        return
+//                    case NavigationGoBackIdentifier.root.rawValue:
+//                        nc.popToRootViewController(animated: true)
+//                        return
+//                    case Self.dismissActionIdentifier:
+//                        nc.dismiss(animated: true, completion: {
+//                            nc.onDismiss?(session)
+//                        })
+//                        return
+//                    default:
+//                        if let vc = getViewByPath(session) {
+//                            nc.pushViewController(vc, animated: true)
+//                            return
+//                        }
+//                    }
+//                }
+//            }
+//
+//            guard let vc = getViewByPath(session, navigationPath: session.nextPath) else { return }
+//
+//            let nc = NavigationController(rootViewController: vc)
+//            nc.session = session
+//            nc.willShow = setSelectedPath
+//            nc.onDismiss = onDismiss
+//
+//            topController?.present(nc, animated: true)
+//            setSelectedPath(session)
+//        }
     }
 
-    public func getViewByPath(_ session: NavigationSession) -> UIRouteViewController? {
+    public func getViewByPath(_ session: NavigationSession, navigationPath: NavigationPath) -> UIRouteViewController? {
         let patterns = routes.map { $0.route.path }
         if
-            let match = URLMatcher().match(session.nextPath.path, from: patterns),
+            let match = URLMatcher().match(navigationPath.path, from: patterns),
             let route = routes.first(where: { $0.route.path == match.pattern })
         {
             let vc: UIRouteViewController?
@@ -216,7 +254,7 @@ public struct RouterView: UIViewControllerRepresentable {
                 return nil
             }
             viewController.session = session
-
+            viewController.navigationPath = navigationPath
             route.onWillAppear?(session.nextPath, match.values)
             return viewController
         }
@@ -283,8 +321,10 @@ public class NavigationController: UINavigationController, UINavigationControlle
 
 public protocol UIRouteViewController: UIViewController {
     var session: NavigationSession? { get set }
+    var navigationPath: NavigationPath? { get set }
 }
 
 open class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     public var session: NavigationSession?
+    public var navigationPath: NavigationPath?
 }
