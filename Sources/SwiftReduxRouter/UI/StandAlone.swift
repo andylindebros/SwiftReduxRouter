@@ -14,7 +14,7 @@ public struct Router: View {
         var sessions = sessions
 
         if sessions.count == 0 {
-            sessions.append(NavigationSession(name: "root", path: NavigationPath("root")))
+            sessions.append(NavigationSession(name: "root", selectedPath: NavigationPath("root")))
         }
 
         store = NavigationStore(sessions: sessions)
@@ -37,11 +37,13 @@ public struct Router: View {
             navigationState: store.store.state.navigation,
             routes: routes,
             tintColor: .red,
-            setSelectedPath: { session in
-                store.store.dispatch(NavigationActions.SetSelectedPath(session: session))
+            setSelectedPath: { session, navigationPath in
+                store.store.dispatch(NavigationActions.SetSelectedPath(session: session, navigationPath: navigationPath))
             },
             onDismiss: { session in
                 store.store.dispatch(NavigationActions.SessionDismissed(session: session))
+            }, sessionHasApplicant: { session, path in
+
             },
             standaloneRouter: self
         ).edgesIgnoringSafeArea([.top, .bottom])

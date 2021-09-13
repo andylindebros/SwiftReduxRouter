@@ -13,6 +13,8 @@ public class NavigationState: ObservableObject, Codable {
     /// Available sessions. Tab sessions are defined here.
     @Published fileprivate(set) var sessions = [NavigationSession]()
 
+    fileprivate(set) var jumpToState = false
+
     public init(sessions: [NavigationSession]? = nil) {
         if let sessions = sessions {
             self.sessions = sessions
@@ -45,11 +47,12 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
     case let a as NavigationJumpStateAction:
         state.sessions = a.navigationState.sessions
         state.selectedSessionId = a.navigationState.selectedSessionId
+        state.jumpToState = true
 
     case let a as NavigationActions.SetSelectedPath:
         if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
-            state.sessions[index].nextPath = a.session.nextPath
-            state.sessions[index].selectedPath = a.session.nextPath
+            // state.sessions[index].nextPath = a.session.nextPath
+            // state.sessions[index].selectedPath = a.session.nextPath
 
             // Remove all indexes that comes after current path
             if let presentedPathIndex = state.sessions[index].presentedPaths.firstIndex(where: { $0.id == state.sessions[index].selectedPath.id }) {
@@ -57,11 +60,24 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
 
                 state.sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
             }
+
+            state.sessions[index].selectedPath = a.navigationPath
+            state.selectedSessionId = state.sessions[index].id
+
+            if let nextPath = state.sessions[index].nextPath {
+                state.sessions[index].presentedPaths.append(nextPath)
+                state.sessions[index].nextPath = nil
+                state.sessions[index].selectedPath = nextPath
+            }
         }
+        state.jumpToState = false
+
     case let a as NavigationActions.Dismiss:
         setupPushState(state: &state, path: a.path, target: a.target)
     case let a as NavigationActions.Push:
         setupPushState(state: &state, path: a.path, target: a.target)
+        // state.nextPath = a.path
+
     case let a as NavigationActions.SessionDismissed:
         if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
             state.sessions.remove(at: index)
@@ -69,6 +85,10 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
     case let a as NavigationActions.GoBack:
         if let index = state.sessions.firstIndex(where: { $0.name == a.target }) {
             state.sessions[index].nextPath = NavigationPath(a.destination.rawValue)
+        }
+    case let a as NavigationActions.SessionHasApplicant:
+        if let sessionIndex = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
+            state.sessions[sessionIndex].applicant = a.path
         }
 
     default:
@@ -80,11 +100,11 @@ public func navigationReducer(action: Action, state: NavigationState?) -> Naviga
 private func setupPushState(state: inout NavigationState, path: NavigationPath, target: String) {
     if let index = state.sessions.firstIndex(where: { $0.name == target }) {
         state.sessions[index].nextPath = path
-        state.sessions[index].presentedPaths.append(path)
+        // state.sessions[index].presentedPaths.append(path)
         state.selectedSessionId = state.sessions[index].id
 
     } else {
-        let session = NavigationSession(name: target, path: path, selectedPath: NavigationPath(""))
+        let session = NavigationSession(name: target, nextPath: path, selectedPath: NavigationPath(""))
         state.sessions.append(session)
         state.selectedSessionId = session.id
     }

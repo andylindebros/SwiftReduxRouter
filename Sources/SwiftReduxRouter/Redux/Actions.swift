@@ -6,6 +6,16 @@ public protocol NavigationJumpStateAction: Action, CustomLogging {
 }
 
 public enum NavigationActions {
+    public struct SessionHasApplicant: Action, Encodable, CustomLogging {
+        public init(session: NavigationSession, path: NavigationPath) {
+            self.session = session
+            self.path = path
+        }
+
+        public var session: NavigationSession
+        public var path: NavigationPath
+    }
+
     /// Action tha will push the next view. Dispatch this action if you will present or push a view.
     public struct Push: Action, Encodable, CustomLogging {
         /// The path of the route that will be pushed
@@ -41,13 +51,15 @@ public enum NavigationActions {
     public struct SetSelectedPath: Action, Encodable, CustomLogging {
         /// The session that is presenting the view
         public var session: NavigationSession
+        public var navigationPath: NavigationPath
 
-        public init(session: NavigationSession) {
+        public init(session: NavigationSession, navigationPath: NavigationPath) {
             self.session = session
+            self.navigationPath = navigationPath
         }
 
         public var description: String {
-            "\(type(of: self)) for target '\(session.name)'"
+            "\(type(of: self)) \(navigationPath.path) for target '\(session.name)'"
         }
     }
 

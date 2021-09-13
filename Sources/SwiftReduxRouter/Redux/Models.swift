@@ -8,24 +8,23 @@ public struct NavigationSession: Codable, Equatable {
 
     public var id = UUID()
     public var name: String
-    public var nextPath: NavigationPath
+    public var nextPath: NavigationPath?
     public var selectedPath: NavigationPath
+    public var applicant: NavigationPath?
+
     public var tab: NavigationTab?
     public var presentedPaths = [NavigationPath]()
 
-    public init(name: String, path: NavigationPath, selectedPath: NavigationPath? = nil, tab: NavigationTab? = nil) {
+    public init(name: String, nextPath: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil) {
         self.name = name
-        nextPath = path
+        self.nextPath = nextPath
 
-        if let selectedPath = selectedPath {
-            self.selectedPath = selectedPath
-        } else {
-            self.selectedPath = path
-        }
+        self.selectedPath = selectedPath
 
         self.tab = tab
 
-        presentedPaths.append(path)
+        applicant = nil
+        presentedPaths.append(selectedPath)
     }
 }
 

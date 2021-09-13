@@ -6,56 +6,51 @@ import SwiftReduxRouter
 /// The state of the app
 struct AppState: Codable {
     private(set) var navigation: NavigationState
-}
 
-struct JumpState: NavigationJumpStateAction, Action {
-    let navigationState: NavigationState
-}
+    static func createStore(
+        initState: AppState? = nil
+    ) -> Store<AppState> {
+        var middlewares = [Middleware<AppState>]()
+#if DEBUG
+        middlewares.append(AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()))
+#endif
+        let store = Store<AppState>(reducer: AppState.reducer, state: initState, middleware: middlewares)
 
-struct Launch: Action, Encodable {
-    
-}
-
-final class AppStore {
-    // MARK: Public
-
-    lazy var initNavigationState: NavigationState = {
-        NavigationState(sessions: [
-            NavigationSession(
-                name: "tab1",
-                path: AppRoutes.helloWorld.navigationRoute.reverse(params: ["name": "\(1)"])!,
-                tab: NavigationTab(
-                    name: "First Tab",
-                    icon: NavigationTab.Icon.system(name: "star.fill")
-                )
-            ),
-            NavigationSession(
-                name: "tab2",
-                path: AppRoutes.viewControllerRoute.navigationRoute.reverse(params: ["name": "\(1)"])!,
-                tab: NavigationTab(
-                    name: "Second Tab",
-                    icon: NavigationTab.Icon.system(name: "heart.fill")
-                )
-            ),
-        ])
-    }()
-
-    private(set) lazy var store: Store<AppState> = {
-        let store = Store<AppState>(reducer: appReducer, state: AppState(navigation: initNavigationState), middleware: [
-            loggerMiddleware,
-            AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()),
-        ])
-        
-        store.dispatch(Launch())
-        
         return store
-    }()
+    }
 
-    static let shared = AppStore()
+    static func reducer(action: Action, state: AppState?) -> AppState {
+        return AppState(
+            navigation: navigationReducer(action: action, state: state?.navigation)
+        )
+    }
+
+    static var initNavigationState: AppState {
+        AppState(
+            navigation: NavigationState(sessions: [
+                NavigationSession(
+                    name: "tab1",
+                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    tab: NavigationTab(
+                        name: "First Tab",
+                        icon: NavigationTab.Icon.system(name: "star.fill")
+                    )
+                ),
+                NavigationSession(
+                    name: "tab2",
+                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    tab: NavigationTab(
+                        name: "Second Tab",
+                        icon: NavigationTab.Icon.system(name: "heart.fill")
+                    )
+                ),
+            ])
+        )
+    }
 }
 
-private extension AppState {
-    static func createReduxMontitorMiddleware(monitor: ReduxMonitorProvider) -> Middleware<Any> {
+extension AppState {
+    private static func createReduxMontitorMiddleware(monitor: ReduxMonitorProvider) -> Middleware<Any> {
         return { dispatch, state in
             var monitor = monitor
             monitor.connect()
@@ -74,7 +69,7 @@ private extension AppState {
 
                     dispatch(JumpState(navigationState: newState.navigation))
 
-                default:
+                case .action:
                     break
                 }
             }
@@ -94,17 +89,8 @@ private extension AppState {
     }
 }
 
-let loggerMiddleware: Middleware<Any> = { _, _ in
-    { next in
-        { action in
-            DispatchQueue.global(qos: .background).async {
-                print(
-                    "⚡️Action:",
-                    action
-                )
-            }
-
-            return next(action)
-        }
-    }
+struct JumpState: NavigationJumpStateAction, Action {
+    let navigationState: NavigationState
 }
+
+struct Launch: Action, Encodable {}

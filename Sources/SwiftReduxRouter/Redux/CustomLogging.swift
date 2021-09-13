@@ -1,10 +1,11 @@
 import Foundation
 
-public protocol CustomLogging : CustomStringConvertible {
+public protocol CustomLogging: CustomStringConvertible {
     var description: String { get }
 }
-extension CustomLogging {
-    public var description: String {
+
+public extension CustomLogging {
+    var description: String {
         "\(type(of: self))"
     }
 }
