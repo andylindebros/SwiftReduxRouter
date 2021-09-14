@@ -142,7 +142,7 @@ public struct RouterView: UIViewControllerRepresentable {
 
             // Appear as a NavigationController. Initial state has only one session
         } else {
-            var rnc = asNavigationController(rootController)
+            let rnc = asNavigationController(rootController)
             guard let session = navigationState.sessions.first else { return rnc }
 
             rnc.session = session

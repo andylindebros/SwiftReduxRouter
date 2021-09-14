@@ -84,7 +84,7 @@ extension AppState {
             monitor.monitorAction = { monitorAction in
                 let decoder = JSONDecoder()
                 switch monitorAction.type {
-                case let .jumpToState(action, stateDataString):
+                case let .jumpToState(_, stateDataString):
 
                     guard
                         let stateData = stateDataString.data(using: .utf8),
