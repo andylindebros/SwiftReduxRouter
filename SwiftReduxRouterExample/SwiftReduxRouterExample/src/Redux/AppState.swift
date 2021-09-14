@@ -1,8 +1,8 @@
 import Foundation
+import Logger
 import ReduxMonitor
 import ReSwift
 import SwiftReduxRouter
-
 /// The state of the app
 struct AppState: Codable {
     private(set) var navigation: NavigationState
@@ -12,7 +12,23 @@ struct AppState: Codable {
     ) -> Store<AppState> {
         var middlewares = [Middleware<AppState>]()
 #if DEBUG
+        middlewares.append { _, _ in
+            { next in
+                { action in
+                    DispatchQueue.global(qos: .background).async {
+                        Logger.shared.publish(
+                            message: "⚡️Action:",
+                            obj: action,
+                            level: .debug
+                        )
+                    }
+
+                    return next(action)
+                }
+            }
+        }
         middlewares.append(AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()))
+
 #endif
         let store = Store<AppState>(reducer: AppState.reducer, state: initState, middleware: middlewares)
 
@@ -26,9 +42,19 @@ struct AppState: Codable {
     }
 
     static var initNavigationState: AppState {
+//        AppState(
+//            navigation: NavigationState(sessions: [
+//                NavigationSession.createInitSession(
+//                    name: "tab1",
+//                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!
+//                 ),
+//
+//            ])
+//        )
+
         AppState(
             navigation: NavigationState(sessions: [
-                NavigationSession(
+                NavigationSession.createInitSession(
                     name: "tab1",
                     selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
@@ -36,7 +62,7 @@ struct AppState: Codable {
                         icon: NavigationTab.Icon.system(name: "star.fill")
                     )
                 ),
-                NavigationSession(
+                NavigationSession.createInitSession(
                     name: "tab2",
                     selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
@@ -58,7 +84,7 @@ extension AppState {
             monitor.monitorAction = { monitorAction in
                 let decoder = JSONDecoder()
                 switch monitorAction.type {
-                case let .jumpToState(_, stateDataString):
+                case let .jumpToState(action, stateDataString):
 
                     guard
                         let stateData = stateDataString.data(using: .utf8),

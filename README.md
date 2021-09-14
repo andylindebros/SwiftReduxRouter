@@ -168,7 +168,6 @@ state.
            AnyView(
              Text("Awesome!")
            )
-         controller.customConfiguration()
          return controller
        }
      },

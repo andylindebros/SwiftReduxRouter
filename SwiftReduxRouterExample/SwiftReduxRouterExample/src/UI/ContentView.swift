@@ -27,6 +27,8 @@ struct ContentView: View {
                                 VStack(spacing: 10) {
                                     Spacer()
 
+                                    Text("SessionID: \(session.id)")
+
                                     Text("Presenting \(presentedName)")
                                         .font(.system(size: 50)).bold()
                                         .foregroundColor(.black)
@@ -82,7 +84,7 @@ struct ContentView: View {
                             .navigationTitle("\(presentedName)")
                             .navigationBarItems(trailing: Button(action: {
                                 dispatch(
-                                    NavigationActions.Dismiss(target: session.name)
+                                    NavigationActions.Dismiss(session: session)
                                 )
                             }) {
                                 Text(session.tab == nil ? "Close" : "")

@@ -6,25 +6,28 @@ public struct NavigationSession: Codable, Equatable {
         lhs.id == rhs.id
     }
 
-    public var id = UUID()
+    public var id: UUID
     public var name: String
-    public var nextPath: NavigationPath?
     public var selectedPath: NavigationPath
-    public var applicant: NavigationPath?
 
     public var tab: NavigationTab?
     public var presentedPaths = [NavigationPath]()
+    public var isPresented: Bool
 
-    public init(name: String, nextPath: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil) {
+    public init(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true) {
+        self.id = id
         self.name = name
-        self.nextPath = nextPath
+        self.isPresented = isPresented
 
         self.selectedPath = selectedPath
 
         self.tab = tab
 
-        applicant = nil
-        presentedPaths.append(selectedPath)
+        self.presentedPaths = presentedPaths
+    }
+
+    public static func createInitSession(name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationSession {
+        NavigationSession(name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
     }
 }
 

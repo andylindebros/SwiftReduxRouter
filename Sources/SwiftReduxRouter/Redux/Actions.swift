@@ -35,15 +35,14 @@ public enum NavigationActions {
     }
 
     public struct Dismiss: Action, Encodable, CustomLogging {
-        public var path: NavigationPath
-        public var target: String
-        public init(target: String) {
-            path = NavigationPath(RouterView.dismissActionIdentifier)
-            self.target = target
+        public init(session: NavigationSession) {
+            self.session = session
         }
 
+        public var session: NavigationSession
+
         public var description: String {
-            "\(type(of: self)) target '\(target)'"
+            "\(type(of: self)) session '\(session.name)'"
         }
     }
 

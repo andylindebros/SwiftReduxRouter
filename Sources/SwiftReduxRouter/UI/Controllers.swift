@@ -32,7 +32,6 @@ public class NavigationController: UINavigationController, UINavigationControlle
 
     public func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
         if let willShow = self.willShow, let vc = viewController as? UIRouteViewController, let session = vc.session, let navPath = vc.navigationPath {
-            print(navPath)
             willShow(session, navPath)
         }
     }

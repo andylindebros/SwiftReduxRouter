@@ -76,13 +76,13 @@ public struct RouterView: UIViewControllerRepresentable {
 
     private func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
         // Appear as a tabbar. Initial state has more than one session
-        if navigationState.sessions.count > 1 {
+        if navigationState.sessions.filter({ $0.tab != nil }).count > 1 {
             let tc = asTabBarController(rootController)
             if let tintColor = tintColor {
                 tc.tabBar.tintColor = tintColor
             }
             var ncs = [NavigationController]()
-            var presentedSessions = [NavigationController]()
+            var presentedControllers = [NavigationController]()
             for session in navigationState.sessions {
                 let nc: NavigationController = tc.viewControllers?.compactMap { $0 as? NavigationController }.first(where: { $0.session?.id == session.id }) ??
                     findPresented(session: session, in: tc) ??
@@ -126,30 +126,50 @@ public struct RouterView: UIViewControllerRepresentable {
                     continue
                 }
 
-                presentedSessions.append(nc)
+                presentedControllers.append(nc)
             }
             tc.setViewControllers(ncs, animated: false)
 
-            presentViewControllers(rootViewController: tc, ncs: presentedSessions)
-
-            removePresentedRedundancy(of: tc, in: presentedSessions)
+            if let presentedViewController = tc.presentedViewController as? NavigationController {
+                removePresentedRedundancy(of: presentedViewController, in: presentedControllers) {
+                    presentViewControllers(rootViewController: tc, ncs: presentedControllers) {}
+                }
+            } else {
+                presentViewControllers(rootViewController: tc, ncs: presentedControllers) {}
+            }
 
             return tc
 
             // Appear as a NavigationController. Initial state has only one session
         } else {
-            var tnc = asNavigationController(rootController)
-            guard let session = navigationState.sessions.first else { return tnc }
-            if let vc = getViewByPath(session, navigationPath: session.selectedPath) {
-                tnc = NavigationController(rootViewController: vc)
-            } else {
-                tnc = NavigationController()
-            }
-            tnc.session = session
-            tnc.willShow = setSelectedPath
-            tnc.onDismiss = onDismiss
+            var rnc = asNavigationController(rootController)
+            guard let session = navigationState.sessions.first else { return rnc }
 
-            return tnc
+            rnc.session = session
+            rnc.willShow = setSelectedPath
+            rnc.onDismiss = onDismiss
+
+            recreateSession(nc: rnc, session: session)
+
+            var presentedControllers = [NavigationController]()
+            for session in navigationState.sessions.filter({ $0.id != rnc.session?.id }) {
+                let nc: NavigationController = findPresented(session: session, in: rnc) ??
+                    NavigationController()
+
+                recreateSession(nc: nc, session: session)
+
+                presentedControllers.append(nc)
+            }
+
+            if let presentedViewController = rnc.presentedViewController as? NavigationController {
+                removePresentedRedundancy(of: presentedViewController, in: presentedControllers) {
+                    presentViewControllers(rootViewController: rnc, ncs: presentedControllers) {}
+                }
+            } else {
+                presentViewControllers(rootViewController: rnc, ncs: presentedControllers) {}
+            }
+
+            return rnc
         }
     }
 
@@ -162,27 +182,7 @@ public struct RouterView: UIViewControllerRepresentable {
             nc.viewControllers.compactMap { $0 as? UIRouteViewController }.first(where: { $0.navigationPath?.id == path.id }) ?? getViewByPath(session, navigationPath: path)
         }
 
-        // Setting a new navigationState where the controllers on high indexes are supposed to be removed, will cause a crash since the navigation controller will invoke the already removed controller. To avoid this we set animation to true when setting a new state.
-        nc.setViewControllers(vcs, animated: navigationState.jumpToState)
-
-        // Add the pushed navigationPath's controller
-        if
-            let nextPath = session.nextPath, session.presentedPaths.filter({ $0.id == nextPath.id }).count == 0,
-            nc.viewControllers.compactMap({ $0 as? UIRouteViewController }).first(where: { $0.navigationPath?.id == nextPath.id }) == nil,
-            let vc = getViewByPath(session, navigationPath: nextPath)
-        {
-            nc.pushViewController(vc, animated: true)
-        }
-    }
-
-    private func getTopController() -> UIViewController? {
-        guard
-            let keyWindow = UIApplication.shared.windows.filter({ $0.isKeyWindow }).first
-        else {
-            return nil
-        }
-
-        return keyWindow.rootViewController
+        nc.setViewControllers(vcs, animated: !navigationState.hasPresentedSessions)
     }
 
     private func findPresented(session: NavigationSession, in rootViewController: UIViewController) -> NavigationController? {
@@ -196,23 +196,50 @@ public struct RouterView: UIViewControllerRepresentable {
         return controller
     }
 
-    private func removePresentedRedundancy(of rootViewController: UIViewController, in presentedControllers: [NavigationController]) {
-        if let presentedViewController = rootViewController.presentedViewController as? NavigationController {
-            if presentedControllers.first(where: { $0.session?.id == presentedViewController.session?.id }) != nil {
-                return
-            }
-            removePresentedRedundancy(of: presentedViewController, in: presentedControllers)
-        }
+    private func findAllPresentedControllers(in rootViewController: NavigationController) -> [NavigationController] {
+        var viewControllers = [NavigationController]()
 
-        rootViewController.dismiss(animated: true)
+        viewControllers.append(rootViewController)
+
+        if let presentedViewController = rootViewController.presentedViewController as? NavigationController {
+            viewControllers.append(contentsOf: findAllPresentedControllers(in: presentedViewController))
+        }
+        return viewControllers
     }
 
-    private func presentViewControllers(rootViewController: UIViewController, ncs: [NavigationController]) {
+    private func removePresentedRedundancy(of rootViewController: NavigationController, in presentedControllers: [NavigationController], completion: @escaping () -> Void) {
+        let ncs = Array(findAllPresentedControllers(in: rootViewController).reversed())
+        dismiss(in: ncs, at: 0, completion: completion)
+    }
+
+    private func dismiss(in controllers: [NavigationController], at index: Int, completion: @escaping () -> Void) {
+        guard index < controllers.count else {
+            return completion()
+        }
+
+        let controller = controllers[index]
+
+        if
+            navigationState.sessions.firstIndex(where: { $0.id == controller.session?.id }) == nil
+        {
+            controller.dismiss(animated: true) {
+                dismiss(in: controllers, at: index + 1, completion: completion)
+            }
+        } else {
+            dismiss(in: controllers, at: index + 1, completion: completion)
+        }
+    }
+
+    private func presentViewControllers(rootViewController: UIViewController, ncs: [NavigationController], completion: @escaping () -> Void) {
         var topController = rootViewController
 
         for controller in ncs {
-            if let ctrl = topController.presentedViewController as? NavigationController, ctrl.session?.id == controller.session?.id {
+            if
+                let ctrl = topController.presentedViewController as? NavigationController,
+                ctrl.session?.id == controller.session?.id
+            {
                 topController = ctrl
+
             } else {
                 topController.present(controller, animated: true)
                 topController = controller

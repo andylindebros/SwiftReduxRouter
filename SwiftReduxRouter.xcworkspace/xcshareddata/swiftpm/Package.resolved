@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Logger",
+        "repositoryURL": "https://github.com/Lindebrothers/Logger",
+        "state": {
+          "branch": null,
+          "revision": "e19685e4819937afb308ed8de415a08d2dae8512",
+          "version": "0.0.2"
+        }
+      },
+      {
         "package": "ReduxMonitor",
         "repositoryURL": "https://github.com/Lindebrothers/ReduxMonitor",
         "state": {
