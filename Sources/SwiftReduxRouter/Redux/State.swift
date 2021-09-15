@@ -13,10 +13,6 @@ public class NavigationState: ObservableObject, Codable {
     /// Available sessions. Tab sessions are defined here.
     @Published fileprivate(set) var sessions = [NavigationSession]()
 
-    var hasPresentedSessions: Bool {
-        sessions.first(where: { $0.isPresented }) != nil
-    }
-
     public init(sessions: [NavigationSession]? = nil) {
         if let sessions = sessions {
             self.sessions = sessions
