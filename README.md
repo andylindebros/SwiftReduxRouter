@@ -139,9 +139,7 @@ extension NavigationActions.Dismiss: Action {}
 extension NavigationActions.SessionDismissed: Action {}
 extension NavigationActions.Push: Action {}
 ```
-1. Add an initial state
-```
-1. Add a initial navigationState to your store.
+1. Add a init navigationState to your store.
 
 ```Swift
 extension AppState {
