@@ -16,7 +16,7 @@ This package provides a Navigation State, reducer and Actions together with the
 ```Bash
 
 dependencies: [
-    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "1.0.0"))
+    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "6.0.0"))
 ]
 ```
 
