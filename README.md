@@ -2,7 +2,7 @@
 
 SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
 
-![Demo](https://github.com/lindebrothers/SwiftReduxRouter/blob/main/SwiftReduxRouterExample/SwiftReduxRouter.gif)
+![Demo](https://github.com/lindebrothers/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 
 It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written in SwiftUI. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
 The routerVIew still uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
