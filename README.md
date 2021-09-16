@@ -32,11 +32,6 @@ import ReduxMonitor
 import ReSwift
 import SwiftReduxRouter
 
-extension NavigationActions.SetSelectedPath: Action {}
-extension NavigationActions.Dismiss: Action {}
-extension NavigationActions.SessionDismissed: Action {}
-extension NavigationActions.Push: Action {}
-
 struct AppState {
     private(set) var navigation: NavigationState
 
