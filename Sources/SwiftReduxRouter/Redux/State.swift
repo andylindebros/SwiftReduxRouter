@@ -1,6 +1,4 @@
-import Combine
 import Foundation
-import ReSwift
 
 // MARK: State
 
@@ -42,7 +40,7 @@ public class NavigationState: ObservableObject, Codable {
 
 // MARK: Reducer
 
-public func navigationReducer(action: Action, state: NavigationState?) -> NavigationState {
+public func navigationReducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
     let state = state ?? NavigationState()
 
     switch action {

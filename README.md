@@ -1,15 +1,15 @@
 # SwiftReduxRouter
 
-SwiftReduxRouter maps navigation to routes that provides SwiftUI views. A
-convenient way of controlling navigation and views. The navigation part is still
-managed by UIKit since SwiftUI still is immature.
+SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
 
-It is written with the [ReSwift](https://github.com/ReSwift/ReSwift) Framework
-that is based on a Redux pattern. But it can be used as standalone feature
-without any a Redux integration.
+![Demo](https://github.com/lindebrothers/SwiftReduxRouter/blob/main/SwiftReduxRouterExample/SwiftReduxRouter.gif)
+
+It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written in SwiftUI. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
+The routerVIew still uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
+
 
 This package provides a Navigation State, reducer and Actions together with the
-`RouterView` written with SwiftUI and UIKit.
+`RouterView` written with SwiftUI backed with UIKit.
 
 ## Install with Swift Package Manager
 
@@ -20,159 +20,180 @@ dependencies: [
 ]
 ```
 
-## Simple usage
+## Implementation
+In this example we use [ReSwift](https://github.com/ReSwift/ReSwift) but you can integrate `SwiftReduxRouter` with any redux app you want.
 
-```Swift
+1. Add the NavigationState object to your Redux State.
+
+``` Swift
+import Foundation
+import Logger
+import ReduxMonitor
+import ReSwift
 import SwiftReduxRouter
-import SwiftUI
 
-struct StandAloneView: View {
-    var routerView = Router(
-        routes: [
-            RouterView.Route(
-                path: NavigationRoute("root"),
-                render: { _, _, router in
-                    AnyView(
-                        Button(action: {
-                            router?.push(
-                                path: NavigationPath("root"),
-                                target: "root"
-                            )
-                        }) {
-                            Text("Click me")
-                        }
-                    )
-                }
-            )
-        ]
-    )
+extension NavigationActions.SetSelectedPath: Action {}
+extension NavigationActions.Dismiss: Action {}
+extension NavigationActions.SessionDismissed: Action {}
+extension NavigationActions.Push: Action {}
+
+struct AppState {
+    private(set) var navigation: NavigationState
+
+    static func createStore(
+        initState: AppState? = nil
+    ) -> Store<AppState> {
+        var middlewares = [Middleware<AppState>]()
+
+        let store = Store<AppState>(reducer: AppState.reducer, state: initState, middleware: middlewares)
+
+        return store
+    }
+
+    static func reducer(action: Action, state: AppState?) -> AppState {
+        return AppState(
+            navigation: navigationReducer(action: action, state: state?.navigation)
+        )
+    }
+}
+```
+1. Add the router to your SwftUI View
+``` Swift
+import SwiftUI
+import SwiftReduxRouter
+
+struct ContentView: View {
+    @ObservedObject var navigationState: NavigationState
+
+    var dispatch: DispatchFunction
+
+    static let navigationRoute = NavigationRoute("hello/<int:name>")
 
     var body: some View {
-        routerView
+        RouterView(
+            navigationState: navigationState,
+            routes: [
+                RouterView.Route(
+                    route: Self.navigationRoute,
+                    renderView: { session, params in
+                        let presentedName = params["name"] as? Int ?? 0
+                        let next = presentedName + 1
+                        return AnyView(
+                            VStack(spacing: 10) {
+                                Text("Presenting \(presentedName)")
+                                    .font(.system(size: 50)).bold()
+                                    .foregroundColor(.black)
+                                Button(action: {
+                                    dispatch(
+                                        NavigationActions.Push(
+                                            path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
+                                            target: session.name
+                                        ) as! Action
+                                    )
+                                }) {
+                                    Text("Push \(next) to current session").foregroundColor(.black)
+                                }
+                            }
+                        )
+                    }
+                )
+            ],
+            tintColor: .red,
+            setSelectedPath: { session, navigationPath in
+                dispatch(NavigationActions.SetSelectedPath(session: session, navigationPath: navigationPath))
+            },
+            onDismiss: { session in
+                dispatch(NavigationActions.SessionDismissed(session: session))
+            }
+        )
+    }
+}
+                
+```
+1. Add the ContentView to your app object
+``` Swift
+import SwiftUI
+import ReSwift
+@main
+struct SwiftReduxRouterExampleApp: App {
+    let store: Store<AppState>
+    init() {
+        store = AppState.createStore(initState: AppState.initNavigationState)
+    }
+
+    var body: some Scene {
+        WindowGroup {
+            ContentView(navigationState: store.state.navigation, dispatch: store.dispatch)
+        }
     }
 }
 ```
 
-## Integrated Router with a ReSwift Redux State
+1. In AppState.swift, extend NavigationActions so they conform to ReSwift.Action.
+``` Swift
+import ReSwift
+import SwiftReduxRouter
 
-If you use ReSwift and Redux you can integrate the NavigationState with your app
-state.
-
-1. Add the NavigationState object to your ReSwift State.
-
-   ```Swift
-   import ReSwift
-   import SwiftReduxRouter
-
-   struct AppState: StateType {
-     private(set) var navigation: NavigationState
-   }
-   ```
-
+extension NavigationActions.SetSelectedPath: Action {}
+extension NavigationActions.Dismiss: Action {}
+extension NavigationActions.SessionDismissed: Action {}
+extension NavigationActions.Push: Action {}
+```
+1. Add an initial state
+```
 1. Add a initial navigationState to your store.
 
-   ```Swift
-   import ReSwift
-   import SwiftReduxRouter
+```Swift
+extension AppState {
+    static var initNavigationState: AppState {
+        AppState(
+            navigation: NavigationState(sessions: [
+                NavigationSession.createInitSession(
+                    name: "tab1",
+                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    tab: NavigationTab(
+                        name: "First Tab",
+                        icon: NavigationTab.Icon.system(name: "star.fill")
+                    )
+                ),
+                NavigationSession.createInitSession(
+                    name: "tab2",
+                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    tab: NavigationTab(
+                        name: "Second Tab",
+                        icon: NavigationTab.Icon.system(name: "heart.fill")
+                    )
+                ),
+            ])
+        )
+    }
+}
+```
 
-   final class AppStore {
-     lazy var initNavigationState: NavigationState = {
-       NavigationState(sessions: [
-         NavigationSession(
-           name: "main",
-           path: NavigationPath("start"),
-         ),
-       ])
-     }()
+## Render your route with UIViewController
 
-     private(set) lazy var store: Store<AppState> = {
-         Store<AppState>(reducer: appReducer, state: AppState(navigation: initNavigationState), middleware: [])
-     }()
+If you need to customize the UIViewController that holds the SwiftUI View you
+can use the renderController instead of the render method.
+
+```Swift
+class MyController<Content: View>: RouteViewController<Content> {
+   func customConfiguration() {
+      // make adjustments to your controller
    }
-   ```
+}
 
-1. Add the Navigation reducer to your main reducer
-
-   ```Swift
-   import ReSwift
-   import SwiftReduxRouter
-
-
-   func appReducer(action: Action, state: AppState?) -> AppState {
-         return AppState(
-             navigation: navigationReducer(action: action, state: state?.navigation)
-         )
-     }
-   ```
-
-1. Connect the navigation State to your views
-
-   ```Swift
-   import SwiftReduxRouter
-   import SwiftUI
-
-   struct ContentView: View {
-
-   var reduxStore: AppStore()
-
-   var body: some View {
-       RouterView(
-           navigationState: reduxStore.store.state.navigation,
-           routes: [
-             RouterView.Route(
-               path: "pathtoview",
-               render: { _, _, _ in
-                 AnyView(
-                   Button(action: {
-                     reduxStore.store.dispatch(
-                       NavigationActions.Push(
-                         path: NavigationPath("pathtoview"),
-                         target: "main"
-                       )
-                     )
-                   }) {
-                     Text("Click me")
-                   }
-                 )
-               },
-             )
-           ],
-           tintColor: .red,
-           setSelectedPath: { session in
-               reduxStore.store.dispatch(NavigationActions.SetSelectedPath(session: session))
-           },
-           onDismiss: { session in
-               reduxStore.store.dispatch(NavigationActions.SessionDismissed(session: session))
-           }
-       ).edgesIgnoringSafeArea([.top, .bottom])
-     }
+RouterView.Route(
+ path: "pathtoview",
+ renderController: { _, _ in
+    let controller = MyController( root:
+       AnyView(
+         Text("Awesome!")
+       )
+     return controller
    }
-   ```
-
-   ## Render your route with UIViewController
-
-   If you need to customize the UIViewController that holds the SwiftUI View you
-   can use the renderController instead of the render method.
-
-   ```Swift
-   class MyController<Content: View>: RouteViewController<Content> {
-       func customConfiguration() {
-          // make adjustments to your controller
-       }
-   }
-
-   RouterView.Route(
-     path: "pathtoview",
-     renderController: { _, _, _ in
-        let controller = MyController( root:
-           AnyView(
-             Text("Awesome!")
-           )
-         return controller
-       }
-     },
-   )
-   ```
+ },
+)
+```
 
 ## URL Routing.
 
@@ -191,16 +212,6 @@ You can make parts of the URL dynamic and attach multiple rules
 user/<string:username>
 ```
 
-The `render` and `renderController` closures of `Router.Route` will provide the
-parameters
-
-```Swift
-render: { path, parameters, router in
-    let username = parameters["username"] as? String
-    return Text(username ?? "unknown")
-}
-```
-
 Supported dynamic parameters are:
 
 - string - `user/<strng:username>`
@@ -209,38 +220,46 @@ Supported dynamic parameters are:
 - uuid - `tokens/<uuid:token>`
 - path - `somepath/<path:mypath>` will match everything after `somepath/`
 
-## TabBar
+## TabBar or a single UINavigationController
+If you set the tab property of the NavigatoinSession in the init state, the RouterView will render a UITabBar.
 
-Insert more than one session to your initial state to implement a tabBar.
-Configure your tabItems using the `NavigationTab` model.
-
+## Presenting views.
+if an unrecognized name of a session is pushed when dispatching `NavigationActions.Push`, the router will present that session automatically
 ```Swift
-final class AppStore {
-    lazy var initNavigationState: NavigationState = {
-      NavigationState(sessions: [
-        NavigationSession(
-          name: "first",
-          path: NavigationPath("start"),
-          tab: NavigationTab(
-            name: "first",
-            icon: "some-icon",
-            iconSelected: "some-icon-selected"
-          )
-        ),
-        NavigationSession(
-          name: "second",
-          path: NavigationPath("start"),
-          tab: NavigationTab(
-            name: "second",
-            icon: "some-other-icon",
-            iconSelected: "some-other-icon-selected"
-          )
+dispatch(NavigationActions.Push(path: NavigationPath("some path to a route"), target: "name of a session that doesn't exist"))
+```
+To dismiss it, you simply use the Dismiss action:
+``` Swift
+dispatch(NavigationActions.Dismiss(session: The session to dismiss))
+```
+You can access the session object from the renderView method. 
+``` Swift
+Route(
+    ...
+    renderView: { session, params in
+        AnyView(
+            Text("Awesome")
+            .navigationTitle("\(presentedName)")
+            .navigationBarItems(trailing: Button(action: {
+                dispatch(
+                    NavigationActions.Dismiss(session: session)
+                )
+            }) {
+                Text(session.tab == nil ? "Close" : "")
+            })
         )
-      ])
-    }()
+    }
+    ...
+)
+```
 
-    private(set) lazy var store: Store<AppState> = {
-        Store<AppState>(reducer: appReducer, state: AppState(navigation: initNavigationState), middleware: [])
-    }()
+### Support for ReduxMonitor
+SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/Lindebrothers/ReduxMonitor). 
+Just let your JumpState action conform `NavigationJumpStateAction`
+``` Swift
+struct JumpState: NavigationJumpStateAction, Action {
+    let navigationState: NavigationState
 }
 ```
+
+

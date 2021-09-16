@@ -22,11 +22,6 @@ public struct RouterView: UIViewControllerRepresentable {
     /// onDismiss is invoked when the UIViewController will be dismissed
     private var onDismiss: (NavigationSession) -> Void
 
-    /// setSelectedPath is invoked by the UIViewController when it is in screen
-    private var sessionHasApplicant: (NavigationSession, NavigationPath) -> Void
-
-    private var standaloneRouter: Router?
-
     private var tintColor: UIColor?
     /// Public init
     public init(
@@ -34,18 +29,13 @@ public struct RouterView: UIViewControllerRepresentable {
         routes: [Route],
         tintColor: UIColor? = nil,
         setSelectedPath: @escaping (NavigationSession, NavigationPath) -> Void,
-        onDismiss: @escaping (NavigationSession) -> Void,
-        sessionHasApplicant: @escaping (NavigationSession, NavigationPath) -> Void,
-
-        standaloneRouter: Router? = nil
+        onDismiss: @escaping (NavigationSession) -> Void
     ) {
         self.navigationState = navigationState
         self.routes = routes
         self.setSelectedPath = setSelectedPath
         self.onDismiss = onDismiss
-        self.standaloneRouter = standaloneRouter
         self.tintColor = tintColor
-        self.sessionHasApplicant = sessionHasApplicant
     }
 
     // MARK: UIVIewControllerRepresentable methods
@@ -257,10 +247,10 @@ public struct RouterView: UIViewControllerRepresentable {
         {
             let vc: UIRouteViewController?
             if let render = route.renderView {
-                let view = render(session, match.values, standaloneRouter)
+                let view = render(session, match.values)
                 vc = RouteViewController(rootView: view)
             } else if let renderController = route.renderController {
-                vc = renderController(session, match.values, standaloneRouter)
+                vc = renderController(session, match.values)
             } else {
                 vc = RouteViewController(rootView: AnyView(EmptyView()))
             }
@@ -283,14 +273,14 @@ public extension RouterView {
     struct Route {
         public var route: NavigationRoute
         public var onWillAppear: ((_ path: NavigationPath, _ values: [String: Any]) -> Void)?
-        public var renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)?
-        public var renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController?)?
+        public var renderView: ((_ session: NavigationSession, _ params: [String: Any]) -> AnyView)?
+        public var renderController: ((_ session: NavigationSession, _ params: [String: Any]) -> UIRouteViewController?)?
 
         public init(
             route: NavigationRoute,
             onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
-            renderView: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> AnyView)? = nil,
-            renderController: ((_ session: NavigationSession, _ params: [String: Any], _ router: Router?) -> UIRouteViewController?)? = nil
+            renderView: ((_ session: NavigationSession, _ params: [String: Any]) -> AnyView)? = nil,
+            renderController: ((_ session: NavigationSession, _ params: [String: Any]) -> UIRouteViewController?)? = nil
         ) {
             self.route = route
             self.onWillAppear = onWillAppear

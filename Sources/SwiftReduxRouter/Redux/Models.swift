@@ -1,5 +1,4 @@
 import Foundation
-import ReSwift
 
 public struct NavigationSession: Codable, Equatable {
     public static func == (lhs: NavigationSession, rhs: NavigationSession) -> Bool {
@@ -66,7 +65,7 @@ public struct NavigationPath: Identifiable, Codable {
         self.path = path
     }
 
-    public func pushAction(to target: String) -> Action {
+    public func pushAction(to target: String) -> NavigationActions.Push {
         return NavigationActions.Push(path: self, target: target)
     }
 }
@@ -122,9 +121,4 @@ public extension NavigationTab {
             }
         }
     }
-}
-
-public enum NavigationGoBackIdentifier: String, Codable {
-    case back = ":back"
-    case root = ":root"
 }

@@ -3,6 +3,12 @@ import Logger
 import ReduxMonitor
 import ReSwift
 import SwiftReduxRouter
+
+extension NavigationActions.SetSelectedPath: Action {}
+extension NavigationActions.Dismiss: Action {}
+extension NavigationActions.SessionDismissed: Action {}
+extension NavigationActions.Push: Action {}
+
 /// The state of the app
 struct AppState: Codable {
     private(set) var navigation: NavigationState
@@ -40,18 +46,10 @@ struct AppState: Codable {
             navigation: navigationReducer(action: action, state: state?.navigation)
         )
     }
+}
 
+extension AppState {
     static var initNavigationState: AppState {
-//        AppState(
-//            navigation: NavigationState(sessions: [
-//                NavigationSession.createInitSession(
-//                    name: "tab1",
-//                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!
-//                 ),
-//
-//            ])
-//        )
-
         AppState(
             navigation: NavigationState(sessions: [
                 NavigationSession.createInitSession(

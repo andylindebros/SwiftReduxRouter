@@ -1,23 +1,12 @@
 import Foundation
-import ReSwift
 
-public protocol NavigationJumpStateAction: Action, CustomLogging {
+public protocol NavigationJumpStateAction: CustomLogging {
     var navigationState: NavigationState { get }
 }
 
 public enum NavigationActions {
-    public struct SessionHasApplicant: Action, Encodable, CustomLogging {
-        public init(session: NavigationSession, path: NavigationPath) {
-            self.session = session
-            self.path = path
-        }
-
-        public var session: NavigationSession
-        public var path: NavigationPath
-    }
-
     /// Action tha will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: Action, Encodable, CustomLogging {
+    public struct Push: Encodable, CustomLogging {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
@@ -34,7 +23,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Dismiss: Action, Encodable, CustomLogging {
+    public struct Dismiss: Encodable, CustomLogging {
         public init(session: NavigationSession) {
             self.session = session
         }
@@ -47,7 +36,7 @@ public enum NavigationActions {
     }
 
     /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: Action, Encodable, CustomLogging {
+    public struct SetSelectedPath: Encodable, CustomLogging {
         /// The session that is presenting the view
         public var session: NavigationSession
         public var navigationPath: NavigationPath
@@ -63,7 +52,7 @@ public enum NavigationActions {
     }
 
     /// Action that dismisses a presented view
-    public struct SessionDismissed: Action, Encodable, CustomLogging {
+    public struct SessionDismissed: Encodable, CustomLogging {
         /// The session that should dismiss the view
         public var session: NavigationSession
 
@@ -73,20 +62,6 @@ public enum NavigationActions {
 
         public var description: String {
             "\(type(of: self)) with target: \(session.name)"
-        }
-    }
-
-    /// Action that will push a navigation backwards
-    public struct GoBack: Action, Encodable, CustomLogging {
-        /// The session that should go backwards
-        public var target: String
-
-        /// Go to the beginning och one step back
-        public var destination: NavigationGoBackIdentifier
-
-        public init(target: String, destination: NavigationGoBackIdentifier) {
-            self.target = target
-            self.destination = destination
         }
     }
 }

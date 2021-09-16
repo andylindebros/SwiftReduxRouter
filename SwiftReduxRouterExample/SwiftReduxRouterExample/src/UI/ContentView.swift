@@ -18,7 +18,7 @@ struct ContentView: View {
             routes: [
                 RouterView.Route(
                     route: Self.navigationRoute,
-                    renderView: { session, params, _ in
+                    renderView: { session, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return AnyView(
@@ -26,8 +26,6 @@ struct ContentView: View {
                                 Spacer()
                                 VStack(spacing: 10) {
                                     Spacer()
-
-                                    Text("SessionID: \(session.id)")
 
                                     Text("Presenting \(presentedName)")
                                         .font(.system(size: 50)).bold()
@@ -101,13 +99,8 @@ struct ContentView: View {
             },
             onDismiss: { session in
                 dispatch(NavigationActions.SessionDismissed(session: session))
-            },
-            sessionHasApplicant: { session, path in
-                dispatch(NavigationActions.SessionHasApplicant(session: session, path: path))
             }
         )
-        // Uncomment this and comment out the above to test the stand alone view
-        // StandAloneView()
         .edgesIgnoringSafeArea(.all)
         .background(Color.red)
     }
