@@ -26,9 +26,6 @@ In this example we use [ReSwift](https://github.com/ReSwift/ReSwift) but you can
 1. Add the NavigationState object to your Redux State.
 
 ``` Swift
-import Foundation
-import Logger
-import ReduxMonitor
 import ReSwift
 import SwiftReduxRouter
 
@@ -255,4 +252,6 @@ struct JumpState: NavigationJumpStateAction, Action {
 }
 ```
 
+### Example app.
+Try the example app `SwiftReduxRouterExample` to find out more
 
