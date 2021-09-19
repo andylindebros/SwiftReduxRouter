@@ -6,7 +6,7 @@ public protocol NavigationJumpStateAction: CustomLogging {
 
 public enum NavigationActions {
     /// Action tha will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: Encodable, CustomLogging {
+    public struct Push: Codable, CustomLogging {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
@@ -23,7 +23,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Dismiss: Encodable, CustomLogging {
+    public struct Dismiss: Codable, CustomLogging {
         public init(session: NavigationSession) {
             self.session = session
         }
@@ -36,7 +36,7 @@ public enum NavigationActions {
     }
 
     /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: Encodable, CustomLogging {
+    public struct SetSelectedPath: Codable, CustomLogging {
         /// The session that is presenting the view
         public var session: NavigationSession
         public var navigationPath: NavigationPath
@@ -52,7 +52,7 @@ public enum NavigationActions {
     }
 
     /// Action that dismisses a presented view
-    public struct SessionDismissed: Encodable, CustomLogging {
+    public struct SessionDismissed: Codable, CustomLogging {
         /// The session that should dismiss the view
         public var session: NavigationSession
 
