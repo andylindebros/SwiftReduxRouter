@@ -7,16 +7,22 @@ public class NavigationState: ObservableObject, Codable {
 
     /// Active session. It can only be one sessin at the time
     @Published fileprivate(set) var selectedSessionId = UUID()
+    @Published fileprivate(set) var rootSelectedSessionID = UUID()
 
     /// Available sessions. Tab sessions are defined here.
     @Published fileprivate(set) var sessions = [NavigationSession]()
 
     public init(sessions: [NavigationSession]? = nil) {
         if let sessions = sessions {
-            self.sessions = sessions
+            self.sessions = sessions.map { session in
+                var session = session
+                session.isPresented = false
+                return session
+            }
 
             if let first = sessions.first {
                 selectedSessionId = first.id
+                rootSelectedSessionID = first.id
             }
         }
     }
@@ -24,17 +30,38 @@ public class NavigationState: ObservableObject, Codable {
     public required init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         selectedSessionId = try values.decode(UUID.self, forKey: .selectedSessionId)
+        rootSelectedSessionID = try values.decode(UUID.self, forKey: .rootSelectedSessionID)
         sessions = try values.decode([NavigationSession].self, forKey: .sessions)
     }
 
     enum CodingKeys: CodingKey {
-        case selectedSessionId, sessions
+        case selectedSessionId, sessions, rootSelectedSessionID
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(sessions, forKey: .sessions)
         try container.encode(selectedSessionId, forKey: .selectedSessionId)
+        try container.encode(rootSelectedSessionID, forKey: .rootSelectedSessionID)
+    }
+}
+
+public extension NavigationState {
+    func isTopSession(_ session: NavigationSession) -> Bool {
+        guard let topSession = getTopSession() else { return false }
+
+        return topSession.id == session.id
+    }
+
+    func getTopSession() -> NavigationSession? {
+        if let presentedSession = sessions.first(where: { $0.isPresented && $0.id == selectedSessionId }) {
+            return presentedSession
+        }
+
+        if let rootSession = sessions.first(where: { $0.id == rootSelectedSessionID }) {
+            return rootSession
+        }
+        return nil
     }
 }
 
@@ -47,11 +74,16 @@ public func navigationReducer<Action>(action: Action, state: NavigationState?) -
     case let a as NavigationJumpStateAction:
         state.sessions = a.navigationState.sessions
         state.selectedSessionId = a.navigationState.selectedSessionId
+        state.rootSelectedSessionID = a.navigationState.rootSelectedSessionID
 
     case let a as NavigationActions.SetSelectedPath:
         if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
             state.sessions[index].selectedPath = a.navigationPath
             state.selectedSessionId = state.sessions[index].id
+
+            if !a.session.isPresented {
+                state.rootSelectedSessionID = a.session.id
+            }
 
             // Remove all indexes that comes after current path
             if let presentedPathIndex = state.sessions[index].presentedPaths.firstIndex(where: { $0.id == state.sessions[index].selectedPath.id }) {
@@ -64,6 +96,12 @@ public func navigationReducer<Action>(action: Action, state: NavigationState?) -
     case let a as NavigationActions.Dismiss:
         if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
             state.sessions.remove(at: index)
+
+            if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
+                state.selectedSessionId = lastPresentedSession.id
+            } else {
+                state.selectedSessionId = state.rootSelectedSessionID
+            }
         }
 
     case let a as NavigationActions.Push:
@@ -90,8 +128,14 @@ public func navigationReducer<Action>(action: Action, state: NavigationState?) -
         }
 
     case let a as NavigationActions.SessionDismissed:
-        if let index = state.sessions.firstIndex(where: { $0.tab == nil && $0.id == a.session.id }) {
+        if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
             state.sessions.remove(at: index)
+
+            if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
+                state.selectedSessionId = lastPresentedSession.id
+            } else {
+                state.selectedSessionId = state.rootSelectedSessionID
+            }
         }
 
     default:

@@ -82,7 +82,7 @@ public struct RouterView: UIViewControllerRepresentable {
 
                 if let tab = session.tab {
                     if
-                        navigationState.selectedSessionId == session.id,
+                        navigationState.rootSelectedSessionID == session.id,
                         let selectedIndex = navigationState.sessions.firstIndex(where: { $0.id == session.id })
                     {
                         tc.selectedIndex = selectedIndex
