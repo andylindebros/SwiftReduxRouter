@@ -34,7 +34,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                target: session.name
+                                                to: session.id
                                             )
                                         )
                                     }) {
@@ -42,9 +42,12 @@ struct ContentView: View {
                                     }
                                     Button(action: {
                                         dispatch(
+                                            NavigationActions.SelectTab(by: AppState.tabOne)
+                                        )
+                                        dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                target: "tab1"
+                                                to: AppState.tabOne
                                             )
                                         )
                                     }) {
@@ -53,20 +56,23 @@ struct ContentView: View {
 
                                     Button(action: {
                                         dispatch(
+                                            NavigationActions.SelectTab(by: AppState.tabTwo)
+                                        )
+                                        dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                target: "tab2"
+                                                to: AppState.tabTwo
                                             )
                                         )
+
                                     }) {
                                         Text("Push \(next) to Tab 2").foregroundColor(.black)
                                     }
 
                                     Button(action: {
                                         dispatch(
-                                            NavigationActions.Push(
-                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                target: UUID().uuidString
+                                            NavigationActions.Present(
+                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!
                                             )
                                         )
                                     }) {

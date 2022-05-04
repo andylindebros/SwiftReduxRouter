@@ -25,8 +25,8 @@ public struct NavigationSession: Codable, Equatable {
         self.presentedPaths = presentedPaths
     }
 
-    public static func createInitSession(name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationSession {
-        NavigationSession(name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+    public static func createInitSession(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationSession {
+        NavigationSession(id: id, name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
     }
 }
 
@@ -65,8 +65,8 @@ public struct NavigationPath: Identifiable, Codable {
         self.path = path
     }
 
-    public func pushAction(to target: String) -> NavigationActions.Push {
-        return NavigationActions.Push(path: self, target: target)
+    public func pushAction(to target: UUID) -> NavigationActions.Push {
+        return NavigationActions.Push(path: self, to: target)
     }
 }
 

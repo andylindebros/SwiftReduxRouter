@@ -3,7 +3,7 @@
     "pins": [
       {
         "package": "Logger",
-        "repositoryURL": "https://github.com/Lindebrothers/Logger",
+        "repositoryURL": "https://github.com/lindebrothers/Logger",
         "state": {
           "branch": null,
           "revision": "e19685e4819937afb308ed8de415a08d2dae8512",

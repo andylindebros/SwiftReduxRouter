@@ -67,79 +67,96 @@ public extension NavigationState {
 
 // MARK: Reducer
 
-public func navigationReducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
-    let state = state ?? NavigationState()
+public extension NavigationState {
+    static func reducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
+        let state = state ?? NavigationState()
 
-    switch action {
-    case let a as NavigationJumpStateAction:
-        state.sessions = a.navigationState.sessions
-        state.selectedSessionId = a.navigationState.selectedSessionId
-        state.rootSelectedSessionID = a.navigationState.rootSelectedSessionID
+        switch action {
+        case let a as NavigationJumpStateAction:
+            state.sessions = a.navigationState.sessions
+            state.selectedSessionId = a.navigationState.selectedSessionId
+            state.rootSelectedSessionID = a.navigationState.rootSelectedSessionID
 
-    case let a as NavigationActions.SetSelectedPath:
-        if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
-            state.sessions[index].selectedPath = a.navigationPath
-            state.selectedSessionId = state.sessions[index].id
+        case let a as NavigationActions.SetSelectedPath:
+            if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
+                state.sessions[index].selectedPath = a.navigationPath
+                state.selectedSessionId = state.sessions[index].id
 
-            if !a.session.isPresented {
-                state.rootSelectedSessionID = a.session.id
+                if !a.session.isPresented {
+                    state.rootSelectedSessionID = a.session.id
+                }
+
+                // Remove all indexes that comes after current path
+                state.removeRedundantPaths(at: index)
             }
 
-            // Remove all indexes that comes after current path
-            if let presentedPathIndex = state.sessions[index].presentedPaths.firstIndex(where: { $0.id == state.sessions[index].selectedPath.id }) {
-                let presentedPaths = state.sessions[index].presentedPaths
+        case let a as NavigationActions.Dismiss:
+            if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
+                state.sessions.remove(at: index)
 
-                state.sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
+                if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
+                    state.selectedSessionId = lastPresentedSession.id
+                } else {
+                    state.selectedSessionId = state.rootSelectedSessionID
+                }
             }
-        }
 
-    case let a as NavigationActions.Dismiss:
-        if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
-            state.sessions.remove(at: index)
-
-            if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
-                state.selectedSessionId = lastPresentedSession.id
+        case let a as NavigationActions.Push:
+            if let index = state.sessions.firstIndex(where: { $0.id == a.target }) {
+                state.selectedSessionId = state.sessions[index].id
             } else {
-                state.selectedSessionId = state.rootSelectedSessionID
+                let session = NavigationSession(name: UUID().uuidString, selectedPath: NavigationPath(""))
+                state.sessions.append(session)
+                state.selectedSessionId = session.id
             }
-        }
+            state.setSelectedPath(a.path)
 
-    case let a as NavigationActions.Push:
-        if let index = state.sessions.firstIndex(where: { $0.name == a.target }) {
-            state.selectedSessionId = state.sessions[index].id
-
-        } else {
-            let session = NavigationSession(name: a.target, selectedPath: NavigationPath(""))
+        case let a as NavigationActions.Present:
+            let session = NavigationSession(name: UUID().uuidString, selectedPath: NavigationPath(""))
             state.sessions.append(session)
             state.selectedSessionId = session.id
-        }
+            state.setSelectedPath(a.path)
 
-        if let index = state.sessions.firstIndex(where: { $0.id == state.selectedSessionId }) {
-            // Remove all indexes that comes after current path
-            if let presentedPathIndex = state.sessions[index].presentedPaths.firstIndex(where: { $0.id == state.sessions[index].selectedPath.id }) {
-                let presentedPaths = state.sessions[index].presentedPaths
+        case let a as NavigationActions.SessionDismissed:
+            if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
+                state.sessions.remove(at: index)
 
-                state.sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
+                if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
+                    state.selectedSessionId = lastPresentedSession.id
+                } else {
+                    state.selectedSessionId = state.rootSelectedSessionID
+                }
             }
 
-            state.sessions[index].selectedPath = a.path
-            state.sessions[index].presentedPaths.append(a.path)
-            state.selectedSessionId = state.sessions[index].id
-        }
-
-    case let a as NavigationActions.SessionDismissed:
-        if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
-            state.sessions.remove(at: index)
-
-            if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
-                state.selectedSessionId = lastPresentedSession.id
-            } else {
-                state.selectedSessionId = state.rootSelectedSessionID
+        case let a as NavigationActions.SelectTab:
+            if let session = state.sessions.first(where: { !$0.isPresented && $0.id == a.id }) {
+                state.rootSelectedSessionID = session.id
             }
-        }
 
-    default:
-        break
+        default:
+            break
+        }
+        return state
     }
-    return state
+}
+
+private extension NavigationState {
+    func setSelectedPath(_ path: NavigationPath) {
+        if let index = sessions.firstIndex(where: { $0.id == selectedSessionId }) {
+            removeRedundantPaths(at: index)
+
+            sessions[index].selectedPath = path
+            sessions[index].presentedPaths.append(path)
+            selectedSessionId = sessions[index].id
+        }
+    }
+
+    func removeRedundantPaths(at index: Int) {
+        // Remove all indexes that comes after current path
+        if let presentedPathIndex = sessions[index].presentedPaths.firstIndex(where: { $0.id == sessions[index].selectedPath.id }) {
+            let presentedPaths = sessions[index].presentedPaths
+
+            sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
+        }
+    }
 }

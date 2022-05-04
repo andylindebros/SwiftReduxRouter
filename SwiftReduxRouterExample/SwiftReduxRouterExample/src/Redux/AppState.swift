@@ -8,10 +8,15 @@ extension NavigationActions.SetSelectedPath: Action {}
 extension NavigationActions.Dismiss: Action {}
 extension NavigationActions.SessionDismissed: Action {}
 extension NavigationActions.Push: Action {}
+extension NavigationActions.Present: Action {}
+extension NavigationActions.SelectTab: Action {}
 
 /// The state of the app
 struct AppState: Codable {
     private(set) var navigation: NavigationState
+
+    static let tabOne = UUID()
+    static let tabTwo = UUID()
 
     static func createStore(
         initState: AppState? = nil
@@ -43,7 +48,7 @@ struct AppState: Codable {
 
     static func reducer(action: Action, state: AppState?) -> AppState {
         return AppState(
-            navigation: navigationReducer(action: action, state: state?.navigation)
+            navigation: NavigationState.reducer(action: action, state: state?.navigation)
         )
     }
 }
@@ -53,6 +58,7 @@ extension AppState {
         AppState(
             navigation: NavigationState(sessions: [
                 NavigationSession.createInitSession(
+                    id: Self.tabOne,
                     name: "tab1",
                     selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
@@ -61,6 +67,7 @@ extension AppState {
                     )
                 ),
                 NavigationSession.createInitSession(
+                    id: Self.tabTwo,
                     name: "tab2",
                     selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(

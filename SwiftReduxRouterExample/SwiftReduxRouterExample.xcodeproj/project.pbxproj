@@ -14,7 +14,6 @@
 		E625CD4725C046A6000CF73B /* SwiftReduxRouterExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD4625C046A6000CF73B /* SwiftReduxRouterExampleUITests.swift */; };
 		E625CD6925C0477C000CF73B /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6225C0477C000CF73B /* AppState.swift */; };
 		E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6625C0477C000CF73B /* ContentView.swift */; };
-		E63819D126F0A0BB00848CCA /* Logger in Frameworks */ = {isa = PBXBuildFile; productRef = E63819D026F0A0BB00848CCA /* Logger */; };
 		E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6769F9D26E020AD00E493F1 /* MyViewController.swift */; };
 		E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */ = {isa = PBXBuildFile; productRef = E6A067ED26F3675E00DD524B /* SwiftReduxRouter */; };
 		E6A067F126F367A200DD524B /* ReSwift in Frameworks */ = {isa = PBXBuildFile; productRef = E6A067F026F367A200DD524B /* ReSwift */; };
@@ -60,7 +59,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E63819D126F0A0BB00848CCA /* Logger in Frameworks */,
 				E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */,
 				E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */,
 				E6A067F126F367A200DD524B /* ReSwift in Frameworks */,
@@ -194,7 +192,6 @@
 			name = SwiftReduxRouterExample;
 			packageProductDependencies = (
 				E6BF068D26EAC1D20037C811 /* ReduxMonitor */,
-				E63819D026F0A0BB00848CCA /* Logger */,
 				E6A067ED26F3675E00DD524B /* SwiftReduxRouter */,
 				E6A067F026F367A200DD524B /* ReSwift */,
 			);
@@ -271,7 +268,6 @@
 			mainGroup = E625CD1D25C046A3000CF73B;
 			packageReferences = (
 				E6BF068C26EAC1D20037C811 /* XCRemoteSwiftPackageReference "ReduxMonitor" */,
-				E63819CF26F0A0BB00848CCA /* XCRemoteSwiftPackageReference "Logger" */,
 				E6A067EF26F367A200DD524B /* XCRemoteSwiftPackageReference "ReSwift" */,
 			);
 			productRefGroup = E625CD2725C046A3000CF73B /* Products */;
@@ -641,14 +637,6 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		E63819CF26F0A0BB00848CCA /* XCRemoteSwiftPackageReference "Logger" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/Lindebrothers/Logger";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.0.2;
-			};
-		};
 		E6A067EF26F367A200DD524B /* XCRemoteSwiftPackageReference "ReSwift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/ReSwift/ReSwift";
@@ -668,11 +656,6 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E63819D026F0A0BB00848CCA /* Logger */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E63819CF26F0A0BB00848CCA /* XCRemoteSwiftPackageReference "Logger" */;
-			productName = Logger;
-		};
 		E6A067ED26F3675E00DD524B /* SwiftReduxRouter */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftReduxRouter;

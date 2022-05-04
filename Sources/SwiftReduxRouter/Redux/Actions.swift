@@ -5,21 +5,33 @@ public protocol NavigationJumpStateAction: CustomLogging {
 }
 
 public enum NavigationActions {
-    /// Action tha will push the next view. Dispatch this action if you will present or push a view.
+    /// Action that will push the next view. Dispatch this action if you will present or push a view.
     public struct Push: Codable, CustomLogging {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
         /// Define the session that the path will be pushed to.
-        public var target: String
+        public var target: UUID
 
-        public init(path: NavigationPath, target: String) {
+        public init(path: NavigationPath, to target: UUID) {
             self.path = path
             self.target = target
         }
 
         public var description: String {
             "\(type(of: self)) path '\(path.path)' to target '\(target)'"
+        }
+    }
+
+    public struct Present: Codable, CustomLogging {
+        public var path: NavigationPath
+
+        public init(path: NavigationPath) {
+            self.path = path
+        }
+
+        public var description: String {
+            "\(type(of: self)) path '\(path.path)'"
         }
     }
 
@@ -62,6 +74,18 @@ public enum NavigationActions {
 
         public var description: String {
             "\(type(of: self)) with target: \(session.name)"
+        }
+    }
+
+    public struct SelectTab: Codable, CustomLogging {
+        public var id: UUID
+
+        public init(by id: UUID) {
+            self.id = id
+        }
+
+        public var description: String {
+            "\(type(of: self)) id: \(id.uuidString)"
         }
     }
 }
