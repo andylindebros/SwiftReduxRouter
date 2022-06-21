@@ -1,6 +1,9 @@
 import Foundation
 import SwiftUI
+
+#if canImport(UIKit)
 import UIKit
+#endif
 
 @available(iOS 13, *)
 public class TabController: UITabBarController {
