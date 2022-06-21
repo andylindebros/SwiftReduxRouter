@@ -4,6 +4,7 @@ import UIKit
 /**
  RouterView provides a SwiftUI view to a navigationState
  */
+@available(iOS 13, *)
 public struct RouterView: UIViewControllerRepresentable {
     /// A Push action including the path with the dismissActionIdentifier will trigger the open vc to dismiss.
     public static let dismissActionIdentifier = ":dismiss"
@@ -268,7 +269,7 @@ public struct RouterView: UIViewControllerRepresentable {
 }
 
 // MARK: Nested models
-
+@available(iOS 13, *)
 public extension RouterView {
     struct Route {
         public var route: NavigationRoute

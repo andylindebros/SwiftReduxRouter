@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import UIKit
 
+@available(iOS 13, *)
 public class TabController: UITabBarController {
     override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
         super.dismiss(animated: flag, completion: completion)
@@ -12,6 +13,7 @@ public class TabController: UITabBarController {
     }
 }
 
+@available(iOS 13, *)
 public class NavigationController: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
     var session: NavigationSession?
     var willShow: ((_ session: NavigationSession, _ navigationPath: NavigationPath) -> Void)?
@@ -37,11 +39,13 @@ public class NavigationController: UINavigationController, UINavigationControlle
     }
 }
 
+@available(iOS 13, *)
 public protocol UIRouteViewController: UIViewController {
     var session: NavigationSession? { get set }
     var navigationPath: NavigationPath? { get set }
 }
 
+@available(iOS 13, *)
 open class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     public var session: NavigationSession?
     public var navigationPath: NavigationPath?
