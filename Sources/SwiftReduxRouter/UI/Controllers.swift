@@ -49,10 +49,50 @@ public protocol UIRouteViewController: UIViewController {
     var navigationPath: NavigationPath? { get set }
 }
 
-@available(iOS 13, *)
-open class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
-    public var session: NavigationSession?
-    public var navigationPath: NavigationPath?
+public struct Wrapper<Content: View>: View {
+    let hideNavigationBar: Bool
+    @ViewBuilder let content: () -> Content
+
+    public var body: some View {
+        content().navigationBarHidden(hideNavigationBar)
+    }
 }
 
+public final class RouteViewController<Content: View>: UIHostingController<Wrapper<Content>>, UIRouteViewController {
+    public init(
+        rootView: Content,
+        session: NavigationSession? = nil,
+        navigationPath: NavigationPath? = nil,
+        hideNavigationBar: Bool = false,
+        title: String? = nil
+    ) {
+        self.session = session
+        self.navigationPath = navigationPath
+        self.hideNavigationBar = hideNavigationBar
+        super.init(rootView: Wrapper(hideNavigationBar: hideNavigationBar) { rootView })
+        self.title = title
+    }
+
+    @available(*, unavailable)
+    @MainActor dynamic required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    public var session: NavigationSession?
+    public var navigationPath: NavigationPath?
+
+    public var hideNavigationBar: Bool
+
+    override public func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        guard hideNavigationBar else { return }
+        navigationController?.setNavigationBarHidden(hideNavigationBar, animated: animated)
+    }
+
+    override public func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        guard hideNavigationBar else { return }
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+}
 #endif

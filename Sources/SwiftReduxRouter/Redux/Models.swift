@@ -59,10 +59,14 @@ public struct NavigationRoute: Codable {
 public struct NavigationPath: Identifiable, Codable {
     public var id: UUID
     public var path: String
+    public var hideNavigationBar: Bool
+    public var title: String?
 
-    public init(id: UUID = UUID(), _ path: String) {
+    public init(id: UUID = UUID(), _ path: String, hideNavigationBar: Bool = false, title: String? = nil) {
         self.id = id
         self.path = path
+        self.hideNavigationBar = hideNavigationBar
+        self.title = title
     }
 
     public func pushAction(to target: UUID) -> NavigationActions.Push {

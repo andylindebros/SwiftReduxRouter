@@ -18,7 +18,7 @@ struct ContentView: View {
             routes: [
                 RouterView.Route(
                     route: Self.navigationRoute,
-                    renderView: { session, params in
+                    renderView: { path, session, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return AnyView(
