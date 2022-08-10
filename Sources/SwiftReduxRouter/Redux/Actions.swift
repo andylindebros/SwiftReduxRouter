@@ -11,9 +11,9 @@ public enum NavigationActions {
         public var path: NavigationPath
 
         /// Define the session that the path will be pushed to.
-        public var target: UUID
+        public var target: NavigationTarget
 
-        public init(path: NavigationPath, to target: UUID) {
+        public init(path: NavigationPath, to target: NavigationTarget) {
             self.path = path
             self.target = target
         }

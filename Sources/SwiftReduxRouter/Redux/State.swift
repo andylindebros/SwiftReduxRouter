@@ -6,11 +6,11 @@ public class NavigationState: ObservableObject, Codable {
     // MARK: Published vars
 
     /// Active session. It can only be one sessin at the time
-    @Published fileprivate(set) var selectedSessionId = UUID()
-    @Published fileprivate(set) var rootSelectedSessionID = UUID()
+    @Published public private(set) var selectedSessionId = UUID()
+    @Published public private(set) var rootSelectedSessionID = UUID()
 
     /// Available sessions. Tab sessions are defined here.
-    @Published fileprivate(set) var sessions = [NavigationSession]()
+    @Published public private(set) var sessions = [NavigationSession]()
 
     public init(sessions: [NavigationSession]? = nil) {
         if let sessions = sessions {
@@ -102,10 +102,21 @@ public extension NavigationState {
             }
 
         case let a as NavigationActions.Push:
-            if let index = state.sessions.firstIndex(where: { $0.id == a.target }) {
+            switch a.target {
+            case .current:
+                // We don't do anything here since current session is already selected
+                break
+            case let .session(session):
+                guard
+                    let index = state.sessions.firstIndex(where: { $0.id == session.id })
+                else {
+                    assertionFailure("Cannot push a view to a navigationSession that does not exist")
+                    return state
+                }
                 state.selectedSessionId = state.sessions[index].id
-            } else {
-                let session = NavigationSession(name: UUID().uuidString, selectedPath: NavigationPath(""))
+
+            case let .new(sessionName):
+                let session = NavigationSession(name: sessionName, selectedPath: NavigationPath(""))
                 state.sessions.append(session)
                 state.selectedSessionId = session.id
             }

@@ -34,7 +34,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                to: session.id
+                                                to: .current
                                             )
                                         )
                                     }) {
@@ -47,7 +47,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                to: AppState.tabOne
+                                                to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabOne })!)
                                             )
                                         )
                                     }) {
@@ -61,7 +61,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                                to: AppState.tabTwo
+                                                to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabTwo })!)
                                             )
                                         )
 

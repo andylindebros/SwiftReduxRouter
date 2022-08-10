@@ -1,5 +1,11 @@
 import Foundation
 
+public enum NavigationTarget: Codable {
+    case new(withName: String = UUID().uuidString)
+    case session(NavigationSession)
+    case current
+}
+
 public struct NavigationSession: Codable, Equatable {
     public static func == (lhs: NavigationSession, rhs: NavigationSession) -> Bool {
         lhs.id == rhs.id
@@ -69,7 +75,7 @@ public struct NavigationPath: Identifiable, Codable {
         self.title = title
     }
 
-    public func pushAction(to target: UUID) -> NavigationActions.Push {
+    public func pushAction(to target: NavigationTarget) -> NavigationActions.Push {
         return NavigationActions.Push(path: self, to: target)
     }
 }
