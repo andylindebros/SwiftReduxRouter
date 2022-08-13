@@ -3,7 +3,6 @@ import SwiftUI
 #if canImport(UIKit)
 import UIKit
 
-
 /**
  RouterView provides a SwiftUI view to a navigationState
  */
@@ -230,8 +229,7 @@ public struct RouterView: UIViewControllerRepresentable {
         for controller in ncs {
             if
                 let ctrl = topController.presentedViewController as? NavigationController,
-                ctrl.session?.id == controller.session?.id
-            {
+                ctrl.session?.id == controller.session?.id {
                 topController = ctrl
 
             } else {
@@ -242,15 +240,14 @@ public struct RouterView: UIViewControllerRepresentable {
     }
 
     // MARK: NavigationPath methods
-    
-    // MARK: NavigationPath methods
 
     static func view(for navigationPath: NavigationPath, in navigationSession: NavigationSession, andInRoutes routes: [Route]) -> UIRouteViewController? {
-        let patterns = routes.map { $0.route.path }
+        let patterns = routes.flatMap { $0.paths.map { $0.path } }
 
         guard
             let urlMatchResult = URLMatcher().match(navigationPath.path, from: patterns),
-            let route = routes.first(where: { $0.route.path == urlMatchResult.pattern })
+            let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil} ).first
+            //let route = routes.first(where: { $0.route.path == urlMatchResult.pattern })
         else { return nil }
 
         let viewController = viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationSession)
@@ -280,25 +277,25 @@ public struct RouterView: UIViewControllerRepresentable {
             return RouteViewController(rootView: AnyView(EmptyView()))
         }
     }
-
 }
 
 // MARK: Nested models
+
 @available(iOS 13, *)
 public extension RouterView {
     struct Route {
-        public var route: NavigationRoute
+        public var paths: [NavigationRoute]
         public var onWillAppear: ((NavigationPath, [String: Any]) -> Void)?
         public var renderView: ((NavigationPath, NavigationSession, [String: Any]) -> AnyView?)?
         public var renderController: ((NavigationPath, NavigationSession, [String: Any]) -> UIRouteViewController?)?
 
         public init(
-            route: NavigationRoute,
+            paths: [NavigationRoute],
             onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
             renderView: ((NavigationPath, NavigationSession, [String: Any]) -> AnyView?)? = nil,
             renderController: ((NavigationPath, NavigationSession, [String: Any]) -> UIRouteViewController?)? = nil
         ) {
-            self.route = route
+            self.paths = paths
             self.onWillAppear = onWillAppear
             self.renderView = renderView
             self.renderController = renderController

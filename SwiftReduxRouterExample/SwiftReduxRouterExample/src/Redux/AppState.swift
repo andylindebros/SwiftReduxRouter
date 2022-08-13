@@ -60,7 +60,7 @@ extension AppState {
                 NavigationSession.createInitSession(
                     id: Self.tabOne,
                     name: "tab1",
-                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
                         name: "First Tab",
                         icon: NavigationTab.Icon.system(name: "star.fill")
@@ -69,7 +69,7 @@ extension AppState {
                 NavigationSession.createInitSession(
                     id: Self.tabTwo,
                     name: "tab2",
-                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
                         name: "Second Tab",
                         icon: NavigationTab.Icon.system(name: "heart.fill")

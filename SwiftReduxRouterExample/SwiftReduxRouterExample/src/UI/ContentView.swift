@@ -7,7 +7,11 @@ struct ContentView: View {
 
     var dispatch: DispatchFunction
 
-    static let navigationRoute = NavigationRoute("hello/<int:name>")
+    static let navigationRoutes =
+    [
+        NavigationRoute("hello/<int:name>"),
+        NavigationRoute("hello/awesome/<int:name>")
+    ]
     let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
 
     let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
@@ -17,7 +21,7 @@ struct ContentView: View {
             navigationState: navigationState,
             routes: [
                 RouterView.Route(
-                    route: Self.navigationRoute,
+                    paths: Self.navigationRoutes,
                     renderView: { path, session, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
@@ -33,7 +37,7 @@ struct ContentView: View {
                                     Button(action: {
                                         dispatch(
                                             NavigationActions.Push(
-                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
+                                                path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                                                 to: .current
                                             )
                                         )
@@ -46,7 +50,7 @@ struct ContentView: View {
                                         )
                                         dispatch(
                                             NavigationActions.Push(
-                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
+                                                path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
                                                 to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabOne })!)
                                             )
                                         )
@@ -60,7 +64,7 @@ struct ContentView: View {
                                         )
                                         dispatch(
                                             NavigationActions.Push(
-                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
+                                                path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
                                                 to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabTwo })!)
                                             )
                                         )
@@ -72,7 +76,7 @@ struct ContentView: View {
                                     Button(action: {
                                         dispatch(
                                             NavigationActions.Present(
-                                                path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!
+                                                path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!
                                             )
                                         )
                                     }) {
