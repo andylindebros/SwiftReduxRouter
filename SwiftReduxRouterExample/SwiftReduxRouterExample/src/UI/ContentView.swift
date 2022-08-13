@@ -22,7 +22,7 @@ struct ContentView: View {
             routes: [
                 RouterView.Route(
                     paths: Self.navigationRoutes,
-                    renderView: { path, session, params in
+                    renderView: { path, navigationModel, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return AnyView(
@@ -51,7 +51,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabOne })!)
+                                                to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabOne })!)
                                             )
                                         )
                                     }) {
@@ -65,7 +65,7 @@ struct ContentView: View {
                                         dispatch(
                                             NavigationActions.Push(
                                                 path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                to: .session(navigationState.sessions.first(where: { $0.id == AppState.tabTwo })!)
+                                                to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
                                             )
                                         )
 
@@ -92,10 +92,10 @@ struct ContentView: View {
                             .navigationTitle("\(presentedName)")
                             .navigationBarItems(trailing: Button(action: {
                                 dispatch(
-                                    NavigationActions.Dismiss(session: session)
+                                    NavigationActions.Dismiss(navigationModel: navigationModel)
                                 )
                             }) {
-                                Text(session.tab == nil ? "Close" : "")
+                                Text(navigationModel.tab == nil ? "Close" : "")
                             })
 
                             .background(backgrounds.randomElement() ?? Color.white)
@@ -104,11 +104,11 @@ struct ContentView: View {
                 ),
             ],
             tintColor: .red,
-            setSelectedPath: { session, navigationPath in
-                dispatch(NavigationActions.SetSelectedPath(session: session, navigationPath: navigationPath))
+            setSelectedPath: { navigationModel, navigationPath in
+                dispatch(NavigationActions.SetSelectedPath(navigationModel: navigationModel, navigationPath: navigationPath))
             },
-            onDismiss: { session in
-                dispatch(NavigationActions.SessionDismissed(session: session))
+            onDismiss: { navigationModel in
+                dispatch(NavigationActions.NavigationDismissed(navigationModel: navigationModel))
             }
         )
         .edgesIgnoringSafeArea(.all)

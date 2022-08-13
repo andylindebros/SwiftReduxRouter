@@ -6,7 +6,7 @@ import SwiftReduxRouter
 
 extension NavigationActions.SetSelectedPath: Action {}
 extension NavigationActions.Dismiss: Action {}
-extension NavigationActions.SessionDismissed: Action {}
+extension NavigationActions.NavigationDismissed: Action {}
 extension NavigationActions.Push: Action {}
 extension NavigationActions.Present: Action {}
 extension NavigationActions.SelectTab: Action {}
@@ -56,8 +56,8 @@ struct AppState: Codable {
 extension AppState {
     static var initNavigationState: AppState {
         AppState(
-            navigation: NavigationState(sessions: [
-                NavigationSession.createInitSession(
+            navigation: NavigationState(navigationModels: [
+                NavigationModel.createInitModel(
                     id: Self.tabOne,
                     name: "tab1",
                     selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
@@ -66,7 +66,7 @@ extension AppState {
                         icon: NavigationTab.Icon.system(name: "star.fill")
                     )
                 ),
-                NavigationSession.createInitSession(
+                NavigationModel.createInitModel(
                     id: Self.tabTwo,
                     name: "tab2",
                     selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,

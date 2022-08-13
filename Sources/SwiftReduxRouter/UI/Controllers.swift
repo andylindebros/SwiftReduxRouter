@@ -19,9 +19,9 @@ public class TabController: UITabBarController {
 
 @available(iOS 13, *)
 public class NavigationController: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
-    var session: NavigationSession?
-    var willShow: ((_ session: NavigationSession, _ navigationPath: NavigationPath) -> Void)?
-    var onDismiss: ((_ session: NavigationSession) -> Void)?
+    var navigationModel: NavigationModel?
+    var willShow: ((_ navigationModel: NavigationModel, _ navigationPath: NavigationPath) -> Void)?
+    var onDismiss: ((_ navigationModel: NavigationModel) -> Void)?
 
     override public func viewDidLoad() {
         super.viewDidLoad()
@@ -31,21 +31,21 @@ public class NavigationController: UINavigationController, UINavigationControlle
 
     public func presentationControllerDidDismiss(_: UIPresentationController) {
         // call whatever you want
-        if let session = session {
-            onDismiss?(session)
+        if let navigationModel = navigationModel {
+            onDismiss?(navigationModel)
         }
     }
 
     public func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
-        if let willShow = self.willShow, let vc = viewController as? UIRouteViewController, let session = vc.session, let navPath = vc.navigationPath {
-            willShow(session, navPath)
+        if let willShow = self.willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.navigationModel, let navPath = vc.navigationPath {
+            willShow(navigationModel, navPath)
         }
     }
 }
 
 @available(iOS 13, *)
 public protocol UIRouteViewController: UIViewController {
-    var session: NavigationSession? { get set }
+    var navigationModel: NavigationModel? { get set }
     var navigationPath: NavigationPath? { get set }
 }
 
@@ -61,12 +61,12 @@ public struct Wrapper<Content: View>: View {
 public final class RouteViewController<Content: View>: UIHostingController<Wrapper<Content>>, UIRouteViewController {
     public init(
         rootView: Content,
-        session: NavigationSession? = nil,
+        navigationModel: NavigationModel? = nil,
         navigationPath: NavigationPath? = nil,
         hideNavigationBar: Bool = false,
         title: String? = nil
     ) {
-        self.session = session
+        self.navigationModel = navigationModel
         self.navigationPath = navigationPath
         self.hideNavigationBar = hideNavigationBar
         super.init(rootView: Wrapper(hideNavigationBar: hideNavigationBar) { rootView })
@@ -78,7 +78,7 @@ public final class RouteViewController<Content: View>: UIHostingController<Wrapp
         fatalError("init(coder:) has not been implemented")
     }
 
-    public var session: NavigationSession?
+    public var navigationModel: NavigationModel?
     public var navigationPath: NavigationPath?
 
     public var hideNavigationBar: Bool

@@ -2,12 +2,12 @@ import Foundation
 
 public enum NavigationTarget: Codable {
     case new(withName: String = UUID().uuidString)
-    case session(NavigationSession)
+    case navigationModel(NavigationModel)
     case current
 }
 
-public struct NavigationSession: Codable, Equatable {
-    public static func == (lhs: NavigationSession, rhs: NavigationSession) -> Bool {
+public struct NavigationModel: Codable, Equatable {
+    public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {
         lhs.id == rhs.id
     }
 
@@ -31,8 +31,8 @@ public struct NavigationSession: Codable, Equatable {
         self.presentedPaths = presentedPaths
     }
 
-    public static func createInitSession(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationSession {
-        NavigationSession(id: id, name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+    public static func createInitModel(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationModel {
+        NavigationModel(id: id, name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
     }
 }
 

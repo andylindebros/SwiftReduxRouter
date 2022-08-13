@@ -36,44 +36,44 @@ public enum NavigationActions {
     }
 
     public struct Dismiss: Codable, CustomLogging {
-        public init(session: NavigationSession) {
-            self.session = session
+        public init(navigationModel: NavigationModel) {
+            self.navigationModel = navigationModel
         }
 
-        public var session: NavigationSession
+        public var navigationModel: NavigationModel
 
         public var description: String {
-            "\(type(of: self)) session '\(session.name)'"
+            "\(type(of: self)) session '\(navigationModel.name)'"
         }
     }
 
     /// Action that defines what View that are actually displayed
     public struct SetSelectedPath: Codable, CustomLogging {
         /// The session that is presenting the view
-        public var session: NavigationSession
+        public var navigationModel: NavigationModel
         public var navigationPath: NavigationPath
 
-        public init(session: NavigationSession, navigationPath: NavigationPath) {
-            self.session = session
+        public init(navigationModel: NavigationModel, navigationPath: NavigationPath) {
+            self.navigationModel = navigationModel
             self.navigationPath = navigationPath
         }
 
         public var description: String {
-            "\(type(of: self)) \(navigationPath.path) for target '\(session.name)'"
+            "\(type(of: self)) \(navigationPath.path) for target '\(navigationModel.name)'"
         }
     }
 
     /// Action that dismisses a presented view
-    public struct SessionDismissed: Codable, CustomLogging {
+    public struct NavigationDismissed: Codable, CustomLogging {
         /// The session that should dismiss the view
-        public var session: NavigationSession
+        public var navigationModel: NavigationModel
 
-        public init(session: NavigationSession) {
-            self.session = session
+        public init(navigationModel: NavigationModel) {
+            self.navigationModel = navigationModel
         }
 
         public var description: String {
-            "\(type(of: self)) with target: \(session.name)"
+            "\(type(of: self)) with target: \(navigationModel.name)"
         }
     }
 

@@ -5,61 +5,61 @@ import Foundation
 public class NavigationState: ObservableObject, Codable {
     // MARK: Published vars
 
-    /// Active session. It can only be one sessin at the time
-    @Published public private(set) var selectedSessionId = UUID()
-    @Published public private(set) var rootSelectedSessionID = UUID()
+    /// Active navigationModel. It can only be one sessin at the time
+    @Published public private(set) var selectedModelId = UUID()
+    @Published public private(set) var rootSelectedModelID = UUID()
 
-    /// Available sessions. Tab sessions are defined here.
-    @Published public private(set) var sessions = [NavigationSession]()
+    /// Available navigationModels. Tab navigationModels are defined here.
+    @Published public private(set) var navigationModels = [NavigationModel]()
 
-    public init(sessions: [NavigationSession]? = nil) {
-        if let sessions = sessions {
-            self.sessions = sessions.map { session in
-                var session = session
-                session.isPresented = false
-                return session
+    public init(navigationModels: [NavigationModel]? = nil) {
+        if let navigationModels = navigationModels {
+            self.navigationModels = navigationModels.map { navigationModel in
+                var navigationModel = navigationModel
+                navigationModel.isPresented = false
+                return navigationModel
             }
 
-            if let first = sessions.first {
-                selectedSessionId = first.id
-                rootSelectedSessionID = first.id
+            if let first = navigationModels.first {
+                selectedModelId = first.id
+                rootSelectedModelID = first.id
             }
         }
     }
 
     public required init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
-        selectedSessionId = try values.decode(UUID.self, forKey: .selectedSessionId)
-        rootSelectedSessionID = try values.decode(UUID.self, forKey: .rootSelectedSessionID)
-        sessions = try values.decode([NavigationSession].self, forKey: .sessions)
+        selectedModelId = try values.decode(UUID.self, forKey: .selectedModelId)
+        rootSelectedModelID = try values.decode(UUID.self, forKey: .rootSelectedModelID)
+        navigationModels = try values.decode([NavigationModel].self, forKey: .navigationModels)
     }
 
     enum CodingKeys: CodingKey {
-        case selectedSessionId, sessions, rootSelectedSessionID
+        case selectedModelId, navigationModels, rootSelectedModelID
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(sessions, forKey: .sessions)
-        try container.encode(selectedSessionId, forKey: .selectedSessionId)
-        try container.encode(rootSelectedSessionID, forKey: .rootSelectedSessionID)
+        try container.encode(navigationModels, forKey: .navigationModels)
+        try container.encode(selectedModelId, forKey: .selectedModelId)
+        try container.encode(rootSelectedModelID, forKey: .rootSelectedModelID)
     }
 }
 
 public extension NavigationState {
-    func isTopSession(_ session: NavigationSession) -> Bool {
-        guard let topSession = getTopSession() else { return false }
+    func isTopModel(_ navigationModel: NavigationModel) -> Bool {
+        guard let topModel = getTopModel() else { return false }
 
-        return topSession.id == session.id
+        return topModel.id == navigationModel.id
     }
 
-    func getTopSession() -> NavigationSession? {
-        if let presentedSession = sessions.first(where: { $0.isPresented && $0.id == selectedSessionId }) {
-            return presentedSession
+    func getTopModel() -> NavigationModel? {
+        if let presentedModel = navigationModels.first(where: { $0.isPresented && $0.id == selectedModelId }) {
+            return presentedModel
         }
 
-        if let rootSession = sessions.first(where: { $0.id == rootSelectedSessionID }) {
-            return rootSession
+        if let rootModel = navigationModels.first(where: { $0.id == rootSelectedModelID }) {
+            return rootModel
         }
         return nil
     }
@@ -73,17 +73,17 @@ public extension NavigationState {
 
         switch action {
         case let a as NavigationJumpStateAction:
-            state.sessions = a.navigationState.sessions
-            state.selectedSessionId = a.navigationState.selectedSessionId
-            state.rootSelectedSessionID = a.navigationState.rootSelectedSessionID
+            state.navigationModels = a.navigationState.navigationModels
+            state.selectedModelId = a.navigationState.selectedModelId
+            state.rootSelectedModelID = a.navigationState.rootSelectedModelID
 
         case let a as NavigationActions.SetSelectedPath:
-            if let index = state.sessions.firstIndex(where: { $0.id == a.session.id }) {
-                state.sessions[index].selectedPath = a.navigationPath
-                state.selectedSessionId = state.sessions[index].id
+            if let index = state.navigationModels.firstIndex(where: { $0.id == a.navigationModel.id }) {
+                state.navigationModels[index].selectedPath = a.navigationPath
+                state.selectedModelId = state.navigationModels[index].id
 
-                if !a.session.isPresented {
-                    state.rootSelectedSessionID = a.session.id
+                if !a.navigationModel.isPresented {
+                    state.rootSelectedModelID = a.navigationModel.id
                 }
 
                 // Remove all indexes that comes after current path
@@ -91,13 +91,13 @@ public extension NavigationState {
             }
 
         case let a as NavigationActions.Dismiss:
-            if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
-                state.sessions.remove(at: index)
+            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == a.navigationModel.id }) {
+                state.navigationModels.remove(at: index)
 
-                if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
-                    state.selectedSessionId = lastPresentedSession.id
+                if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
+                    state.selectedModelId = lastPresentedModel.id
                 } else {
-                    state.selectedSessionId = state.rootSelectedSessionID
+                    state.selectedModelId = state.rootSelectedModelID
                 }
             }
 
@@ -106,42 +106,42 @@ public extension NavigationState {
             case .current:
                 // We don't do anything here since current session is already selected
                 break
-            case let .session(session):
+            case let .navigationModel(navigationModel):
                 guard
-                    let index = state.sessions.firstIndex(where: { $0.id == session.id })
+                    let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
                     assertionFailure("Cannot push a view to a navigationSession that does not exist")
                     return state
                 }
-                state.selectedSessionId = state.sessions[index].id
+                state.selectedModelId = state.navigationModels[index].id
 
-            case let .new(sessionName):
-                let session = NavigationSession(name: sessionName, selectedPath: NavigationPath(""))
-                state.sessions.append(session)
-                state.selectedSessionId = session.id
+            case let .new(modelName):
+                let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath(""))
+                state.navigationModels.append(navigationModel)
+                state.selectedModelId = navigationModel.id
             }
             state.setSelectedPath(a.path)
 
         case let a as NavigationActions.Present:
-            let session = NavigationSession(name: UUID().uuidString, selectedPath: NavigationPath(""))
-            state.sessions.append(session)
-            state.selectedSessionId = session.id
+            let navigationModel = NavigationModel(name: UUID().uuidString, selectedPath: NavigationPath(""))
+            state.navigationModels.append(navigationModel)
+            state.selectedModelId = navigationModel.id
             state.setSelectedPath(a.path)
 
-        case let a as NavigationActions.SessionDismissed:
-            if let index = state.sessions.firstIndex(where: { $0.isPresented && $0.id == a.session.id }) {
-                state.sessions.remove(at: index)
+        case let a as NavigationActions.NavigationDismissed:
+            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == a.navigationModel.id }) {
+                state.navigationModels.remove(at: index)
 
-                if let lastPresentedSession = state.sessions.last(where: { $0.isPresented }) {
-                    state.selectedSessionId = lastPresentedSession.id
+                if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
+                    state.selectedModelId = lastPresentedModel.id
                 } else {
-                    state.selectedSessionId = state.rootSelectedSessionID
+                    state.selectedModelId = state.rootSelectedModelID
                 }
             }
 
         case let a as NavigationActions.SelectTab:
-            if let session = state.sessions.first(where: { !$0.isPresented && $0.id == a.id }) {
-                state.rootSelectedSessionID = session.id
+            if let navigationModel = state.navigationModels.first(where: { !$0.isPresented && $0.id == a.id }) {
+                state.rootSelectedModelID = navigationModel.id
             }
 
         default:
@@ -153,21 +153,21 @@ public extension NavigationState {
 
 private extension NavigationState {
     func setSelectedPath(_ path: NavigationPath) {
-        if let index = sessions.firstIndex(where: { $0.id == selectedSessionId }) {
+        if let index = navigationModels.firstIndex(where: { $0.id == selectedModelId }) {
             removeRedundantPaths(at: index)
 
-            sessions[index].selectedPath = path
-            sessions[index].presentedPaths.append(path)
-            selectedSessionId = sessions[index].id
+            navigationModels[index].selectedPath = path
+            navigationModels[index].presentedPaths.append(path)
+            selectedModelId = navigationModels[index].id
         }
     }
 
     func removeRedundantPaths(at index: Int) {
         // Remove all indexes that comes after current path
-        if let presentedPathIndex = sessions[index].presentedPaths.firstIndex(where: { $0.id == sessions[index].selectedPath.id }) {
-            let presentedPaths = sessions[index].presentedPaths
+        if let presentedPathIndex = navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationModels[index].selectedPath.id }) {
+            let presentedPaths = navigationModels[index].presentedPaths
 
-            sessions[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
+            navigationModels[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
         }
     }
 }

@@ -67,7 +67,7 @@ struct ContentView: View {
             routes: [
                 RouterView.Route(
                     paths: Self.navigationRoutes,
-                    renderView: { session, params in
+                    renderView: { navigationModel, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return AnyView(
@@ -79,11 +79,11 @@ struct ContentView: View {
                                     dispatch(
                                         NavigationActions.Push(
                                             path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                            target: session.name
+                                            target: navigationModel.name
                                         ) as! Action
                                     )
                                 }) {
-                                    Text("Push \(next) to current session").foregroundColor(.black)
+                                    Text("Push \(next) to current navigationModel").foregroundColor(.black)
                                 }
                             }
                         )
@@ -91,11 +91,11 @@ struct ContentView: View {
                 )
             ],
             tintColor: .red,
-            setSelectedPath: { session, navigationPath in
-                dispatch(NavigationActions.SetSelectedPath(session: session, navigationPath: navigationPath))
+            setSelectedPath: { navigationModel, navigationPath in
+                dispatch(NavigationActions.SetSelectedPath(navigationModel: navigationModel, navigationPath: navigationPath))
             },
-            onDismiss: { session in
-                dispatch(NavigationActions.SessionDismissed(session: session))
+            onDismiss: { navigationModel in
+                dispatch(NavigationActions.NavigationDismissed(navigationModel: navigationModel))
             }
         )
     }
@@ -128,7 +128,7 @@ import SwiftReduxRouter
 
 extension NavigationActions.SetSelectedPath: Action {}
 extension NavigationActions.Dismiss: Action {}
-extension NavigationActions.SessionDismissed: Action {}
+extension NavigationActions.NavigationDismissed: Action {}
 extension NavigationActions.Push: Action {}
 ```
 1. Add a init navigationState to your store.
@@ -137,8 +137,8 @@ extension NavigationActions.Push: Action {}
 extension AppState {
     static var initNavigationState: AppState {
         AppState(
-            navigation: NavigationState(sessions: [
-                NavigationSession.createInitSession(
+            navigation: NavigationState(navigationModels: [
+                NavigationModel.createInitModel(
                     name: "tab1",
                     selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
@@ -146,7 +146,7 @@ extension AppState {
                         icon: NavigationTab.Icon.system(name: "star.fill")
                     )
                 ),
-                NavigationSession.createInitSession(
+                NavigationModel.createInitModel(
                     name: "tab2",
                     selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
@@ -211,31 +211,31 @@ Supported dynamic parameters are:
 - path - `somepath/<path:mypath>` will match everything after `somepath/`
 
 ## TabBar or a single UINavigationController
-If you set the tab property of the NavigatoinSession in the init state, the RouterView will render a UITabBar.
+If you set the tab property of the NavigatoinModel in the init state, the RouterView will render a UITabBar.
 
 ## Presenting views.
-if an unrecognized name of a session is pushed when dispatching `NavigationActions.Push`, the router will present that session automatically
+if an unrecognized name of a navigationModel is pushed when dispatching `NavigationActions.Push`, the router will present that navigationModel automatically
 ```Swift
-dispatch(NavigationActions.Push(path: NavigationPath("some path to a route"), target: "name of a session that doesn't exist"))
+dispatch(NavigationActions.Push(path: NavigationPath("some path to a route"), target: "name of a navigationModel that doesn't exist"))
 ```
 To dismiss it, you simply use the Dismiss action:
 ``` Swift
-dispatch(NavigationActions.Dismiss(session: The session to dismiss))
+dispatch(NavigationActions.Dismiss(navigationModel: The navigationModel to dismiss))
 ```
-You can access the session object from the renderView method. 
+You can access the navigationModel object from the renderView method. 
 ``` Swift
 Route(
     ...
-    renderView: { session, params in
+    renderView: { navigationModel, params in
         AnyView(
             Text("Awesome")
             .navigationTitle("\(presentedName)")
             .navigationBarItems(trailing: Button(action: {
                 dispatch(
-                    NavigationActions.Dismiss(session: session)
+                    NavigationActions.Dismiss(navigationModel: navigationModel)
                 )
             }) {
-                Text(session.tab == nil ? "Close" : "")
+                Text(navigationModel.tab == nil ? "Close" : "")
             })
         )
     }

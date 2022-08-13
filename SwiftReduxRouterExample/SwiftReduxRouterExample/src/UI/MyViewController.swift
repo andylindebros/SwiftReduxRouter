@@ -2,7 +2,7 @@ import SwiftReduxRouter
 import UIKit
 
 class MyViewController: UIViewController, UIRouteViewController {
-    var session: NavigationSession?
+    var navigationModel: NavigationModel?
     var navigationPath: NavigationPath?
 
     override func viewDidLoad() {
