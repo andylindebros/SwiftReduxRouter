@@ -2,7 +2,7 @@
 
 SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
 
-![Demo](https://github.com/lindebrothers/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
+![Demo](https://github.com/andylindebros/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 
 It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written in SwiftUI. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
 The routerVIew still uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
@@ -16,7 +16,7 @@ This package provides a Navigation State, reducer and Actions together with the
 ```Bash
 
 dependencies: [
-    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "6.0.0"))
+    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "10.0.0"))
 ]
 ```
 
@@ -59,14 +59,14 @@ struct ContentView: View {
 
     var dispatch: DispatchFunction
 
-    static let navigationRoute = NavigationRoute("hello/<int:name>")
+    static let navigationRoutes = [NavigationRoute("hello/<int:name>")]
 
     var body: some View {
         RouterView(
             navigationState: navigationState,
             routes: [
                 RouterView.Route(
-                    route: Self.navigationRoute,
+                    paths: Self.navigationRoutes,
                     renderView: { session, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
@@ -140,7 +140,7 @@ extension AppState {
             navigation: NavigationState(sessions: [
                 NavigationSession.createInitSession(
                     name: "tab1",
-                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
                         name: "First Tab",
                         icon: NavigationTab.Icon.system(name: "star.fill")
@@ -148,7 +148,7 @@ extension AppState {
                 ),
                 NavigationSession.createInitSession(
                     name: "tab2",
-                    selectedPath: ContentView.navigationRoute.reverse(params: ["name": "\(1)"])!,
+                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
                         name: "Second Tab",
                         icon: NavigationTab.Icon.system(name: "heart.fill")
@@ -173,7 +173,7 @@ class MyController<Content: View>: RouteViewController<Content> {
 }
 
 RouterView.Route(
- path: "pathtoview",
+ paths: [NavigationRoute("pathtoview")],
  renderController: { _, _ in
     let controller = MyController( root:
        AnyView(
@@ -244,7 +244,7 @@ Route(
 ```
 
 ### Support for ReduxMonitor
-SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/Lindebrothers/ReduxMonitor). 
+SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/andylindebros/ReduxMonitor). 
 Just let your JumpState action conform `NavigationJumpStateAction`
 ``` Swift
 struct JumpState: NavigationJumpStateAction, Action {
