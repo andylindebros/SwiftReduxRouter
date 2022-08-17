@@ -242,13 +242,12 @@ public struct RouterView: UIViewControllerRepresentable {
     // MARK: NavigationPath methods
 
     static func view(for navigationPath: NavigationPath, in navigationModel: NavigationModel, andInRoutes routes: [Route]) -> UIRouteViewController? {
-        let patterns = routes.flatMap { $0.paths.map { $0.path } }
-
         guard
-            let urlMatchResult = URLMatcher().match(navigationPath.path, from: patterns),
-            let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil} ).first
-            //let route = routes.first(where: { $0.route.path == urlMatchResult.pattern })
-        else { return nil }
+            let (route, urlMatchResult) = Self.route(for: navigationPath, in: routes),
+            let route = route
+        else {
+            return nil
+        }
 
         let viewController = viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
 
@@ -258,20 +257,38 @@ public struct RouterView: UIViewControllerRepresentable {
         return viewController
     }
 
+    private static func route(for navigationPath: NavigationPath, in routes: [Route]) -> (Route?, URLMatchResult?)? {
+        let patterns = routes.flatMap { $0.paths.map { $0.path } }
+
+        guard
+            let urlMatchResult = URLMatcher().match(navigationPath.path, from: patterns),
+            let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil }).first
+        else {
+            // provide first
+            return (Self.defaultRoute(in: routes), nil)
+        }
+
+        return (route, urlMatchResult)
+    }
+
+    private static func defaultRoute(in routes: [Route]) -> Route? {
+        routes.first { $0.defaultRoute }
+    }
+
     private static func viewController(
         of route: Route,
-        with urlMatchResult: URLMatchResult,
+        with urlMatchResult: URLMatchResult?,
         for navigationPath: NavigationPath,
         in navigationModel: NavigationModel
     ) -> UIRouteViewController {
-        if let view = route.renderView?(navigationPath, navigationModel, urlMatchResult.values) {
+        if let view = route.renderView?(navigationPath, navigationModel, urlMatchResult?.values) {
             return RouteViewController(
                 rootView: view,
                 hideNavigationBar: navigationPath.hideNavigationBar,
                 title: navigationPath.title
             )
 
-        } else if let view = route.renderController?(navigationPath, navigationModel, urlMatchResult.values) {
+        } else if let view = route.renderController?(navigationPath, navigationModel, urlMatchResult?.values) {
             return view
         } else {
             return RouteViewController(rootView: AnyView(EmptyView()))
@@ -285,20 +302,22 @@ public struct RouterView: UIViewControllerRepresentable {
 public extension RouterView {
     struct Route {
         public var paths: [NavigationRoute]
-        public var onWillAppear: ((NavigationPath, [String: Any]) -> Void)?
-        public var renderView: ((NavigationPath, NavigationModel, [String: Any]) -> AnyView?)?
-        public var renderController: ((NavigationPath, NavigationModel, [String: Any]) -> UIRouteViewController?)?
-
+        public var onWillAppear: ((NavigationPath, [String: Any]?) -> Void)?
+        public var renderView: ((NavigationPath, NavigationModel, [String: Any]?) -> AnyView?)?
+        public var renderController: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
+        public var defaultRoute: Bool
         public init(
             paths: [NavigationRoute],
-            onWillAppear: ((NavigationPath, [String: Any]) -> Void)? = nil,
-            renderView: ((NavigationPath, NavigationModel, [String: Any]) -> AnyView?)? = nil,
-            renderController: ((NavigationPath, NavigationModel, [String: Any]) -> UIRouteViewController?)? = nil
+            onWillAppear: ((NavigationPath, [String: Any]?) -> Void)? = nil,
+            renderView: ((NavigationPath, NavigationModel, [String: Any]?) -> AnyView?)? = nil,
+            renderController: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)? = nil,
+            defaultRoute: Bool = false
         ) {
             self.paths = paths
             self.onWillAppear = onWillAppear
             self.renderView = renderView
             self.renderController = renderController
+            self.defaultRoute = defaultRoute
         }
     }
 }

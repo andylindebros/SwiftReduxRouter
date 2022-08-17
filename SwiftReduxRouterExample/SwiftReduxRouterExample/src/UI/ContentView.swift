@@ -8,10 +8,10 @@ struct ContentView: View {
     var dispatch: DispatchFunction
 
     static let navigationRoutes =
-    [
-        NavigationRoute("hello/<int:name>"),
-        NavigationRoute("hello/awesome/<int:name>")
-    ]
+        [
+            NavigationRoute("hello/<int:name>"),
+            NavigationRoute("hello/awesome/<int:name>"),
+        ]
     let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
 
     let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
@@ -23,7 +23,7 @@ struct ContentView: View {
                 RouterView.Route(
                     paths: Self.navigationRoutes,
                     renderView: { path, navigationModel, params in
-                        let presentedName = params["name"] as? Int ?? 0
+                        let presentedName = params?["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return AnyView(
                             HStack {
@@ -82,6 +82,15 @@ struct ContentView: View {
                                     }) {
                                         Text("Present \(next)").foregroundColor(.black)
                                     }
+                                    Button(action: {
+                                        dispatch(
+                                            NavigationActions.Present(
+                                                path: NavigationPath("does not exist")
+                                            )
+                                        )
+                                    }) {
+                                        Text("Present a path that doesn't exist").foregroundColor(.black)
+                                    }
                                     Spacer()
                                 }
                                 Spacer()
@@ -101,6 +110,13 @@ struct ContentView: View {
                             .background(backgrounds.randomElement() ?? Color.white)
                         )
                     }
+                ),
+                RouterView.Route(
+                    paths: [NavigationRoute("default")],
+                    renderView: { navigationPath, navigationModel, _ in
+                        AnyView(Text("Not found"))
+                    },
+                    defaultRoute: true
                 ),
             ],
             tintColor: .red,
