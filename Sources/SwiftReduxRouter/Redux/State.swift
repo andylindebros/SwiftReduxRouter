@@ -72,6 +72,13 @@ public extension NavigationState {
         let state = state ?? NavigationState()
 
         switch action {
+        case let a as NavigationActions.UpdateIcon:
+            guard let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == a.navigationModelID })
+            else {
+                return state
+            }
+            state.navigationModels[navigationModelIndex].tab?.icon =  .system(name: a.iconName)
+
         case let a as NavigationJumpStateAction:
             state.navigationModels = a.navigationState.navigationModels
             state.selectedModelId = a.navigationState.selectedModelId

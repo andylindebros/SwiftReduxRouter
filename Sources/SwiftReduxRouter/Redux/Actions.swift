@@ -5,6 +5,16 @@ public protocol NavigationJumpStateAction: CustomLogging {
 }
 
 public enum NavigationActions {
+    public struct UpdateIcon: Codable {
+        public init(navigationModelID: UUID, iconName: String) {
+            self.navigationModelID = navigationModelID
+            self.iconName = iconName
+        }
+
+        public var navigationModelID: UUID
+        public var iconName: String
+    }
+
     /// Action that will push the next view. Dispatch this action if you will present or push a view.
     public struct Push: Codable, CustomLogging {
         /// The path of the route that will be pushed
