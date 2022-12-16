@@ -5,7 +5,6 @@ import SwiftUI
 
 import UIKit
 
-
 @available(iOS 13, *)
 public class TabController: UITabBarController {
     override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
@@ -38,7 +37,15 @@ public class NavigationController: UINavigationController, UINavigationControlle
 
     public func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
         if let willShow = self.willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.navigationModel, let navPath = vc.navigationPath {
-            willShow(navigationModel, navPath)
+            if let coordinator = viewController.transitionCoordinator, coordinator.isInteractive {
+                coordinator.notifyWhenInteractionChanges { context in
+                    if !context.isCancelled {
+                        willShow(navigationModel, navPath)
+                    }
+                }
+            } else {
+                willShow(navigationModel, navPath)
+            }
         }
     }
 }
