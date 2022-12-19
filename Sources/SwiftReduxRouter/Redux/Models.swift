@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 public enum NavigationTarget: Codable {
     case new(withName: String = UUID().uuidString)
@@ -84,11 +85,14 @@ public struct NavigationTab: Codable {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
-
-    public init(name: String, icon: Icon, selectedIcon: Icon? = nil) {
+    public var badgeColor: UIColor?
+    public var badgeValue: String?
+    public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil) {
         self.name = name
         self.icon = icon
         self.selectedIcon = selectedIcon
+        self.badgeValue = badgeValue
+        self.badgeColor = badgeColor
     }
 }
 

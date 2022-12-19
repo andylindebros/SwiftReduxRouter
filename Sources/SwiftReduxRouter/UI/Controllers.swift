@@ -1,8 +1,5 @@
 import Foundation
 import SwiftUI
-
-#if canImport(UIKit)
-
 import UIKit
 
 @available(iOS 13, *)
@@ -102,4 +99,3 @@ public final class RouteViewController<Content: View>: UIHostingController<Wrapp
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 }
-#endif

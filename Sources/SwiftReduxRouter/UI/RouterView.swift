@@ -1,6 +1,4 @@
 import SwiftUI
-
-#if canImport(UIKit)
 import UIKit
 
 /**
@@ -26,6 +24,7 @@ public struct RouterView: UIViewControllerRepresentable {
     private var onDismiss: (NavigationModel) -> Void
 
     private var tintColor: UIColor?
+
     /// Public init
     public init(
         navigationState: NavigationState,
@@ -115,6 +114,9 @@ public struct RouterView: UIViewControllerRepresentable {
                         image: icon,
                         selectedImage: selectedImage == nil ? icon : selectedImage
                     )
+
+                    nc.tabBarItem.badgeColor = tab.badgeColor ?? .red
+                    nc.tabBarItem.badgeValue = tab.badgeValue
                     ncs.append(nc)
                     continue
                 }
@@ -321,4 +323,3 @@ public extension RouterView {
         }
     }
 }
-#endif

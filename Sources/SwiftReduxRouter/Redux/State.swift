@@ -72,12 +72,25 @@ public extension NavigationState {
         let state = state ?? NavigationState()
 
         switch action {
+        case let a as NavigationActions.SetBadgeValue:
+            guard
+                let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == a.navigationModelID }),
+                var tab = state.navigationModels.first(where: { $0.id == a.navigationModelID })?.tab
+            else {
+                return state
+            }
+            tab.badgeValue = a.badgeValue
+            if let color = a.color {
+                tab.badgeColor = color
+            }
+            state.navigationModels[navigationModelIndex].tab = tab
+
         case let a as NavigationActions.UpdateIcon:
             guard let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == a.navigationModelID })
             else {
                 return state
             }
-            state.navigationModels[navigationModelIndex].tab?.icon =  .system(name: a.iconName)
+            state.navigationModels[navigationModelIndex].tab?.icon = .system(name: a.iconName)
 
         case let a as NavigationJumpStateAction:
             state.navigationModels = a.navigationState.navigationModels

@@ -10,6 +10,7 @@ extension NavigationActions.NavigationDismissed: Action {}
 extension NavigationActions.Push: Action {}
 extension NavigationActions.Present: Action {}
 extension NavigationActions.SelectTab: Action {}
+extension NavigationActions.SetBadgeValue: Action {}
 
 /// The state of the app
 struct AppState: Codable {
@@ -72,7 +73,8 @@ extension AppState {
                     selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
                     tab: NavigationTab(
                         name: "Second Tab",
-                        icon: NavigationTab.Icon.system(name: "heart.fill")
+                        icon: NavigationTab.Icon.system(name: "heart.fill"),
+                        badgeColor: .red
                     )
                 ),
             ])

@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 public protocol NavigationJumpStateAction: CustomLogging {
     var navigationState: NavigationState { get }
@@ -13,6 +14,18 @@ public enum NavigationActions {
 
         public var navigationModelID: UUID
         public var iconName: String
+    }
+
+    public struct SetBadgeValue: Codable {
+        public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
+            self.navigationModelID = navigationModelID
+            self.badgeValue = badgeValue
+            self.color = color
+        }
+
+        public let navigationModelID: UUID
+        public let badgeValue: String?
+        public let color: UIColor?
     }
 
     /// Action that will push the next view. Dispatch this action if you will present or push a view.
