@@ -100,6 +100,9 @@ public extension NavigationState {
         case let a as NavigationActions.SetSelectedPath:
             if let index = state.navigationModels.firstIndex(where: { $0.id == a.navigationModel.id }) {
                 state.navigationModels[index].selectedPath = a.navigationPath
+                if state.navigationModels[index].animate {
+                    state.navigationModels[index].animate = true
+                }
                 state.selectedModelId = state.navigationModels[index].id
 
                 if !a.navigationModel.isPresented {
@@ -123,10 +126,16 @@ public extension NavigationState {
 
         case let a as NavigationActions.Push:
             switch a.target {
-            case .current:
-                // We don't do anything here since current session is already selected
-                break
-            case let .navigationModel(navigationModel):
+            case let .current(animate):
+                guard
+                    let index = state.navigationModels.firstIndex(where: { $0.id == state.selectedModelId })
+                else {
+                    assertionFailure("Cannot push a view to a navigationSession that does not exist")
+                    return state
+                }
+                state.navigationModels[index].animate = animate
+
+            case let .navigationModel(navigationModel, animate):
                 guard
                     let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
@@ -134,8 +143,9 @@ public extension NavigationState {
                     return state
                 }
                 state.selectedModelId = state.navigationModels[index].id
+                state.navigationModels[index].animate = animate
 
-            case let .new(modelName):
+            case let .new(modelName, type):
                 let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath(""))
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id

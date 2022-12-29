@@ -2,9 +2,14 @@ import Foundation
 import UIKit
 
 public enum NavigationTarget: Codable {
-    case new(withName: String = UUID().uuidString)
-    case navigationModel(NavigationModel)
-    case current
+    case new(withName: String = UUID().uuidString, type: PresentationType = .regular)
+    case navigationModel(NavigationModel, animate: Bool = true)
+    case current(animate: Bool = true)
+}
+
+public enum PresentationType: Codable {
+    case tab
+    case regular
 }
 
 public struct NavigationModel: Codable, Equatable {
@@ -19,17 +24,18 @@ public struct NavigationModel: Codable, Equatable {
     public var tab: NavigationTab?
     public var presentedPaths = [NavigationPath]()
     public var isPresented: Bool
+    public let presentationType: PresentationType
+    var animate: Bool
 
-    public init(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true) {
+    public init(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular) {
         self.id = id
         self.name = name
         self.isPresented = isPresented
-
+        self.presentationType = presentationType
         self.selectedPath = selectedPath
-
         self.tab = tab
-
         self.presentedPaths = presentedPaths
+        animate = true
     }
 
     public static func createInitModel(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationModel {

@@ -177,7 +177,7 @@ public struct RouterView: UIViewControllerRepresentable {
             nc.viewControllers.compactMap { $0 as? UIRouteViewController }.first(where: { $0.navigationPath?.id == path.id }) ?? Self.view(for: path, in: navigationModel, andInRoutes: routes)
         }
 
-        nc.setViewControllers(vcs, animated: nc.presentedViewController == nil)
+        nc.setViewControllers(vcs, animated: navigationModel.animate && nc.presentedViewController == nil)
     }
 
     private func findPresented(navigationModel: NavigationModel, in rootViewController: UIViewController) -> NavigationController? {

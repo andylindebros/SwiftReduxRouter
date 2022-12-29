@@ -32,65 +32,67 @@ struct ContentView: View {
                                     VStack(spacing: 10) {
                                         Spacer()
 
-                                        Text("Presenting \(presentedName)")
-                                            .font(.system(size: 50)).bold()
-                                            .foregroundColor(.black)
-                                        Button(action: {
-                                            dispatch(
-                                                NavigationActions.Push(
-                                                    path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                    to: .current
+                                        VStack {
+                                            Text("Presenting \(presentedName)")
+                                                .font(.system(size: 50)).bold()
+                                                .foregroundColor(.black)
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.Push(
+                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                        to: .current()
+                                                    )
                                                 )
-                                            )
-                                        }) {
-                                            Text("Push \(next) to current session").foregroundColor(.black)
-                                        }
-                                        Button(action: {
-                                            dispatch(
-                                                NavigationActions.SelectTab(by: AppState.tabOne)
-                                            )
-                                            dispatch(
-                                                NavigationActions.Push(
-                                                    path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                    to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                                            }) {
+                                                Text("Push \(next) to current session").foregroundColor(.black)
+                                            }
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.SelectTab(by: AppState.tabOne)
                                                 )
-                                            )
-                                        }) {
-                                            Text("Push \(next) to Tab 1").foregroundColor(.black)
-                                        }
+                                                dispatch(
+                                                    NavigationActions.Push(
+                                                        path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                                                        to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                                                    )
+                                                )
+                                            }) {
+                                                Text("Push \(next) to Tab 1").foregroundColor(.black)
+                                            }
 
-                                        Button(action: {
-                                            dispatch(
-                                                NavigationActions.SelectTab(by: AppState.tabTwo)
-                                            )
-                                            dispatch(
-                                                NavigationActions.Push(
-                                                    path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                    to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.SelectTab(by: AppState.tabTwo)
                                                 )
-                                            )
+                                                dispatch(
+                                                    NavigationActions.Push(
+                                                        path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                                                        to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
+                                                    )
+                                                )
 
-                                        }) {
-                                            Text("Push \(next) to Tab 2").foregroundColor(.black)
-                                        }
+                                            }) {
+                                                Text("Push \(next) to Tab 2").foregroundColor(.black)
+                                            }
 
-                                        Button(action: {
-                                            dispatch(
-                                                NavigationActions.Present(
-                                                    path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.Present(
+                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!
+                                                    )
                                                 )
-                                            )
-                                        }) {
-                                            Text("Present \(next)").foregroundColor(.black)
-                                        }
-                                        Button(action: {
-                                            dispatch(
-                                                NavigationActions.Present(
-                                                    path: NavigationPath("does not exist")
+                                            }) {
+                                                Text("Present \(next)").foregroundColor(.black)
+                                            }
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.Present(
+                                                        path: NavigationPath("does not exist")
+                                                    )
                                                 )
-                                            )
-                                        }) {
-                                            Text("Present a path that doesn't exist").foregroundColor(.black)
+                                            }) {
+                                                Text("Present a path that doesn't exist").foregroundColor(.black)
+                                            }
                                         }
                                         VStack {
                                             Button(action: {
@@ -108,6 +110,18 @@ struct ContentView: View {
                                                 dispatch(NavigationActions.SetBadgeValue(of: navigationModel.id, withValue: nil, withColor: nil))
                                             }) {
                                                 Text("Reset badge")
+                                            }
+                                        }
+                                        VStack {
+                                            Button(action: {
+                                                dispatch(
+                                                    NavigationActions.Push(
+                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                        to: .current(animate: false)
+                                                    )
+                                                )
+                                            }) {
+                                                Text("Push to current, no animation")
                                             }
                                         }
                                     }
