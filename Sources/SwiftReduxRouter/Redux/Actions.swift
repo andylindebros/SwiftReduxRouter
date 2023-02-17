@@ -111,4 +111,20 @@ public enum NavigationActions {
             "\(type(of: self)) id: \(id.uuidString)"
         }
     }
+
+    public struct Replace: Codable, CustomLogging, Sendable {
+        public let path: SwiftReduxRouter.NavigationPath
+        public let newPath: SwiftReduxRouter.NavigationPath
+        public let navigationModel: NavigationModel
+
+        public init(path: SwiftReduxRouter.NavigationPath, with newPath: SwiftReduxRouter.NavigationPath, in navigationModel: NavigationModel) {
+            self.path = path
+            self.newPath = newPath
+            self.navigationModel = navigationModel
+        }
+
+        public var description: String {
+            "\(type(of: self)) path: \(path.path) with \(newPath.path) in \(navigationModel.name)"
+        }
+    }
 }

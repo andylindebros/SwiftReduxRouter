@@ -70,7 +70,7 @@ public extension NavigationState {
 // MARK: Reducer
 
 public extension NavigationState {
-    static func reducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
+    @MainActor static func reducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
         let state = state ?? NavigationState()
 
         switch action {
@@ -175,6 +175,17 @@ public extension NavigationState {
             if let navigationModel = state.navigationModels.first(where: { !$0.isPresented && $0.id == a.id }) {
                 state.rootSelectedModelID = navigationModel.id
             }
+
+        case let a as NavigationActions.Replace:
+            guard
+                let index = state.navigationModels.firstIndex(where: { $0.id == a.navigationModel.id }),
+                let currentPathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == a.path.id })
+            else {
+                return state
+            }
+
+            state.navigationModels[index].presentedPaths[currentPathIndex] = a.newPath
+            state.navigationModels[index].animate = false
 
         default:
             break

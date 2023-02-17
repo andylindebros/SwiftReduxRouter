@@ -1,6 +1,6 @@
-import SwiftUIRedux
 import SwiftReduxRouter
 import SwiftUI
+import SwiftUIRedux
 
 struct ContentView: View {
     @ObservedObject var navigationState: NavigationState
@@ -122,6 +122,21 @@ struct ContentView: View {
                                                 )
                                             }) {
                                                 Text("Push to current, no animation")
+                                            }
+
+                                            Button(action: {
+                                                guard let currentNavModel = navigationState.navigationModels.first(where: { $0.id == navigationState.selectedModelId }) else {
+                                                    return
+                                                }
+                                                dispatch(
+                                                    NavigationActions.Replace(
+                                                        path: currentNavModel.selectedPath,
+                                                        with: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                        in: currentNavModel
+                                                    )
+                                                )
+                                            }) {
+                                                Text("Replace current path with new")
                                             }
                                         }
                                     }

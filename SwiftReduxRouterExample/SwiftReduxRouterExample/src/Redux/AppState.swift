@@ -11,6 +11,7 @@ extension NavigationActions.Push: Action {}
 extension NavigationActions.Present: Action {}
 extension NavigationActions.SelectTab: Action {}
 extension NavigationActions.SetBadgeValue: Action {}
+extension NavigationActions.Replace: Action {}
 
 /// The state of the app
 struct AppState: Codable {
@@ -47,7 +48,7 @@ struct AppState: Codable {
         return store
     }
 
-    static func reducer(action: Action, state: AppState) -> AppState {
+    @MainActor static func reducer(action: Action, state: AppState) -> AppState {
         return AppState(
             navigation: NavigationState.reducer(action: action, state: state.navigation)
         )
