@@ -14,9 +14,9 @@
 		E625CD4725C046A6000CF73B /* SwiftReduxRouterExampleUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD4625C046A6000CF73B /* SwiftReduxRouterExampleUITests.swift */; };
 		E625CD6925C0477C000CF73B /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6225C0477C000CF73B /* AppState.swift */; };
 		E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6625C0477C000CF73B /* ContentView.swift */; };
+		E6314209299A4CD6000D50C0 /* SwiftUIRedux in Frameworks */ = {isa = PBXBuildFile; productRef = E6314208299A4CD6000D50C0 /* SwiftUIRedux */; };
 		E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6769F9D26E020AD00E493F1 /* MyViewController.swift */; };
 		E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */ = {isa = PBXBuildFile; productRef = E6A067ED26F3675E00DD524B /* SwiftReduxRouter */; };
-		E6A067F126F367A200DD524B /* ReSwift in Frameworks */ = {isa = PBXBuildFile; productRef = E6A067F026F367A200DD524B /* ReSwift */; };
 		E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */ = {isa = PBXBuildFile; productRef = E6BF068D26EAC1D20037C811 /* ReduxMonitor */; };
 /* End PBXBuildFile section */
 
@@ -60,8 +60,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */,
+				E6314209299A4CD6000D50C0 /* SwiftUIRedux in Frameworks */,
 				E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */,
-				E6A067F126F367A200DD524B /* ReSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -193,7 +193,7 @@
 			packageProductDependencies = (
 				E6BF068D26EAC1D20037C811 /* ReduxMonitor */,
 				E6A067ED26F3675E00DD524B /* SwiftReduxRouter */,
-				E6A067F026F367A200DD524B /* ReSwift */,
+				E6314208299A4CD6000D50C0 /* SwiftUIRedux */,
 			);
 			productName = SwiftReduxRouterExample;
 			productReference = E625CD2625C046A3000CF73B /* SwiftReduxRouterExample.app */;
@@ -268,7 +268,7 @@
 			mainGroup = E625CD1D25C046A3000CF73B;
 			packageReferences = (
 				E6BF068C26EAC1D20037C811 /* XCRemoteSwiftPackageReference "ReduxMonitor" */,
-				E6A067EF26F367A200DD524B /* XCRemoteSwiftPackageReference "ReSwift" */,
+				E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */,
 			);
 			productRefGroup = E625CD2725C046A3000CF73B /* Products */;
 			projectDirPath = "";
@@ -484,6 +484,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lindebros.LindebrosHomeAssistant.SwiftReduxRouterExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -506,6 +507,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.lindebros.LindebrosHomeAssistant.SwiftReduxRouterExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -637,12 +639,12 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		E6A067EF26F367A200DD524B /* XCRemoteSwiftPackageReference "ReSwift" */ = {
+		E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ReSwift/ReSwift";
+			repositoryURL = "https://github.com/andylindebros/SwiftUIRedux";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 6.1.0;
+				minimumVersion = 0.2.0;
 			};
 		};
 		E6BF068C26EAC1D20037C811 /* XCRemoteSwiftPackageReference "ReduxMonitor" */ = {
@@ -656,14 +658,14 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		E6314208299A4CD6000D50C0 /* SwiftUIRedux */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */;
+			productName = SwiftUIRedux;
+		};
 		E6A067ED26F3675E00DD524B /* SwiftReduxRouter */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = SwiftReduxRouter;
-		};
-		E6A067F026F367A200DD524B /* ReSwift */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E6A067EF26F367A200DD524B /* XCRemoteSwiftPackageReference "ReSwift" */;
-			productName = ReSwift;
 		};
 		E6BF068D26EAC1D20037C811 /* ReduxMonitor */ = {
 			isa = XCSwiftPackageProductDependency;

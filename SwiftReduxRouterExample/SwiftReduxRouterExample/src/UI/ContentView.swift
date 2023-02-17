@@ -1,4 +1,4 @@
-import ReSwift
+import SwiftUIRedux
 import SwiftReduxRouter
 import SwiftUI
 
@@ -7,7 +7,7 @@ struct ContentView: View {
 
     var dispatch: DispatchFunction
 
-    static let navigationRoutes =
+    @MainActor static let navigationRoutes =
         [
             NavigationRoute("hello/<int:name>"),
             NavigationRoute("hello/awesome/<int:name>"),

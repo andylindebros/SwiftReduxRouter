@@ -48,6 +48,7 @@ public class NavigationController: UINavigationController, UINavigationControlle
 }
 
 @available(iOS 13, *)
+@MainActor
 public protocol UIRouteViewController: UIViewController {
     var navigationModel: NavigationModel? { get set }
     var navigationPath: NavigationPath? { get set }

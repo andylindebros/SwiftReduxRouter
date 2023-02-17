@@ -1,4 +1,4 @@
-import ReSwift
+import SwiftUIRedux
 import SwiftReduxRouter
 import SwiftUI
 

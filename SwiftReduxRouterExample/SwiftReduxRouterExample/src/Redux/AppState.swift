@@ -1,8 +1,8 @@
 import Foundation
 import Logger
 import ReduxMonitor
-import ReSwift
 import SwiftReduxRouter
+import SwiftUIRedux
 
 extension NavigationActions.SetSelectedPath: Action {}
 extension NavigationActions.Dismiss: Action {}
@@ -19,16 +19,16 @@ struct AppState: Codable {
     static let tabOne = UUID()
     static let tabTwo = UUID()
 
-    static func createStore(
-        initState: AppState? = nil
+    @MainActor static func createStore(
+        initState: AppState
     ) -> Store<AppState> {
         var middlewares = [Middleware<AppState>]()
 #if DEBUG
         middlewares.append { _, _ in
             { next in
                 { action in
-                    DispatchQueue.global(qos: .background).async {
-                        Logger.shared.publish(
+                    Task.detached {
+                        Logger().publish(
                             message: "⚡️Action:",
                             obj: action,
                             level: .debug
@@ -47,15 +47,15 @@ struct AppState: Codable {
         return store
     }
 
-    static func reducer(action: Action, state: AppState?) -> AppState {
+    static func reducer(action: Action, state: AppState) -> AppState {
         return AppState(
-            navigation: NavigationState.reducer(action: action, state: state?.navigation)
+            navigation: NavigationState.reducer(action: action, state: state.navigation)
         )
     }
 }
 
 extension AppState {
-    static var initNavigationState: AppState {
+    @MainActor static var initNavigationState: AppState {
         AppState(
             navigation: NavigationState(navigationModels: [
                 NavigationModel.createInitModel(
@@ -110,8 +110,8 @@ extension AppState {
                 { action in
                     let newAction: Void = next(action)
                     let newState = state()
-                    if let encodableAction = action as? Encodable, let encodableState = newState as? Encodable {
-                        monitor.publish(action: AnyEncodable(encodableAction), state: AnyEncodable(encodableState))
+                    if let encodableState = newState as? Encodable {
+                        monitor.publish(action: AnyEncodable(action), state: AnyEncodable(encodableState))
                     } else {
                         print("Could not monitor action because either state or action does not conform to encodable", action)
                     }
@@ -124,6 +124,10 @@ extension AppState {
 
 struct JumpState: NavigationJumpStateAction, Action {
     let navigationState: NavigationState
+
+    var description: String {
+        "JumpState"
+    }
 }
 
 struct Launch: Action, Encodable {}

@@ -2,17 +2,19 @@ import Foundation
 
 // MARK: State
 
-public class NavigationState: ObservableObject, Codable {
+public final class NavigationState: ObservableObject, Codable {
     // MARK: Published vars
 
     /// Active navigationModel. It can only be one sessin at the time
-    @Published public private(set) var selectedModelId = UUID()
-    @Published public private(set) var rootSelectedModelID = UUID()
+    @Published public private(set) var selectedModelId: UUID
+    @Published public private(set) var rootSelectedModelID: UUID
 
     /// Available navigationModels. Tab navigationModels are defined here.
     @Published public private(set) var navigationModels = [NavigationModel]()
 
     public init(navigationModels: [NavigationModel]? = nil) {
+        selectedModelId = UUID()
+        rootSelectedModelID = UUID()
         if let navigationModels = navigationModels {
             self.navigationModels = navigationModels.map { navigationModel in
                 var navigationModel = navigationModel
@@ -145,7 +147,7 @@ public extension NavigationState {
                 state.selectedModelId = state.navigationModels[index].id
                 state.navigationModels[index].animate = animate
 
-            case let .new(modelName, type):
+            case let .new(modelName, _):
                 let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath(""))
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id

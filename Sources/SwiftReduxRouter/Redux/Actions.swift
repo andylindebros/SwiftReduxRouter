@@ -1,12 +1,12 @@
 import Foundation
 import UIKit
 
-public protocol NavigationJumpStateAction: CustomLogging {
+public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
 
 public enum NavigationActions {
-    public struct UpdateIcon: Codable {
+    public struct UpdateIcon: Codable, Sendable {
         public init(navigationModelID: UUID, iconName: String) {
             self.navigationModelID = navigationModelID
             self.iconName = iconName
@@ -16,7 +16,7 @@ public enum NavigationActions {
         public var iconName: String
     }
 
-    public struct SetBadgeValue: Codable {
+    public struct SetBadgeValue: Codable, Sendable {
         public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
             self.navigationModelID = navigationModelID
             self.badgeValue = badgeValue
@@ -29,7 +29,7 @@ public enum NavigationActions {
     }
 
     /// Action that will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: Codable, CustomLogging {
+    public struct Push: Codable, CustomLogging, Sendable {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
@@ -46,7 +46,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Present: Codable, CustomLogging {
+    public struct Present: Codable, CustomLogging, Sendable {
         public var path: NavigationPath
 
         public init(path: NavigationPath) {
@@ -58,7 +58,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Dismiss: Codable, CustomLogging {
+    public struct Dismiss: Codable, CustomLogging, Sendable {
         public init(navigationModel: NavigationModel) {
             self.navigationModel = navigationModel
         }
@@ -71,7 +71,7 @@ public enum NavigationActions {
     }
 
     /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: Codable, CustomLogging {
+    public struct SetSelectedPath: Codable, CustomLogging, Sendable {
         /// The session that is presenting the view
         public var navigationModel: NavigationModel
         public var navigationPath: NavigationPath
@@ -87,7 +87,7 @@ public enum NavigationActions {
     }
 
     /// Action that dismisses a presented view
-    public struct NavigationDismissed: Codable, CustomLogging {
+    public struct NavigationDismissed: Codable, CustomLogging, Sendable {
         /// The session that should dismiss the view
         public var navigationModel: NavigationModel
 
@@ -100,7 +100,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct SelectTab: Codable, CustomLogging {
+    public struct SelectTab: Codable, CustomLogging, Sendable {
         public var id: UUID
 
         public init(by id: UUID) {

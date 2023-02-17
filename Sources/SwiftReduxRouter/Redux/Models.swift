@@ -1,18 +1,18 @@
 import Foundation
 import UIKit
 
-public enum NavigationTarget: Codable {
+public enum NavigationTarget: Codable, Sendable {
     case new(withName: String = UUID().uuidString, type: PresentationType = .regular)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 }
 
-public enum PresentationType: Codable {
+public enum PresentationType: Codable, Sendable {
     case tab
     case regular
 }
 
-public struct NavigationModel: Codable, Equatable {
+public struct NavigationModel: Codable, Equatable, Sendable {
     public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {
         lhs.id == rhs.id
     }
@@ -69,7 +69,7 @@ public struct NavigationRoute: Codable {
     }
 }
 
-public struct NavigationPath: Identifiable, Codable {
+public struct NavigationPath: Identifiable, Codable, Sendable {
     public var id: UUID
     public var path: String
     public var hideNavigationBar: Bool
@@ -87,7 +87,7 @@ public struct NavigationPath: Identifiable, Codable {
     }
 }
 
-public struct NavigationTab: Codable {
+public struct NavigationTab: Codable, Sendable {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
@@ -103,7 +103,7 @@ public struct NavigationTab: Codable {
 }
 
 public extension NavigationTab {
-    enum Icon: Codable {
+    enum Icon: Codable, Sendable {
         case local(name: String)
         case system(name: String)
 

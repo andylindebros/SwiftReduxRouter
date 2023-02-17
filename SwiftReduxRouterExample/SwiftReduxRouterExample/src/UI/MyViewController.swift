@@ -1,6 +1,7 @@
 import SwiftReduxRouter
 import UIKit
 
+@MainActor
 class MyViewController: UIViewController, UIRouteViewController {
     var navigationModel: NavigationModel?
     var navigationPath: NavigationPath?

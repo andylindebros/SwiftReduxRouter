@@ -123,7 +123,7 @@ struct SwiftReduxRouterExampleApp: App {
 
 1. In AppState.swift, extend NavigationActions so they conform to ReSwift.Action.
 ``` Swift
-import ReSwift
+import SwiftUIRedux
 import SwiftReduxRouter
 
 extension NavigationActions.SetSelectedPath: Action {}
