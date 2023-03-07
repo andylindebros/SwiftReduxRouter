@@ -263,7 +263,8 @@ public struct RouterView: UIViewControllerRepresentable {
         let patterns = routes.flatMap { $0.paths.map { $0.path } }
 
         guard
-            let urlMatchResult = URLMatcher().match(navigationPath.path, from: patterns),
+            let path = navigationPath.path,
+            let urlMatchResult = URLMatcher().match(path, from: patterns),
             let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil }).first
         else {
             // provide first

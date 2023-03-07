@@ -87,7 +87,7 @@ struct ContentView: View {
                                             Button(action: {
                                                 dispatch(
                                                     NavigationActions.Present(
-                                                        path: NavigationPath("does not exist")
+                                                        path: NavigationPath()
                                                     )
                                                 )
                                             }) {

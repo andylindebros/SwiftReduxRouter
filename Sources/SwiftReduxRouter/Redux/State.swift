@@ -148,14 +148,14 @@ public extension NavigationState {
                 state.navigationModels[index].animate = animate
 
             case let .new(modelName, _):
-                let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath(""))
+                let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath())
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id
             }
             state.setSelectedPath(a.path)
 
         case let a as NavigationActions.Present:
-            let navigationModel = NavigationModel(name: UUID().uuidString, selectedPath: NavigationPath(""))
+            let navigationModel = NavigationModel(name: UUID().uuidString, selectedPath: NavigationPath())
             state.navigationModels.append(navigationModel)
             state.selectedModelId = navigationModel.id
             state.setSelectedPath(a.path)

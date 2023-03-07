@@ -42,7 +42,7 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) path '\(path.path)' to target '\(target)'"
+            "\(type(of: self)) path '\(path.path ?? "")' to target '\(target)'"
         }
     }
 
@@ -54,7 +54,7 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) path '\(path.path)'"
+            "\(type(of: self)) path '\(path.path ?? "")'"
         }
     }
 
@@ -82,7 +82,7 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) \(navigationPath.path) for target '\(navigationModel.name)'"
+            "\(type(of: self)) \(navigationPath.path ?? "") for target '\(navigationModel.name)'"
         }
     }
 
@@ -124,7 +124,7 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) path: \(path.path) with \(newPath.path) in \(navigationModel.name)"
+            "\(type(of: self)) path: \(path.path ?? "") with \(newPath.path ?? "") in \(navigationModel.name)"
         }
     }
 }

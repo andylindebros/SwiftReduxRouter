@@ -65,25 +65,30 @@ public struct NavigationRoute: Codable {
                 parameters.append(value)
             }
         }
-        return NavigationPath(parameters.joined(separator: "/"))
+        guard let url = URL(string: parameters.joined(separator: "/")) else { return nil }
+        return NavigationPath(url)
     }
 }
 
 public struct NavigationPath: Identifiable, Codable, Sendable {
     public var id: UUID
-    public var path: String
+    public var url: URL?
     public var hideNavigationBar: Bool
     public var title: String?
 
-    public init(id: UUID = UUID(), _ path: String, hideNavigationBar: Bool = false, title: String? = nil) {
+    public init(id: UUID = UUID(), _ url: URL? = nil, hideNavigationBar: Bool = false, title: String? = nil) {
         self.id = id
-        self.path = path
+        self.url = url
         self.hideNavigationBar = hideNavigationBar
         self.title = title
     }
 
     public func pushAction(to target: NavigationTarget) -> NavigationActions.Push {
         return NavigationActions.Push(path: self, to: target)
+    }
+
+    public var path: String? {
+        url?.path
     }
 }
 
