@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1EA8D95529D64C61008949D9 /* Logger in Frameworks */ = {isa = PBXBuildFile; productRef = 1EA8D95429D64C61008949D9 /* Logger */; };
 		E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD2925C046A3000CF73B /* SwiftReduxRouterExampleApp.swift */; };
 		E625CD2E25C046A5000CF73B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E625CD2D25C046A5000CF73B /* Assets.xcassets */; };
 		E625CD3125C046A5000CF73B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E625CD3025C046A5000CF73B /* Preview Assets.xcassets */; };
@@ -61,6 +62,7 @@
 			files = (
 				E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */,
 				E6314209299A4CD6000D50C0 /* SwiftUIRedux in Frameworks */,
+				1EA8D95529D64C61008949D9 /* Logger in Frameworks */,
 				E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -194,6 +196,7 @@
 				E6BF068D26EAC1D20037C811 /* ReduxMonitor */,
 				E6A067ED26F3675E00DD524B /* SwiftReduxRouter */,
 				E6314208299A4CD6000D50C0 /* SwiftUIRedux */,
+				1EA8D95429D64C61008949D9 /* Logger */,
 			);
 			productName = SwiftReduxRouterExample;
 			productReference = E625CD2625C046A3000CF73B /* SwiftReduxRouterExample.app */;
@@ -269,6 +272,7 @@
 			packageReferences = (
 				E6BF068C26EAC1D20037C811 /* XCRemoteSwiftPackageReference "ReduxMonitor" */,
 				E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */,
+				1EA8D95329D64C61008949D9 /* XCRemoteSwiftPackageReference "Logger" */,
 			);
 			productRefGroup = E625CD2725C046A3000CF73B /* Products */;
 			projectDirPath = "";
@@ -639,6 +643,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		1EA8D95329D64C61008949D9 /* XCRemoteSwiftPackageReference "Logger" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/lindebrothers/Logger";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.0.0;
+			};
+		};
 		E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/andylindebros/SwiftUIRedux";
@@ -658,6 +670,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		1EA8D95429D64C61008949D9 /* Logger */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1EA8D95329D64C61008949D9 /* XCRemoteSwiftPackageReference "Logger" */;
+			productName = Logger;
+		};
 		E6314208299A4CD6000D50C0 /* SwiftUIRedux */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = E6314207299A4CD6000D50C0 /* XCRemoteSwiftPackageReference "SwiftUIRedux" */;
