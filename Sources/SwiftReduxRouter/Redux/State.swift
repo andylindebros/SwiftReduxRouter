@@ -1,5 +1,5 @@
 import Foundation
-#if canImport(UIKit)
+
 // MARK: State
 
 public final class NavigationState: ObservableObject, Codable {
@@ -82,9 +82,11 @@ public extension NavigationState {
                 return state
             }
             tab.badgeValue = a.badgeValue
-            if let color = a.color {
-                tab.badgeColor = color
-            }
+            #if canImport(UIKit)
+                if let color = a.color {
+                    tab.badgeColor = color
+                }
+            #endif
             state.navigationModels[navigationModelIndex].tab = tab
 
         case let a as NavigationActions.UpdateIcon:
@@ -214,4 +216,3 @@ private extension NavigationState {
         }
     }
 }
-#endif

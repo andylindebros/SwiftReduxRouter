@@ -3,7 +3,7 @@ import Foundation
 import UIKit
 #endif
 
-#if canImport(UIKit)
+
 public enum NavigationTarget: Codable, Sendable {
     case new(withName: String = UUID().uuidString, type: PresentationType = .regular)
     case navigationModel(NavigationModel, animate: Bool = true)
@@ -99,8 +99,12 @@ public struct NavigationTab: Codable, Sendable {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
+#if canImport(UIKit)
     public var badgeColor: UIColor?
+#endif
     public var badgeValue: String?
+
+#if canImport(UIKit)
     public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil) {
         self.name = name
         self.icon = icon
@@ -108,6 +112,14 @@ public struct NavigationTab: Codable, Sendable {
         self.badgeValue = badgeValue
         self.badgeColor = badgeColor
     }
+#else
+    public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil) {
+        self.name = name
+        self.icon = icon
+        self.selectedIcon = selectedIcon
+        self.badgeValue = badgeValue
+    }
+#endif
 }
 
 public extension NavigationTab {
@@ -151,4 +163,4 @@ public extension NavigationTab {
     }
 }
 
-#endif
+

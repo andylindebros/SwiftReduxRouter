@@ -1,8 +1,10 @@
 import Foundation
 #if os(iOS)
 import UIKit
+#else
+import AppKit
 #endif
-#if canImport(UIKit)
+
 public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
@@ -18,16 +20,25 @@ public enum NavigationActions {
         public var iconName: String
     }
 
+
     public struct SetBadgeValue: Codable, Sendable {
+#if canImport(UIKit)
         public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
             self.navigationModelID = navigationModelID
             self.badgeValue = badgeValue
             self.color = color
         }
-
+        #else
+        public init(of navigationModelID: UUID, withValue badgeValue: String?) {
+            self.navigationModelID = navigationModelID
+            self.badgeValue = badgeValue
+        }
+        #endif
         public let navigationModelID: UUID
         public let badgeValue: String?
+#if canImport(UIKit)
         public let color: UIColor?
+#endif
     }
 
     /// Action that will push the next view. Dispatch this action if you will present or push a view.
@@ -130,4 +141,4 @@ public enum NavigationActions {
         }
     }
 }
-#endif
+
