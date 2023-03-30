@@ -1,6 +1,8 @@
 import Foundation
+#if os(iOS)
 import UIKit
-
+#endif
+#if canImport(UIKit)
 public extension Decodable where Self: UIColor {
     init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
@@ -20,3 +22,4 @@ public extension Encodable where Self: UIColor {
 }
 
 extension UIColor: Codable {}
+#endif

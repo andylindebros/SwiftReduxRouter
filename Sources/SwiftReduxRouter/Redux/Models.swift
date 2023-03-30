@@ -1,6 +1,9 @@
 import Foundation
+#if os(iOS)
 import UIKit
+#endif
 
+#if canImport(UIKit)
 public enum NavigationTarget: Codable, Sendable {
     case new(withName: String = UUID().uuidString, type: PresentationType = .regular)
     case navigationModel(NavigationModel, animate: Bool = true)
@@ -147,3 +150,5 @@ public extension NavigationTab {
         }
     }
 }
+
+#endif

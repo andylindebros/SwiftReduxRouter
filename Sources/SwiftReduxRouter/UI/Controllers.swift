@@ -1,7 +1,9 @@
 import Foundation
 import SwiftUI
+#if os(iOS)
 import UIKit
-
+#endif
+#if canImport(UIKit)
 @available(iOS 13, *)
 public class TabController: UITabBarController {
     override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
@@ -100,3 +102,4 @@ public final class RouteViewController<Content: View>: UIHostingController<Wrapp
         navigationController?.setNavigationBarHidden(false, animated: animated)
     }
 }
+#endif

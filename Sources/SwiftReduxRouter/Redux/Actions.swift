@@ -1,6 +1,8 @@
 import Foundation
+#if os(iOS)
 import UIKit
-
+#endif
+#if canImport(UIKit)
 public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
@@ -128,3 +130,4 @@ public enum NavigationActions {
         }
     }
 }
+#endif

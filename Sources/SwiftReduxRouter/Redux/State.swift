@@ -1,5 +1,5 @@
 import Foundation
-
+#if canImport(UIKit)
 // MARK: State
 
 public final class NavigationState: ObservableObject, Codable {
@@ -214,3 +214,4 @@ private extension NavigationState {
         }
     }
 }
+#endif

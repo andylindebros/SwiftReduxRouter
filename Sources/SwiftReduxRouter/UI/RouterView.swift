@@ -1,6 +1,8 @@
 import SwiftUI
+#if os(iOS)
 import UIKit
-
+#endif
+#if canImport(UIKit)
 /**
  RouterView provides a SwiftUI view to a navigationState
  */
@@ -324,3 +326,4 @@ public extension RouterView {
         }
     }
 }
+#endif
