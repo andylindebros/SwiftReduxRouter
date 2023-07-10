@@ -14,9 +14,9 @@ public enum ReactiveMiddleware {
                     }
 
                     switch action {
-                    case let a as NavigationActions.Deeplink:
+                    case let deeplink as NavigationActions.Deeplink:
                         if
-                            let reaction = a.reaction(of: state.navigation),
+                            let reaction = deeplink.action(for: state.navigation),
                             let navigationAction = reaction as? Action
                         {
                             dispatch(navigationAction)

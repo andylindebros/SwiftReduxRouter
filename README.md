@@ -118,8 +118,8 @@ struct SwiftReduxRouterExampleApp: App {
             // You can let the SwiftReduxRouter handle deep links by using the modifier `onOpenURL`
             .onOpenURL { incomingURL in
                 DispatchQueue.main.async {
-                    guard let deepLinkAction = NavigationActions.Deeplink(with: incomingURL) else { return }
-                    store.dispatch(deepLinkAction.reaction(of: store.state.navigation)
+                    guard let deeplink = NavigationActions.Deeplink(with: incomingURL) else { return }
+                    store.dispatch(deeplink.action(for: store.state.navigation)
                 }
             }
         }

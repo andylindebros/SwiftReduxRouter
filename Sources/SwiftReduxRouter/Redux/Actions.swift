@@ -150,7 +150,7 @@ public enum NavigationActions {
 
         let url: URL
 
-        public func reaction(of state: NavigationState) -> NavigationAction? {
+        public func action(for state: NavigationState) -> NavigationAction? {
             if let model = findNavigationModel(in: state) {
                 let newURL = URL(string: url.path.replacingOccurrences(of: model.path?.url?.absoluteString ?? "", with: ""))
 
