@@ -148,29 +148,48 @@ extension NavigationActions.Deeplink: Action {}
 extension AppState {
     static var initNavigationState: AppState {
         AppState(
-            navigation: NavigationState(navigationModels: [
-                NavigationModel.createInitModel(
-                    path: NavigationPath("/tab1"),
-                    selectedPath: NavigationPath("/hello/1"),
-                    tab: NavigationTab(
-                        name: "First Tab",
-                        icon: NavigationTab.Icon.system(name: "star.fill")
-                    )
-                ),
-                NavigationModel.createInitModel(
-                    path: NavigationPath("/tab2"),
-                    selectedPath: NavigationPath("/hello/2"),
-                    tab: NavigationTab(
-                        name: "Second Tab",
-                        icon: NavigationTab.Icon.system(name: "heart.fill")
-                    )
-                ),
-            ])
+            navigation: NavigationState(
+                navigationModels: [
+                    NavigationModel.createInitModel(
+                        path: NavigationPath("/andylindebros/SwiftReduxRouter/tab1"),
+                        selectedPath: NavigationPath("/hello/1"),
+                        tab: NavigationTab(
+                            name: "First Tab",
+                            icon: NavigationTab.Icon.system(name: "star.fill")
+                        )
+                    ),
+                    NavigationModel.createInitModel(
+                        path: NavigationPath("/andylindebros/SwiftReduxRouter/tab2"),
+                        selectedPath: NavigationPath("/hello/2"),
+                        tab: NavigationTab(
+                            name: "Second Tab",
+                            icon: NavigationTab.Icon.system(name: "heart.fill")
+                        )
+                    ),
+                ],
+                navigationModelRoutes: [
+                    NavigationRoute("/standalone"),
+                ]
+            )
         )
     }
 }
 ```
 
+#### Deeplinks
+Setup your scheme and deep links will be opened by the router.
+
+Following rules apply to the example implementation above:
+
+`swiftreduxrouter://example.com/tab1/hello/2` will be pushed to the first tab
+`swiftreduxrouter://example.com/tab1/hello/1` will be selected in the first tab
+`swiftreduxrouter:///tab2/hello/2` will be pushed to the second tab
+`swiftreduxrouter:///tab2/hello/1` will be selected in the second tab
+`swiftreduxrouter:///standalone/hello/1` will be presented in the standalone navigationController on top of the tab bar
+`swiftreduxrouter:///standalone/hello/2` will be pushed to the presented standalone navigationController
+`swiftreduxrouter:///hello/1` will be presented in a new navigationController on top of the tab bar
+
+`swiftreduxrouter:///tab1` will select the first tab
 
 ## URL Routing.
 
