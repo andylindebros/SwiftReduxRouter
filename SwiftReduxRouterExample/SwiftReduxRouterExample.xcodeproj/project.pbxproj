@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E49E79A2A5C4EF700AB9644 /* ReactiveMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E49E7992A5C4EF700AB9644 /* ReactiveMiddleware.swift */; };
 		1EA8D95529D64C61008949D9 /* Logger in Frameworks */ = {isa = PBXBuildFile; productRef = 1EA8D95429D64C61008949D9 /* Logger */; };
 		E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD2925C046A3000CF73B /* SwiftReduxRouterExampleApp.swift */; };
 		E625CD2E25C046A5000CF73B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E625CD2D25C046A5000CF73B /* Assets.xcassets */; };
@@ -39,6 +40,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		1E49E7992A5C4EF700AB9644 /* ReactiveMiddleware.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReactiveMiddleware.swift; sourceTree = "<group>"; };
 		E625CD2625C046A3000CF73B /* SwiftReduxRouterExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftReduxRouterExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E625CD2925C046A3000CF73B /* SwiftReduxRouterExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftReduxRouterExampleApp.swift; sourceTree = "<group>"; };
 		E625CD2D25C046A5000CF73B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -84,6 +86,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1EE6F9002A5851D90089A99D /* Middleware */ = {
+			isa = PBXGroup;
+			children = (
+				1E49E7992A5C4EF700AB9644 /* ReactiveMiddleware.swift */,
+			);
+			path = Middleware;
+			sourceTree = "<group>";
+		};
 		E625CD1D25C046A3000CF73B = {
 			isa = PBXGroup;
 			children = (
@@ -155,6 +165,7 @@
 		E625CD6125C0477C000CF73B /* Redux */ = {
 			isa = PBXGroup;
 			children = (
+				1EE6F9002A5851D90089A99D /* Middleware */,
 				E625CD6225C0477C000CF73B /* AppState.swift */,
 			);
 			path = Redux;
@@ -319,6 +330,7 @@
 				E625CD6925C0477C000CF73B /* AppState.swift in Sources */,
 				E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */,
 				E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */,
+				1E49E79A2A5C4EF700AB9644 /* ReactiveMiddleware.swift in Sources */,
 				E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

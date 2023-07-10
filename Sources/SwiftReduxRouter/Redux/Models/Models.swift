@@ -1,52 +1,20 @@
 import Foundation
 #if os(iOS)
-import UIKit
+    import UIKit
 #endif
 
-
-public enum NavigationTarget: Codable, Sendable {
-    case new(withName: String = UUID().uuidString, type: PresentationType = .regular)
+public enum NavigationTarget: Equatable, Codable, Sendable {
+    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 }
 
-public enum PresentationType: Codable, Sendable {
+public enum PresentationType: Equatable, Codable, Sendable {
     case tab
     case regular
 }
 
-public struct NavigationModel: Codable, Equatable, Sendable {
-    public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {
-        lhs.id == rhs.id
-    }
-
-    public var id: UUID
-    public var name: String
-    public var selectedPath: NavigationPath
-
-    public var tab: NavigationTab?
-    public var presentedPaths = [NavigationPath]()
-    public var isPresented: Bool
-    public let presentationType: PresentationType
-    var animate: Bool
-
-    public init(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular) {
-        self.id = id
-        self.name = name
-        self.isPresented = isPresented
-        self.presentationType = presentationType
-        self.selectedPath = selectedPath
-        self.tab = tab
-        self.presentedPaths = presentedPaths
-        animate = true
-    }
-
-    public static func createInitModel(id: UUID = UUID(), name: String, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationModel {
-        NavigationModel(id: id, name: name, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
-    }
-}
-
-public struct NavigationRoute: Codable {
+public struct NavigationRoute: Codable, Sendable {
     public init(_ path: String) {
         self.path = path
     }
@@ -73,7 +41,7 @@ public struct NavigationRoute: Codable {
     }
 }
 
-public struct NavigationPath: Identifiable, Codable, Sendable {
+public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
     public var id: UUID
     public var url: URL?
     public var hideNavigationBar: Bool
@@ -93,33 +61,38 @@ public struct NavigationPath: Identifiable, Codable, Sendable {
     public var path: String? {
         url?.path
     }
+
+    public static func create(_ url: URL?, hideNavigationBar: Bool = false, title: String? = nil) -> NavigationPath? {
+        guard let url = url else { return nil }
+        return NavigationPath(url, hideNavigationBar: hideNavigationBar, title: title)
+    }
 }
 
 public struct NavigationTab: Codable, Sendable {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
-#if canImport(UIKit)
-    public var badgeColor: UIColor?
-#endif
+    #if canImport(UIKit)
+        public var badgeColor: UIColor?
+    #endif
     public var badgeValue: String?
 
-#if canImport(UIKit)
-    public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil) {
-        self.name = name
-        self.icon = icon
-        self.selectedIcon = selectedIcon
-        self.badgeValue = badgeValue
-        self.badgeColor = badgeColor
-    }
-#else
-    public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil) {
-        self.name = name
-        self.icon = icon
-        self.selectedIcon = selectedIcon
-        self.badgeValue = badgeValue
-    }
-#endif
+    #if canImport(UIKit)
+        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil) {
+            self.name = name
+            self.icon = icon
+            self.selectedIcon = selectedIcon
+            self.badgeValue = badgeValue
+            self.badgeColor = badgeColor
+        }
+    #else
+        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil) {
+            self.name = name
+            self.icon = icon
+            self.selectedIcon = selectedIcon
+            self.badgeValue = badgeValue
+        }
+    #endif
 }
 
 public extension NavigationTab {
@@ -162,5 +135,3 @@ public extension NavigationTab {
         }
     }
 }
-
-

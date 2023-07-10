@@ -1,16 +1,18 @@
 import Foundation
 #if os(iOS)
-import UIKit
+    import UIKit
 #else
-import AppKit
+    import AppKit
 #endif
+
+public protocol NavigationAction: Codable, CustomLogging, Sendable {}
 
 public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
 
 public enum NavigationActions {
-    public struct UpdateIcon: Codable, Sendable {
+    public struct UpdateIcon: NavigationAction {
         public init(navigationModelID: UUID, iconName: String) {
             self.navigationModelID = navigationModelID
             self.iconName = iconName
@@ -20,29 +22,28 @@ public enum NavigationActions {
         public var iconName: String
     }
 
-
-    public struct SetBadgeValue: Codable, Sendable {
-#if canImport(UIKit)
-        public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
-            self.navigationModelID = navigationModelID
-            self.badgeValue = badgeValue
-            self.color = color
-        }
+    public struct SetBadgeValue: NavigationAction {
+        #if canImport(UIKit)
+            public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
+                self.navigationModelID = navigationModelID
+                self.badgeValue = badgeValue
+                self.color = color
+            }
         #else
-        public init(of navigationModelID: UUID, withValue badgeValue: String?) {
-            self.navigationModelID = navigationModelID
-            self.badgeValue = badgeValue
-        }
+            public init(of navigationModelID: UUID, withValue badgeValue: String?) {
+                self.navigationModelID = navigationModelID
+                self.badgeValue = badgeValue
+            }
         #endif
         public let navigationModelID: UUID
         public let badgeValue: String?
-#if canImport(UIKit)
-        public let color: UIColor?
-#endif
+        #if canImport(UIKit)
+            public let color: UIColor?
+        #endif
     }
 
     /// Action that will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: Codable, CustomLogging, Sendable {
+    public struct Push: NavigationAction {
         /// The path of the route that will be pushed
         public var path: NavigationPath
 
@@ -59,7 +60,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Present: Codable, CustomLogging, Sendable {
+    public struct Present: NavigationAction {
         public var path: NavigationPath
 
         public init(path: NavigationPath) {
@@ -71,7 +72,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Dismiss: Codable, CustomLogging, Sendable {
+    public struct Dismiss: NavigationAction {
         public init(navigationModel: NavigationModel) {
             self.navigationModel = navigationModel
         }
@@ -79,12 +80,12 @@ public enum NavigationActions {
         public var navigationModel: NavigationModel
 
         public var description: String {
-            "\(type(of: self)) session '\(navigationModel.name)'"
+            "\(type(of: self)) session '\(navigationModel.path?.path ?? navigationModel.id.uuidString)'"
         }
     }
 
     /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: Codable, CustomLogging, Sendable {
+    public struct SetSelectedPath: NavigationAction {
         /// The session that is presenting the view
         public var navigationModel: NavigationModel
         public var navigationPath: NavigationPath
@@ -95,12 +96,12 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) \(navigationPath.path ?? "") for target '\(navigationModel.name)'"
+            "\(type(of: self)) \(navigationPath.path ?? "") for target '\(navigationModel.path?.path ?? navigationModel.id.uuidString)'"
         }
     }
 
     /// Action that dismisses a presented view
-    public struct NavigationDismissed: Codable, CustomLogging, Sendable {
+    public struct NavigationDismissed: NavigationAction {
         /// The session that should dismiss the view
         public var navigationModel: NavigationModel
 
@@ -109,11 +110,11 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) with target: \(navigationModel.name)"
+            "\(type(of: self)) with target: \(navigationModel.path?.path ?? navigationModel.id.uuidString)"
         }
     }
 
-    public struct SelectTab: Codable, CustomLogging, Sendable {
+    public struct SelectTab: NavigationAction {
         public var id: UUID
 
         public init(by id: UUID) {
@@ -125,7 +126,7 @@ public enum NavigationActions {
         }
     }
 
-    public struct Replace: Codable, CustomLogging, Sendable {
+    public struct Replace: NavigationAction {
         public let path: SwiftReduxRouter.NavigationPath
         public let newPath: SwiftReduxRouter.NavigationPath
         public let navigationModel: NavigationModel
@@ -137,8 +138,61 @@ public enum NavigationActions {
         }
 
         public var description: String {
-            "\(type(of: self)) path: \(path.path ?? "") with \(newPath.path ?? "") in \(navigationModel.name)"
+            "\(type(of: self)) path: \(navigationModel.path?.path ?? "")\(path.path ?? "") with \(newPath.path ?? "")"
+        }
+    }
+
+    public struct Deeplink: Codable, CustomLogging, Sendable {
+        public init?(with url: URL?) {
+            guard let url = url else { return nil }
+            self.url = url
+        }
+
+        let url: URL
+
+        public func reaction(of state: NavigationState) -> NavigationAction? {
+            if let model = findNavigationModel(in: state) {
+                let newURL = URL(string: url.path.replacingOccurrences(of: model.path?.url?.absoluteString ?? "", with: ""))
+
+                // Select: URL has a excat match
+                if newURL == model.selectedPath.url || url.path == model.path?.url?.absoluteString {
+                    return NavigationActions.SetSelectedPath(navigationModel: model, navigationPath: model.selectedPath)
+                }
+
+                if let newURL = newURL {
+                    // Found and select already mathing path in model
+                    if let foundPath = model.presentedPaths.first(where: { $0.path == newURL.absoluteString }) {
+                        return NavigationActions.SetSelectedPath(navigationModel: model, navigationPath: foundPath)
+                    }
+
+                    // Present new path to found model
+                    return NavigationActions.Push(path: NavigationPath(newURL), to: .navigationModel(model, animate: true))
+                }
+            } else {
+                // Push new path to known navigationModel (found in navigation routes)
+                if
+                    let pattern = URLMatcher().match(url.path, from: state.navigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
+                    let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
+                {
+                    return NavigationActions.Push(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular))
+
+                    // push to new navigationModel
+                } else if let newPath = NavigationPath.create(URL(string: url.path)) {
+                    return NavigationActions.Push(path: newPath, to: .new())
+                }
+                return nil
+            }
+            return nil
+        }
+
+        private func findNavigationModel(in state: NavigationState) -> NavigationModel? {
+            guard
+                let pattern = URLMatcher().match(url.path, from: state.navigationModels.compactMap { $0.path?.url?.absoluteString }, ensureComponentsCount: false)?.pattern,
+                let navigationModel = state.navigationModels.first(where: { $0.path?.url?.absoluteString == pattern })
+            else {
+                return nil
+            }
+            return navigationModel
         }
     }
 }
-

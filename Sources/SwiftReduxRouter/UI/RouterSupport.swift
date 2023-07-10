@@ -66,7 +66,7 @@ extension URL: URLConvertible {
 /// URLMatcher provides a way to match URLs against a list of specified patterns.
 ///
 /// URLMatcher extracts the pattern and the values from the URL if possible.
-open class URLMatcher {
+struct URLMatcher {
     typealias URLPattern = String
     typealias URLValueConverter = (_ pathComponents: [String], _ index: Int) -> Any?
 
@@ -107,7 +107,7 @@ open class URLMatcher {
     ///
     /// - returns: A `URLMatchComponents` struct that holds the URL pattern string, a dictionary of
     ///            the URL placeholder values.
-    func match(_ url: URLConvertible, from candidates: [URLPattern]) -> URLMatchResult? {
+    func match(_ url: URLConvertible, from candidates: [URLPattern], ensureComponentsCount: Bool = true) -> URLMatchResult? {
         let url = normalizeURL(url)
         let scheme = url.urlValue?.scheme
         let stringPathComponents = self.stringPathComponents(from: url)
@@ -116,7 +116,7 @@ open class URLMatcher {
 
         for candidate in candidates {
             guard scheme == candidate.urlValue?.scheme else { continue }
-            if let result = match(stringPathComponents, with: candidate) {
+            if let result = match(stringPathComponents, with: candidate, ensureComponentsCount: ensureComponentsCount) {
                 results.append(result)
             }
         }
@@ -126,10 +126,11 @@ open class URLMatcher {
         }
     }
 
-    func match(_ stringPathComponents: [String], with candidate: URLPattern) -> URLMatchResult? {
+    func match(_ stringPathComponents: [String], with candidate: URLPattern, ensureComponentsCount: Bool = true) -> URLMatchResult? {
         let normalizedCandidate = normalizeURL(candidate).urlStringValue
         let candidatePathComponents = pathComponents(from: normalizedCandidate)
-        guard ensurePathComponentsCount(stringPathComponents, candidatePathComponents) else {
+
+        if ensureComponentsCount, !ensurePathComponentsCount(stringPathComponents, candidatePathComponents) {
             return nil
         }
 
@@ -153,8 +154,11 @@ open class URLMatcher {
                 return nil
             }
         }
+        let joinedPath = (stringPathComponents.count > 0 ? stringPathComponents[0 ... pairCount - 1] : []).joined(separator: "/")
 
-        return URLMatchResult(pattern: candidate, values: urlValues)
+        let result = URLMatchResult(pattern: candidate, values: urlValues, path: joinedPath.count > 0 ? "/\(joinedPath)" : "")
+
+        return result
     }
 
     func normalizeURL(_ dirtyURL: URLConvertible) -> URLConvertible {
@@ -185,6 +189,7 @@ open class URLMatcher {
                 return false
             }
         }
+
         return hasSameNumberOfComponents || (containsPathPlaceholderComponent && stringPathComponents.count > candidatePathComponents.count)
     }
 
@@ -243,6 +248,8 @@ struct URLMatchResult {
 
     /// The values extracted from the URL placeholder.
     let values: [String: Any]
+
+    let path: String
 }
 
 enum URLPathComponentMatchResult {

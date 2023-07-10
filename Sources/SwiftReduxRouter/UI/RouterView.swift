@@ -8,24 +8,20 @@ import UIKit
  */
 @available(iOS 13, *)
 public struct RouterView: UIViewControllerRepresentable {
-    /// A Push action including the path with the dismissActionIdentifier will trigger the open vc to dismiss.
-    public static let dismissActionIdentifier = ":dismiss"
 
     /// The navigationState
     @ObservedObject private var navigationState: NavigationState
 
-    /// The root controller of the router
-
     /// Available routes
-    private var routes: [Route]
+    private let routes: [Route]
 
     /// setSelectedPath is invoked by the UIViewController when it is in screen
-    private var setSelectedPath: (NavigationModel, NavigationPath) -> Void
+    private let setSelectedPath: (NavigationModel, NavigationPath) -> Void
 
     /// onDismiss is invoked when the UIViewController will be dismissed
-    private var onDismiss: (NavigationModel) -> Void
+    private let onDismiss: (NavigationModel) -> Void
 
-    private var tintColor: UIColor?
+    private let tintColor: UIColor?
 
     /// Public init
     public init(
@@ -286,17 +282,10 @@ public struct RouterView: UIViewControllerRepresentable {
         for navigationPath: NavigationPath,
         in navigationModel: NavigationModel
     ) -> UIRouteViewController {
-        if let view = route.renderView?(navigationPath, navigationModel, urlMatchResult?.values) {
-            return RouteViewController(
-                rootView: view,
-                hideNavigationBar: navigationPath.hideNavigationBar,
-                title: navigationPath.title
-            )
-
-        } else if let view = route.renderController?(navigationPath, navigationModel, urlMatchResult?.values) {
+        if let view = route.render?(navigationPath, navigationModel, urlMatchResult?.values) {
             return view
         } else {
-            return RouteViewController(rootView: AnyView(EmptyView()))
+            return RouteViewController(rootView: EmptyView())
         }
     }
 }
@@ -306,24 +295,21 @@ public struct RouterView: UIViewControllerRepresentable {
 @available(iOS 13, *)
 public extension RouterView {
     struct Route {
-        public var paths: [NavigationRoute]
-        public var onWillAppear: ((NavigationPath, [String: Any]?) -> Void)?
-        public var renderView: ((NavigationPath, NavigationModel, [String: Any]?) -> AnyView?)?
-        public var renderController: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
-        public var defaultRoute: Bool
         public init(
             paths: [NavigationRoute],
             onWillAppear: ((NavigationPath, [String: Any]?) -> Void)? = nil,
-            renderView: ((NavigationPath, NavigationModel, [String: Any]?) -> AnyView?)? = nil,
-            renderController: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)? = nil,
+            render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)? = nil,
             defaultRoute: Bool = false
         ) {
             self.paths = paths
             self.onWillAppear = onWillAppear
-            self.renderView = renderView
-            self.renderController = renderController
+            self.render = render
             self.defaultRoute = defaultRoute
         }
+        public let paths: [NavigationRoute]
+        public let onWillAppear: ((NavigationPath, [String: Any]?) -> Void)?
+        public let render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
+        public let defaultRoute: Bool
     }
 }
 #endif

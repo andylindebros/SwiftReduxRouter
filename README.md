@@ -4,7 +4,7 @@ SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlle
 
 ![Demo](https://github.com/andylindebros/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 
-It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written in SwiftUI. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
+It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written for SwiftUI usage. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
 The routerVIew still uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
 
 
@@ -59,18 +59,16 @@ struct ContentView: View {
 
     var dispatch: DispatchFunction
 
-    static let navigationRoutes = [NavigationRoute("hello/<int:name>")]
-
     var body: some View {
         RouterView(
             navigationState: navigationState,
             routes: [
                 RouterView.Route(
-                    paths: Self.navigationRoutes,
-                    renderView: { navigationModel, params in
+                    paths: [NavigationRoute("hello/<int:name>")],
+                    render: { navigationModel, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
-                        return AnyView(
+                        return RouteViewController(rootView:
                             VStack(spacing: 10) {
                                 Text("Presenting \(presentedName)")
                                     .font(.system(size: 50)).bold()
@@ -116,6 +114,14 @@ struct SwiftReduxRouterExampleApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView(navigationState: store.state.navigation, dispatch: store.dispatch)
+            
+            // You can let the SwiftReduxRouter handle deep links by using the modifier `onOpenURL`
+            .onOpenURL { incomingURL in
+                DispatchQueue.main.async {
+                    guard let deepLinkAction = NavigationActions.Deeplink(with: incomingURL) else { return }
+                    store.dispatch(deepLinkAction.reaction(of: store.state.navigation)
+                }
+            }
         }
     }
 }
@@ -139,16 +145,16 @@ extension AppState {
         AppState(
             navigation: NavigationState(navigationModels: [
                 NavigationModel.createInitModel(
-                    name: "tab1",
-                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
+                    path: NavigationPath("/tab1"),
+                    selectedPath: NavigationPath("/hello/1"),
                     tab: NavigationTab(
                         name: "First Tab",
                         icon: NavigationTab.Icon.system(name: "star.fill")
                     )
                 ),
                 NavigationModel.createInitModel(
-                    name: "tab2",
-                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
+                    path: NavigationPath("/tab2"),
+                    selectedPath: NavigationPath("/hello/2"),
                     tab: NavigationTab(
                         name: "Second Tab",
                         icon: NavigationTab.Icon.system(name: "heart.fill")
@@ -160,30 +166,6 @@ extension AppState {
 }
 ```
 
-## Render your route with UIViewController
-
-If you need to customize the UIViewController that holds the SwiftUI View you
-can use the renderController instead of the render method.
-
-```Swift
-class MyController<Content: View>: RouteViewController<Content> {
-   func customConfiguration() {
-      // make adjustments to your controller
-   }
-}
-
-RouterView.Route(
- paths: [NavigationRoute("pathtoview")],
- renderController: { _, _ in
-    let controller = MyController( root:
-       AnyView(
-         Text("Awesome!")
-       )
-     return controller
-   }
- },
-)
-```
 
 ## URL Routing.
 
@@ -226,8 +208,8 @@ You can access the navigationModel object from the renderView method.
 ``` Swift
 Route(
     ...
-    renderView: { navigationModel, params in
-        AnyView(
+    render: { navigationModel, params in
+        RouteViewController(rootView:
             Text("Awesome")
             .navigationTitle("\(presentedName)")
             .navigationBarItems(trailing: Button(action: {
@@ -242,6 +224,7 @@ Route(
     ...
 )
 ```
+
 
 ### Support for ReduxMonitor
 SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/andylindebros/ReduxMonitor). 

@@ -1,7 +1,7 @@
 import Foundation
 import Logger
 import ReduxMonitor
-import SwiftReduxRouter
+@preconcurrency import SwiftReduxRouter
 import SwiftUIRedux
 
 extension NavigationActions.SetSelectedPath: Action {}
@@ -12,6 +12,7 @@ extension NavigationActions.Present: Action {}
 extension NavigationActions.SelectTab: Action {}
 extension NavigationActions.SetBadgeValue: Action {}
 extension NavigationActions.Replace: Action {}
+extension NavigationActions.Deeplink: Action {}
 
 /// The state of the app
 struct AppState: Codable {
@@ -24,25 +25,25 @@ struct AppState: Codable {
         initState: AppState
     ) -> Store<AppState> {
         var middlewares = [Middleware<AppState>]()
-#if DEBUG
-        middlewares.append { _, _ in
-            { next in
-                { action in
-                    Task.detached {
-                        Logger().publish(
-                            message: "⚡️Action:",
-                            obj: action,
-                            level: .debug
-                        )
-                    }
+        middlewares.append(ReactiveMiddleware.createMiddleware())
+        #if DEBUG
+            middlewares.append { _, _ in
+                { next in
+                    { action in
+                        Task.detached {
+                            Logger().publish(
+                                message: "⚡️Action:",
+                                obj: action,
+                                level: .debug
+                            )
+                        }
 
-                    return next(action)
+                        return next(action)
+                    }
                 }
             }
-        }
-        middlewares.append(AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()))
-
-#endif
+            middlewares.append(AppState.createReduxMontitorMiddleware(monitor: ReduxMonitor()))
+        #endif
         let store = Store<AppState>(reducer: AppState.reducer, state: initState, middleware: middlewares)
 
         return store
@@ -58,27 +59,32 @@ struct AppState: Codable {
 extension AppState {
     @MainActor static var initNavigationState: AppState {
         AppState(
-            navigation: NavigationState(navigationModels: [
-                NavigationModel.createInitModel(
-                    id: Self.tabOne,
-                    name: "tab1",
-                    selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
-                    tab: NavigationTab(
-                        name: "First Tab",
-                        icon: NavigationTab.Icon.system(name: "star.fill")
-                    )
-                ),
-                NavigationModel.createInitModel(
-                    id: Self.tabTwo,
-                    name: "tab2",
-                    selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
-                    tab: NavigationTab(
-                        name: "Second Tab",
-                        icon: NavigationTab.Icon.system(name: "heart.fill"),
-                        badgeColor: .red
-                    )
-                ),
-            ])
+            navigation: NavigationState(
+                navigationModels: [
+                    NavigationModel.createInitModel(
+                        id: Self.tabOne,
+                        path: NavigationPath(URL(string: "/tab1")),
+                        selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
+                        tab: NavigationTab(
+                            name: "First Tab",
+                            icon: NavigationTab.Icon.system(name: "star.fill")
+                        )
+                    ),
+                    NavigationModel.createInitModel(
+                        id: Self.tabTwo,
+                        path: NavigationPath(URL(string: "/tab2")),
+                        selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
+                        tab: NavigationTab(
+                            name: "Second Tab",
+                            icon: NavigationTab.Icon.system(name: "heart.fill"),
+                            badgeColor: .red
+                        )
+                    ),
+                ],
+                navigationModelRoutes: [
+                    NavigationRoute("/tab3"),
+                ]
+            )
         )
     }
 }

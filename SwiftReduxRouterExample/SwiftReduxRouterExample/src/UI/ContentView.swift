@@ -21,11 +21,19 @@ struct ContentView: View {
             navigationState: navigationState,
             routes: [
                 RouterView.Route(
+                    paths: [
+                        NavigationRoute("/hello")
+                    ],
+                    render: { path, navigationModel, params in
+                        RouteViewController(rootView: Text("/hello"))
+                    }
+                ),
+                RouterView.Route(
                     paths: Self.navigationRoutes,
-                    renderView: { path, navigationModel, params in
+                    render: { path, navigationModel, params in
                         let presentedName = params?["name"] as? Int ?? 0
                         let next = presentedName + 1
-                        return AnyView(
+                        return RouteViewController(rootView:
                             ScrollView {
                                 HStack {
                                     Spacer()
@@ -160,8 +168,8 @@ struct ContentView: View {
                 ),
                 RouterView.Route(
                     paths: [NavigationRoute("default")],
-                    renderView: { navigationPath, navigationModel, _ in
-                        AnyView(Text("Not found"))
+                    render: { navigationPath, navigationModel, _ in
+                        return RouteViewController(rootView: Text("Not found"))
                     },
                     defaultRoute: true
                 ),

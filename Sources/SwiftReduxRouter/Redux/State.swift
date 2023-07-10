@@ -12,9 +12,13 @@ public final class NavigationState: ObservableObject, Codable {
     /// Available navigationModels. Tab navigationModels are defined here.
     @Published public private(set) var navigationModels = [NavigationModel]()
 
-    public init(navigationModels: [NavigationModel]? = nil) {
+    public let navigationModelRoutes: [NavigationRoute]
+
+    public init(navigationModels: [NavigationModel]? = nil, navigationModelRoutes: [NavigationRoute] = []) {
         selectedModelId = UUID()
         rootSelectedModelID = UUID()
+        self.navigationModelRoutes = navigationModelRoutes
+
         if let navigationModels = navigationModels {
             self.navigationModels = navigationModels.map { navigationModel in
                 var navigationModel = navigationModel
@@ -34,10 +38,11 @@ public final class NavigationState: ObservableObject, Codable {
         selectedModelId = try values.decode(UUID.self, forKey: .selectedModelId)
         rootSelectedModelID = try values.decode(UUID.self, forKey: .rootSelectedModelID)
         navigationModels = try values.decode([NavigationModel].self, forKey: .navigationModels)
+        navigationModelRoutes = try values.decode([NavigationRoute].self, forKey: .navigationModelRoutes)
     }
 
     enum CodingKeys: CodingKey {
-        case selectedModelId, navigationModels, rootSelectedModelID
+        case selectedModelId, navigationModels, rootSelectedModelID, navigationModelRoutes
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -45,6 +50,7 @@ public final class NavigationState: ObservableObject, Codable {
         try container.encode(navigationModels, forKey: .navigationModels)
         try container.encode(selectedModelId, forKey: .selectedModelId)
         try container.encode(rootSelectedModelID, forKey: .rootSelectedModelID)
+        try container.encode(navigationModelRoutes, forKey: .navigationModelRoutes)
     }
 }
 
@@ -147,17 +153,20 @@ public extension NavigationState {
                     return state
                 }
                 state.selectedModelId = state.navigationModels[index].id
+                if !state.navigationModels[index].isPresented {
+                    state.rootSelectedModelID = state.navigationModels[index].id
+                }
                 state.navigationModels[index].animate = animate
 
-            case let .new(modelName, _):
-                let navigationModel = NavigationModel(name: modelName, selectedPath: NavigationPath())
+            case let .new(navigationModelPath, _):
+                let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath())
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id
             }
             state.setSelectedPath(a.path)
 
         case let a as NavigationActions.Present:
-            let navigationModel = NavigationModel(name: UUID().uuidString, selectedPath: NavigationPath())
+            let navigationModel = NavigationModel(path: nil, selectedPath: NavigationPath())
             state.navigationModels.append(navigationModel)
             state.selectedModelId = navigationModel.id
             state.setSelectedPath(a.path)

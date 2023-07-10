@@ -1,180 +1,113 @@
-//@testable import SwiftReduxRouter
-//import XCTest
-//
-//final class StateTests: XCTestCase {
-//    func testNewState() {
-//        let state = NavigationState()
-//
-//        let newState = navigationReducer(
-//            action: NavigationActions.Push(
-//                path: NavigationPath("/whatever"),
-//                target: "whatever"
-//            ),
-//            state: state
-//        )
-//
-//        XCTAssertEqual(newState.sessions.last!.name, "whatever")
-//        XCTAssertEqual(newState.sessions.last!.nextPath.path, "/whatever")
-//        XCTAssertEqual(newState.sessions.last!.selectedPath.path, "")
-//        XCTAssertEqual(state.selectedSessionId, newState.sessions.last!.id)
-//    }
-//
-//    func testUpdateSelectedRoute() throws {
-//        let sessions = [
-//            NavigationSession(
-//                name: "tab1",
-//                path: NavigationPath("/one"),
-//                tab: NavigationTab(
-//                    name: "First",
-//                    icon: "tab_search",
-//                    selectedIcon: "tab_search_selected"
-//                )
-//            ),
-//            NavigationSession(
-//                name: "tab2",
-//                path: NavigationPath("/two"),
-//                tab: NavigationTab(
-//                    name: "Second",
-//                    icon: "tab_favorite",
-//                    selectedIcon: "tab_favorite_selected"
-//                )
-//            ),
-//        ]
-//
-//        var state = NavigationState(sessions: sessions)
-//
-//        let session = state.sessions[0]
-//        XCTAssertNotEqual(state.selectedSessionId, session.id)
-//
-//        XCTAssertEqual(session.nextPath.path, "/one")
-//        XCTAssertEqual(session.presentedPaths.first!.path, "/one")
-//
-//        state = navigationReducer(
-//            action: NavigationActions.Push(
-//                path: NavigationPath("/whatever"),
-//                target: "tab1"
-//            ),
-//            state: state
-//        )
-//        // second tab is now selected
-//        XCTAssertEqual(state.selectedSessionId, session.id)
-//
-//        XCTAssertEqual(state.sessions.count, 2)
-//        XCTAssertEqual(state.sessions[0].nextPath.path, "/whatever")
-//
-//        // Selected path should still not be updated. It should be updated by SetSelectedPath
-//        XCTAssertEqual(state.sessions[0].selectedPath.path, "/one")
-//
-//        // The path should have been added to presented Paths
-//        XCTAssertEqual(state.sessions[0].presentedPaths.count, 2)
-//        XCTAssertEqual(state.sessions[0].presentedPaths.first!.path, "/one")
-//        XCTAssertEqual(state.sessions[0].presentedPaths.last!.path, "/whatever")
-//
-//        state = navigationReducer(
-//            action: NavigationActions.SetSelectedPath(
-//                session: state.sessions[0]
-//            ),
-//            state: state
-//        )
-//        XCTAssertEqual(state.sessions[0].nextPath.path, "/whatever")
-//        XCTAssertEqual(state.sessions[0].selectedPath.path, "/whatever")
-//
-//        // Push a new view to section session
-//        let secondTabSession = state.sessions[1]
-//        state = navigationReducer(
-//            action: NavigationActions.Push(
-//                path: NavigationPath("/nextViewTabTwo"),
-//                target: "tab2"
-//            ),
-//            state: state
-//        )
-//        XCTAssertEqual(state.selectedSessionId, secondTabSession.id)
-//
-//        XCTAssertEqual(state.sessions.count, 2)
-//        XCTAssertEqual(state.sessions[1].nextPath.path, "/nextViewTabTwo")
-//
-//        // Selected path should still not be updated. It should be updated by SetSelectedPath
-//        XCTAssertEqual(state.sessions[1].selectedPath.path, "/two")
-//        // The path should have been added to presented Paths
-//        XCTAssertEqual(state.sessions[1].presentedPaths.count, 2)
-//        XCTAssertEqual(state.sessions[1].presentedPaths.first!.path, "/two")
-//        XCTAssertEqual(state.sessions[1].presentedPaths.last!.path, "/nextViewTabTwo")
-//
-//        // GoBack on the first tab whilte first session is in the background
-//        state = navigationReducer(
-//            action: NavigationActions.GoBack(
-//                target: "tab1",
-//                destination: .back
-//            ),
-//            state: state
-//        )
-//
-//        XCTAssertEqual(state.sessions[0].nextPath.path, ":back")
-//        XCTAssertEqual(state.sessions[0].selectedPath.path, "/whatever")
-//
-//        // This action simulates the action that are made from the router when the back action has been executed
-//        state = navigationReducer(
-//            action: NavigationActions.SetSelectedPath(
-//                session: session
-//            ),
-//            state: state
-//        )
-//        XCTAssertEqual(state.sessions[0].nextPath.path, "/one")
-//        XCTAssertEqual(state.sessions[0].selectedPath.path, "/one")
-//
-//        // The path should have removed all presentedPaths that comes after the nextPath
-//        XCTAssertEqual(state.sessions[0].presentedPaths.count, 1)
-//        XCTAssertEqual(state.sessions[0].presentedPaths.first!.path, "/one")
-//    }
-//
-//    func testPresentView() {
-//        let sessions = [
-//            NavigationSession(
-//                name: "tab1",
-//                path: NavigationPath("/one"),
-//                tab: NavigationTab(
-//                    name: "Annonser",
-//                    icon: "tab_search",
-//                    selectedIcon: "tab_search_selected"
-//                )
-//            ),
-//            NavigationSession(
-//                name: "tab2",
-//                path: NavigationPath("/two"),
-//                tab: NavigationTab(
-//                    name: "Sparade",
-//                    icon: "tab_favorite",
-//                    selectedIcon: "tab_favorite_selected"
-//                )
-//            ),
-//        ]
-//        var state = NavigationState(sessions: sessions)
-//        // Push a new view in a new session (Simulates a presented view)
-//
-//        state = navigationReducer(
-//            action: NavigationActions.Push(
-//                path: NavigationPath("/presented"),
-//                target: "newSession"
-//            ),
-//            state: state
-//        )
-//
-//        XCTAssertEqual(state.sessions.count, 3)
-//
-//        let presentedSession = state.sessions.last!
-//        XCTAssertEqual(presentedSession.nextPath.path, "/presented")
-//        XCTAssertEqual(state.selectedSessionId, presentedSession.id)
-//
-//        // Dismiss the session
-//        state = navigationReducer(
-//            action: NavigationActions.SessionDismissed(
-//                session: presentedSession
-//            ),
-//            state: state
-//        )
-//
-//        XCTAssertEqual(state.sessions.count, 2)
-//        let lastSession = state.sessions.last!
-//        XCTAssertNotEqual(lastSession.id, presentedSession.id)
-//    }
-//}
+@testable import SwiftReduxRouter
+import XCTest
+
+final class StateTests: XCTestCase {
+    func testDeeplinkActions() throws {
+        let navigationModel1 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel1")),
+            selectedPath: NavigationPath(URL(string: "/route/1"))
+        )
+
+        let navigationModel2 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel2")),
+            selectedPath: NavigationPath(URL(string: "/route/2"))
+        )
+
+        let navigationModel3 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel2/awesome")),
+            selectedPath: NavigationPath(URL(string: "/route/2"))
+        )
+
+        let state = NavigationState(navigationModels: [navigationModel1, navigationModel2, navigationModel3])
+
+        let deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigationModel2/route/3")))
+
+        let pushAction = try XCTUnwrap(deeplinkAction.reaction(of: state) as? NavigationActions.Push)
+
+        guard case let NavigationTarget.navigationModel(foundModel, animate: true) = pushAction.target else {
+            return XCTFail("NavigationTarget \(pushAction.target) was not expected")
+        }
+
+        XCTAssertEqual(foundModel.id, navigationModel2.id)
+        XCTAssertEqual(pushAction.path.path, "/route/3")
+    }
+
+    func testPresentNewNavigationModel() throws {
+        let navigationModel1 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel1")),
+            selectedPath: NavigationPath(URL(string: "/route/1"))
+        )
+
+        let navigationModel2 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel2")),
+            selectedPath: NavigationPath(URL(string: "/route/2"))
+        )
+
+        let state = NavigationState(navigationModels: [navigationModel1, navigationModel2])
+
+        let deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/new/route/3")))
+
+        let pushAction = try XCTUnwrap(deeplinkAction.reaction(of: state) as? NavigationActions.Push)
+
+        guard case let NavigationTarget.new(navigationModelPath, type: type) = pushAction.target else {
+            return XCTFail("NavigationTarget \(pushAction.target) was not expected")
+        }
+        XCTAssertNil(navigationModelPath)
+        XCTAssertEqual(type, .regular)
+        XCTAssertEqual(pushAction.path.path, "/new/route/3")
+    }
+
+    func testAlreadyPresentedPath() throws {
+        let navigationModel1 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel1")),
+            selectedPath: NavigationPath(URL(string: "/route/1"))
+        )
+
+        let navigationModel2 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel2")),
+            selectedPath: NavigationPath(URL(string: "/route/2"))
+        )
+
+        let state = NavigationState(navigationModels: [navigationModel1, navigationModel2])
+
+        let deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigationModel2/route/2")))
+
+        let reaction = try XCTUnwrap(deeplinkAction.reaction(of: state) as? NavigationActions.SetSelectedPath)
+        XCTAssertEqual(reaction.navigationModel.id, navigationModel2.id)
+        XCTAssertEqual(try XCTUnwrap(reaction.navigationPath.path), "/route/2")
+    }
+
+    func testNoFurtherURL() throws {
+        let navigationModel1 = NavigationModel.createInitModel(
+            path: NavigationPath(URL(string: "/navigationModel1")),
+            selectedPath: NavigationPath(URL(string: "/route"))
+        )
+
+        let state = NavigationState(navigationModels: [navigationModel1])
+
+        var deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigationModel1")))
+
+        let action = try XCTUnwrap(deeplinkAction.reaction(of: state) as? NavigationActions.Push)
+
+        XCTAssertEqual(action.path.path, "/navigationModel1")
+
+        // Test can handle no url
+        deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com")))
+        XCTAssertNil(deeplinkAction.reaction(of: state))
+    }
+
+    func testCanCreateNavigationBasedOnNavigationModelRoute() throws {
+        let state = NavigationState(navigationModels: [], navigationModelRoutes: [NavigationRoute("/navigation1"), NavigationRoute("/navigation2")])
+
+        let deeplinkAction = try XCTUnwrap(NavigationActions.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigation2/awesome")))
+
+        let action = try XCTUnwrap(deeplinkAction.reaction(of: state) as? NavigationActions.Push)
+
+        guard case let NavigationTarget.new(navigationModelPath, type: type) = action.target else {
+            return XCTFail("NavigationTarget \(action.target) was not expected")
+        }
+        XCTAssertEqual(try XCTUnwrap(navigationModelPath).path, "/navigation2")
+        XCTAssertEqual(type, .regular)
+        XCTAssertEqual(action.path.path, "/awesome")
+    }
+}
