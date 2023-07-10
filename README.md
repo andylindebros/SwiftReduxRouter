@@ -136,6 +136,11 @@ extension NavigationActions.SetSelectedPath: Action {}
 extension NavigationActions.Dismiss: Action {}
 extension NavigationActions.NavigationDismissed: Action {}
 extension NavigationActions.Push: Action {}
+extension NavigationActions.Present: Action {}
+extension NavigationActions.SelectTab: Action {}
+extension NavigationActions.SetBadgeValue: Action {}
+extension NavigationActions.Replace: Action {}
+extension NavigationActions.Deeplink: Action {}
 ```
 1. Add a init navigationState to your store.
 
