@@ -4,12 +4,10 @@ SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlle
 
 ![Demo](https://github.com/andylindebros/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 
-It is written in for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView written for SwiftUI usage. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
-The routerVIew still uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
+It is written for SwiftUI apps based on a Redux pattern. This Router provides a NavigationState and a RouterView backed with UIKit. The NavigationState controls the navigation and you can easily go back and forth in the action history and the RouterView will navigate to a route.
+The routerView uses the UINavigationController in the background since the current SwiftUI NavigationView does not provide necessary methods to make it work.
 
-
-This package provides a Navigation State, reducer and Actions together with the
-`RouterView` written with SwiftUI backed with UIKit.
+This package also provides a nessecary actions to use to changed the navigation state.
 
 ## Install with Swift Package Manager
 
@@ -21,7 +19,7 @@ dependencies: [
 ```
 
 ## Implementation
-In this example we use [ReSwift](https://github.com/ReSwift/ReSwift) but you can integrate `SwiftReduxRouter` with any redux app you want.
+In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRedux) but you can integrate `SwiftReduxRouter` with any redux app you want.
 
 1. Add the NavigationState object to your Redux State.
 
@@ -225,7 +223,7 @@ Supported dynamic parameters are:
 - path - `somepath/<path:mypath>` will match everything after `somepath/`
 
 ## TabBar or a single UINavigationController
-If you set the tab property of the NavigatoinModel in the init state, the RouterView will render a UITabBar.
+If you set the tab property of the NavigationModel in the init state, the RouterView will render a UITabBar.
 
 ## Presenting views.
 A view gets presented by setting the navigationTarget to NavigationTarget.new(). 
@@ -246,7 +244,7 @@ Route(
             .navigationTitle("\(presentedName)")
             .navigationBarItems(trailing: Button(action: {
                 dispatch(
-                    NavigationAction.Dismiss(navigationModel: navigationModel)
+                    NavigationAction.dismiss(navigationModel)
                 )
             }) {
                 Text(navigationModel.tab == nil ? "Close" : "")
