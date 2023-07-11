@@ -114,7 +114,7 @@ final class DeeplinkTests: XCTestCase {
     }
 
     func testCanCreateNavigationBasedOnNavigationModelRoute() throws {
-        let state = NavigationState(navigationModels: [], navigationModelRoutes: [NavigationRoute("/navigation1"), NavigationRoute("/navigation2")])
+        let state = NavigationState(navigationModels: [], availableNavigationModelRoutes: [NavigationRoute("/navigation1"), NavigationRoute("/navigation2")])
 
         let deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigation2/awesome")))
 

@@ -76,7 +76,7 @@ struct ContentView: View {
                                 Button(action: {
                                     dispatch(
                                         NavigationAction.add(
-                                            path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
+                                            path: NavigationPath.create("/page/\(next)")!,
                                             to: navigationModel.name
                                         )
                                     )
@@ -161,7 +161,7 @@ extension AppState {
                         )
                     ),
                 ],
-                navigationModelRoutes: [
+                availableNavigationModelRoutes: [
                     NavigationRoute("/standalone"),
                 ]
             )

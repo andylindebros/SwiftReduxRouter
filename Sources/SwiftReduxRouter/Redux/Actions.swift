@@ -89,7 +89,7 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
             } else {
                 // Push new path to known navigationModel (found in navigation routes)
                 if
-                    let pattern = URLMatcher().match(url.path, from: state.navigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
+                    let pattern = URLMatcher().match(url.path, from: state.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
                     let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
                 {
                     return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular))

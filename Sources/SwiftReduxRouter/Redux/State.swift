@@ -3,10 +3,10 @@ import Foundation
 // MARK: State
 
 public final class NavigationState: ObservableObject, Codable {
-    public init(navigationModels: [NavigationModel]? = nil, navigationModelRoutes: [NavigationRoute] = []) {
+    public init(navigationModels: [NavigationModel]? = nil, availableNavigationModelRoutes: [NavigationRoute] = []) {
         selectedModelId = UUID()
         rootSelectedModelID = UUID()
-        self.navigationModelRoutes = navigationModelRoutes
+        self.availableNavigationModelRoutes = availableNavigationModelRoutes
 
         if let navigationModels = navigationModels {
             self.navigationModels = navigationModels.map { navigationModel in
@@ -27,7 +27,7 @@ public final class NavigationState: ObservableObject, Codable {
         selectedModelId = try values.decode(UUID.self, forKey: .selectedModelId)
         rootSelectedModelID = try values.decode(UUID.self, forKey: .rootSelectedModelID)
         navigationModels = try values.decode([NavigationModel].self, forKey: .navigationModels)
-        navigationModelRoutes = try values.decode([NavigationRoute].self, forKey: .navigationModelRoutes)
+        availableNavigationModelRoutes = try values.decode([NavigationRoute].self, forKey: .availableNavigationModelRoutes)
         availableRoutes = try values.decode([NavigationRoute].self, forKey: .availableRoutes)
     }
 
@@ -38,12 +38,12 @@ public final class NavigationState: ObservableObject, Codable {
     /// Available navigationModels. Tab navigationModels are defined here.
     @Published public private(set) var navigationModels = [NavigationModel]()
 
-    public let navigationModelRoutes: [NavigationRoute]
+    public let availableNavigationModelRoutes: [NavigationRoute]
 
     private(set) var availableRoutes: [NavigationRoute] = []
 
     enum CodingKeys: CodingKey {
-        case selectedModelId, navigationModels, rootSelectedModelID, navigationModelRoutes, availableRoutes
+        case selectedModelId, navigationModels, rootSelectedModelID, availableNavigationModelRoutes, availableRoutes
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -51,7 +51,7 @@ public final class NavigationState: ObservableObject, Codable {
         try container.encode(navigationModels, forKey: .navigationModels)
         try container.encode(selectedModelId, forKey: .selectedModelId)
         try container.encode(rootSelectedModelID, forKey: .rootSelectedModelID)
-        try container.encode(navigationModelRoutes, forKey: .navigationModelRoutes)
+        try container.encode(availableNavigationModelRoutes, forKey: .availableNavigationModelRoutes)
         try container.encode(availableRoutes, forKey: .availableRoutes)
     }
 }

@@ -73,7 +73,7 @@ extension AppState {
                         )
                     ),
                 ],
-                navigationModelRoutes: [
+                availableNavigationModelRoutes: [
                     NavigationRoute("/tab3"),
                 ]
             )
