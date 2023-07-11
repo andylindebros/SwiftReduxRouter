@@ -3,17 +3,6 @@ import Foundation
 // MARK: State
 
 public final class NavigationState: ObservableObject, Codable {
-    // MARK: Published vars
-
-    /// Active navigationModel. It can only be one sessin at the time
-    @Published public private(set) var selectedModelId: UUID
-    @Published public private(set) var rootSelectedModelID: UUID
-
-    /// Available navigationModels. Tab navigationModels are defined here.
-    @Published public private(set) var navigationModels = [NavigationModel]()
-
-    public let navigationModelRoutes: [NavigationRoute]
-
     public init(navigationModels: [NavigationModel]? = nil, navigationModelRoutes: [NavigationRoute] = []) {
         selectedModelId = UUID()
         rootSelectedModelID = UUID()
@@ -39,10 +28,22 @@ public final class NavigationState: ObservableObject, Codable {
         rootSelectedModelID = try values.decode(UUID.self, forKey: .rootSelectedModelID)
         navigationModels = try values.decode([NavigationModel].self, forKey: .navigationModels)
         navigationModelRoutes = try values.decode([NavigationRoute].self, forKey: .navigationModelRoutes)
+        availableRoutes = try values.decode([NavigationRoute].self, forKey: .availableRoutes)
     }
 
+    /// Active navigationModel. It can only be one sessin at the time
+    @Published public private(set) var selectedModelId: UUID
+    @Published public private(set) var rootSelectedModelID: UUID
+
+    /// Available navigationModels. Tab navigationModels are defined here.
+    @Published public private(set) var navigationModels = [NavigationModel]()
+
+    public let navigationModelRoutes: [NavigationRoute]
+
+    private(set) var availableRoutes: [NavigationRoute] = []
+
     enum CodingKeys: CodingKey {
-        case selectedModelId, navigationModels, rootSelectedModelID, navigationModelRoutes
+        case selectedModelId, navigationModels, rootSelectedModelID, navigationModelRoutes, availableRoutes
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -51,6 +52,7 @@ public final class NavigationState: ObservableObject, Codable {
         try container.encode(selectedModelId, forKey: .selectedModelId)
         try container.encode(rootSelectedModelID, forKey: .rootSelectedModelID)
         try container.encode(navigationModelRoutes, forKey: .navigationModelRoutes)
+        try container.encode(availableRoutes, forKey: .availableRoutes)
     }
 }
 
@@ -73,58 +75,66 @@ public extension NavigationState {
     }
 }
 
+extension NavigationState {
+    func setAvailableRoutes(_ availableRoutes: [NavigationRoute]) {
+        self.availableRoutes = availableRoutes
+    }
+}
+
 // MARK: Reducer
 
 public extension NavigationState {
     @MainActor static func reducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
         let state = state ?? NavigationState()
 
-        switch action {
-        case let a as NavigationActions.SetBadgeValue:
+        if let action = action as? NavigationJumpStateAction {
+            state.navigationModels = action.navigationState.navigationModels
+            state.selectedModelId = action.navigationState.selectedModelId
+            state.rootSelectedModelID = action.navigationState.rootSelectedModelID
+            return state
+        }
+
+        switch action as? NavigationAction {
+        case let .setBadgeValue(to: badgeValue, withModelID: navigationModelID, withColor: color):
             guard
-                let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == a.navigationModelID }),
-                var tab = state.navigationModels.first(where: { $0.id == a.navigationModelID })?.tab
+                let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == navigationModelID }),
+                var tab = state.navigationModels.first(where: { $0.id == navigationModelID })?.tab
             else {
                 return state
             }
-            tab.badgeValue = a.badgeValue
+            tab.badgeValue = badgeValue
             #if canImport(UIKit)
-                if let color = a.color {
+                if let color = color {
                     tab.badgeColor = color
                 }
             #endif
             state.navigationModels[navigationModelIndex].tab = tab
 
-        case let a as NavigationActions.UpdateIcon:
-            guard let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == a.navigationModelID })
+        case let .setIcon(to: iconName, withModelID: navigationModelID):
+            guard let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == navigationModelID })
             else {
                 return state
             }
-            state.navigationModels[navigationModelIndex].tab?.icon = .system(name: a.iconName)
+            state.navigationModels[navigationModelIndex].tab?.icon = .system(name: iconName)
 
-        case let a as NavigationJumpStateAction:
-            state.navigationModels = a.navigationState.navigationModels
-            state.selectedModelId = a.navigationState.selectedModelId
-            state.rootSelectedModelID = a.navigationState.rootSelectedModelID
-
-        case let a as NavigationActions.SetSelectedPath:
-            if let index = state.navigationModels.firstIndex(where: { $0.id == a.navigationModel.id }) {
-                state.navigationModels[index].selectedPath = a.navigationPath
+        case let .setSelectedPath(to: navigationPath, in: navigationModel):
+            if let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
+                state.navigationModels[index].selectedPath = navigationPath
                 if state.navigationModels[index].animate {
                     state.navigationModels[index].animate = true
                 }
                 state.selectedModelId = state.navigationModels[index].id
 
-                if !a.navigationModel.isPresented {
-                    state.rootSelectedModelID = a.navigationModel.id
+                if !navigationModel.isPresented {
+                    state.rootSelectedModelID = navigationModel.id
                 }
 
                 // Remove all indexes that comes after current path
                 state.removeRedundantPaths(at: index)
             }
 
-        case let a as NavigationActions.Dismiss:
-            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == a.navigationModel.id }) {
+        case let .dismiss(navigationModel):
+            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
                 state.navigationModels.remove(at: index)
 
                 if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
@@ -134,8 +144,12 @@ public extension NavigationState {
                 }
             }
 
-        case let a as NavigationActions.Push:
-            switch a.target {
+        case let .add(path: navigationPath, to: target):
+            guard let url = navigationPath.url, URLMatcher().match(url, from: state.availableRoutes.map { $0.path }) != nil else {
+                print("⚠️ Cannot add \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route")
+                return state
+            }
+            switch target {
             case let .current(animate):
                 guard
                     let index = state.navigationModels.firstIndex(where: { $0.id == state.selectedModelId })
@@ -163,16 +177,10 @@ public extension NavigationState {
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id
             }
-            state.setSelectedPath(a.path)
+            state.setSelectedPath(navigationPath)
 
-        case let a as NavigationActions.Present:
-            let navigationModel = NavigationModel(path: nil, selectedPath: NavigationPath())
-            state.navigationModels.append(navigationModel)
-            state.selectedModelId = navigationModel.id
-            state.setSelectedPath(a.path)
-
-        case let a as NavigationActions.NavigationDismissed:
-            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == a.navigationModel.id }) {
+        case let .setNavigationDismsissed(navigationModel):
+            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
                 state.navigationModels.remove(at: index)
 
                 if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
@@ -182,20 +190,21 @@ public extension NavigationState {
                 }
             }
 
-        case let a as NavigationActions.SelectTab:
-            if let navigationModel = state.navigationModels.first(where: { !$0.isPresented && $0.id == a.id }) {
+        case let .selectTab(by: navigationModelID):
+            if let navigationModel = state.navigationModels.first(where: { !$0.isPresented && $0.id == navigationModelID }) {
                 state.rootSelectedModelID = navigationModel.id
             }
 
-        case let a as NavigationActions.Replace:
+        case let .replace(path: path, with: newPath, in: navigationModel):
+
             guard
-                let index = state.navigationModels.firstIndex(where: { $0.id == a.navigationModel.id }),
-                let currentPathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == a.path.id })
+                let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
+                let currentPathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id })
             else {
                 return state
             }
 
-            state.navigationModels[index].presentedPaths[currentPathIndex] = a.newPath
+            state.navigationModels[index].presentedPaths[currentPathIndex] = newPath
             state.navigationModels[index].animate = false
 
         default:

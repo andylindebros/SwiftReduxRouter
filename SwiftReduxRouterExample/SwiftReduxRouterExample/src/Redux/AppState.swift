@@ -4,15 +4,7 @@ import ReduxMonitor
 @preconcurrency import SwiftReduxRouter
 import SwiftUIRedux
 
-extension NavigationActions.SetSelectedPath: Action {}
-extension NavigationActions.Dismiss: Action {}
-extension NavigationActions.NavigationDismissed: Action {}
-extension NavigationActions.Push: Action {}
-extension NavigationActions.Present: Action {}
-extension NavigationActions.SelectTab: Action {}
-extension NavigationActions.SetBadgeValue: Action {}
-extension NavigationActions.Replace: Action {}
-extension NavigationActions.Deeplink: Action {}
+extension NavigationAction: Action {}
 
 /// The state of the app
 struct AppState: Codable {

@@ -56,28 +56,16 @@ public protocol UIRouteViewController: UIViewController {
     var navigationPath: NavigationPath? { get set }
 }
 
-public struct Wrapper<Content: View>: View {
-    let hideNavigationBar: Bool
-    @ViewBuilder let content: () -> Content
 
-    public var body: some View {
-        content().navigationBarHidden(hideNavigationBar)
-    }
-}
-
-public final class RouteViewController<Content: View>: UIHostingController<Wrapper<Content>>, UIRouteViewController {
+public final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     public init(
         rootView: Content,
         navigationModel: NavigationModel? = nil,
-        navigationPath: NavigationPath? = nil,
-        hideNavigationBar: Bool = false,
-        title: String? = nil
+        navigationPath: NavigationPath? = nil
     ) {
         self.navigationModel = navigationModel
         self.navigationPath = navigationPath
-        self.hideNavigationBar = hideNavigationBar
-        super.init(rootView: Wrapper(hideNavigationBar: hideNavigationBar) { rootView })
-        self.title = title
+        super.init(rootView: rootView )
     }
 
     @available(*, unavailable)
@@ -87,19 +75,5 @@ public final class RouteViewController<Content: View>: UIHostingController<Wrapp
 
     public var navigationModel: NavigationModel?
     public var navigationPath: NavigationPath?
-
-    public var hideNavigationBar: Bool
-
-    override public func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        guard hideNavigationBar else { return }
-        navigationController?.setNavigationBarHidden(hideNavigationBar, animated: animated)
-    }
-
-    override public func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        guard hideNavigationBar else { return }
-        navigationController?.setNavigationBarHidden(false, animated: animated)
-    }
 }
 #endif

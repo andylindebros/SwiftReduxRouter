@@ -22,15 +22,25 @@ struct ContentView: View {
             routes: [
                 RouterView.Route(
                     paths: [
-                        NavigationRoute("/hello")
+                        .init("/custom"),
                     ],
-                    render: { path, navigationModel, params in
+                    render: { _, _, _ in
+                        HiddenNavigationBarViewController(rootView: VStack {
+                            Text("Custom")
+                        })
+                    }
+                ),
+                RouterView.Route(
+                    paths: [
+                        NavigationRoute("/hello"),
+                    ],
+                    render: { _, _, _ in
                         RouteViewController(rootView: Text("/hello"))
                     }
                 ),
                 RouterView.Route(
                     paths: Self.navigationRoutes,
-                    render: { path, navigationModel, params in
+                    render: { _, navigationModel, params in
                         let presentedName = params?["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return RouteViewController(rootView:
@@ -46,7 +56,7 @@ struct ContentView: View {
                                                 .foregroundColor(.black)
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.Push(
+                                                    NavigationAction.add(
                                                         path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                                                         to: .current()
                                                     )
@@ -56,10 +66,10 @@ struct ContentView: View {
                                             }
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.SelectTab(by: AppState.tabOne)
+                                                    NavigationAction.selectTab(by: AppState.tabOne)
                                                 )
                                                 dispatch(
-                                                    NavigationActions.Push(
+                                                    NavigationAction.add(
                                                         path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
                                                         to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabOne })!)
                                                     )
@@ -70,10 +80,10 @@ struct ContentView: View {
 
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.SelectTab(by: AppState.tabTwo)
+                                                    NavigationAction.selectTab(by: AppState.tabTwo)
                                                 )
                                                 dispatch(
-                                                    NavigationActions.Push(
+                                                    NavigationAction.add(
                                                         path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
                                                         to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
                                                     )
@@ -85,8 +95,9 @@ struct ContentView: View {
 
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.Present(
-                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!
+                                                    NavigationAction.add(
+                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                        to: .new()
                                                     )
                                                 )
                                             }) {
@@ -94,8 +105,9 @@ struct ContentView: View {
                                             }
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.Present(
-                                                        path: NavigationPath()
+                                                    NavigationAction.add(
+                                                        path: NavigationPath(),
+                                                        to: .new()
                                                     )
                                                 )
                                             }) {
@@ -104,18 +116,27 @@ struct ContentView: View {
                                         }
                                         VStack {
                                             Button(action: {
-                                                dispatch(NavigationActions.SetBadgeValue(of: navigationModel.id, withValue: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) - 1)", withColor: [.red, .blue, .yellow, .purple, .green].randomElement()))
+                                                dispatch(NavigationAction.setBadgeValue(
+                                                    to: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) - 1)",
+                                                    withModelID: navigationModel.id,
+                                                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
+                                                ))
                                             }) {
                                                 Text("Decrease badgeValue")
                                             }
                                             Button(action: {
-                                                dispatch(NavigationActions.SetBadgeValue(of: navigationModel.id, withValue: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) + 1)", withColor: [.red, .blue, .yellow, .purple, .green].randomElement()))
+                                                dispatch(NavigationAction.setBadgeValue(
+                                                    to: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) + 1)",
+
+                                                    withModelID: navigationModel.id,
+                                                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
+                                                ))
                                             }) {
                                                 Text("Increase badgeValue")
                                             }
 
                                             Button(action: {
-                                                dispatch(NavigationActions.SetBadgeValue(of: navigationModel.id, withValue: nil, withColor: nil))
+                                                dispatch(NavigationAction.setBadgeValue(to: nil, withModelID: navigationModel.id, withColor: nil))
                                             }) {
                                                 Text("Reset badge")
                                             }
@@ -123,7 +144,7 @@ struct ContentView: View {
                                         VStack {
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationActions.Push(
+                                                    NavigationAction.add(
                                                         path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                                                         to: .current(animate: false)
                                                     )
@@ -137,7 +158,7 @@ struct ContentView: View {
                                                     return
                                                 }
                                                 dispatch(
-                                                    NavigationActions.Replace(
+                                                    NavigationAction.replace(
                                                         path: currentNavModel.selectedPath,
                                                         with: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                                                         in: currentNavModel
@@ -156,7 +177,7 @@ struct ContentView: View {
                             .navigationTitle("\(presentedName)")
                             .navigationBarItems(trailing: Button(action: {
                                 dispatch(
-                                    NavigationActions.Dismiss(navigationModel: navigationModel)
+                                    NavigationAction.dismiss(navigationModel)
                                 )
                             }) {
                                 Text(navigationModel.tab == nil ? "Close" : "")
@@ -168,18 +189,18 @@ struct ContentView: View {
                 ),
                 RouterView.Route(
                     paths: [NavigationRoute("default")],
-                    render: { navigationPath, navigationModel, _ in
-                        return RouteViewController(rootView: Text("Not found"))
+                    render: { _, _, _ in
+                        RouteViewController(rootView: Text("Not found"))
                     },
                     defaultRoute: true
                 ),
             ],
             tintColor: .red,
             setSelectedPath: { navigationModel, navigationPath in
-                dispatch(NavigationActions.SetSelectedPath(navigationModel: navigationModel, navigationPath: navigationPath))
+                dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
             },
             onDismiss: { navigationModel in
-                dispatch(NavigationActions.NavigationDismissed(navigationModel: navigationModel))
+                dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
             }
         )
         .edgesIgnoringSafeArea(.all)

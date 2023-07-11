@@ -1,148 +1,63 @@
 import Foundation
+import SwiftUI
 #if os(iOS)
     import UIKit
 #else
     import AppKit
 #endif
 
-public protocol NavigationAction: Codable, CustomLogging, Sendable {}
+public protocol NavigationActionProvider: Codable, CustomLogging, Sendable {}
 
 public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
 
-public enum NavigationActions {
-    public struct UpdateIcon: NavigationAction {
-        public init(navigationModelID: UUID, iconName: String) {
-            self.navigationModelID = navigationModelID
-            self.iconName = iconName
-        }
+public enum NavigationAction: Equatable, NavigationActionProvider {
+    case add(path: NavigationPath, to: NavigationTarget)
+    case dismiss(NavigationModel)
+    case setSelectedPath(to: NavigationPath, in: NavigationModel)
+    case setNavigationDismsissed(NavigationModel)
+    case selectTab(by: UUID)
+    case replace(path: NavigationPath, with: NavigationPath, in: NavigationModel)
+    case setIcon(to: String, withModelID: UUID)
+    #if canImport(UIKit)
+        case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
+    #else
+        case setBadgeValue(to: String?, withModelID: UUID, withColor: String? = nil)
+    #endif
+    case deeplink(Deeplink)
 
-        public var navigationModelID: UUID
-        public var iconName: String
-    }
+    public var description: String {
+        let desc = "\(type(of: self))"
+        switch self {
+        case let .add(path: path, to: target):
+            return "\(desc).add path: \(path.path ?? path.id.uuidString), to: \(target)"
+        case let .dismiss(model):
+            return "\(desc).dismiss \(model)"
+        case let .setSelectedPath(to: path, in: model):
+            return "\(desc).setSelectedPath to: \(path.path ?? path.id.uuidString) in: \(model)"
+        case let .setNavigationDismsissed(model):
+            return "\(desc).setNavigationDismsissed \(model)"
+        case let .selectTab(by: id):
+            return "\(desc).selectTab by: \(id)"
+        case let .replace(path: path, with: newPath, in: model):
+            return "\(desc).replace path: \(path.path ?? path.id.uuidString) with newPath: \(newPath.path ?? path.id.uuidString) in: \(model)"
+        case let .setIcon(to: value, withModelID: modelID):
+            return "\(desc).setIcon to: \(value) withModelID: \(modelID.uuidString)"
 
-    public struct SetBadgeValue: NavigationAction {
-        #if canImport(UIKit)
-            public init(of navigationModelID: UUID, withValue badgeValue: String?, withColor color: UIColor? = nil) {
-                self.navigationModelID = navigationModelID
-                self.badgeValue = badgeValue
-                self.color = color
-            }
-        #else
-            public init(of navigationModelID: UUID, withValue badgeValue: String?) {
-                self.navigationModelID = navigationModelID
-                self.badgeValue = badgeValue
-            }
-        #endif
-        public let navigationModelID: UUID
-        public let badgeValue: String?
-        #if canImport(UIKit)
-            public let color: UIColor?
-        #endif
-    }
+        case let .setBadgeValue(to: value, withModelID: modelID, withColor: _):
+            return "\(desc).setBadgeValue to: \(value ?? "") withModelID: \(modelID.uuidString)"
 
-    /// Action that will push the next view. Dispatch this action if you will present or push a view.
-    public struct Push: NavigationAction {
-        /// The path of the route that will be pushed
-        public var path: NavigationPath
-
-        /// Define the session that the path will be pushed to.
-        public var target: NavigationTarget
-
-        public init(path: NavigationPath, to target: NavigationTarget) {
-            self.path = path
-            self.target = target
-        }
-
-        public var description: String {
-            "\(type(of: self)) path '\(path.path ?? "")' to target '\(target)'"
+        case let .deeplink(deeplink):
+            return "\(desc).deeplink with url: \(deeplink.url.path)"
         }
     }
 
-    public struct Present: NavigationAction {
-        public var path: NavigationPath
-
-        public init(path: NavigationPath) {
-            self.path = path
-        }
-
-        public var description: String {
-            "\(type(of: self)) path '\(path.path ?? "")'"
-        }
-    }
-
-    public struct Dismiss: NavigationAction {
-        public init(navigationModel: NavigationModel) {
-            self.navigationModel = navigationModel
-        }
-
-        public var navigationModel: NavigationModel
-
-        public var description: String {
-            "\(type(of: self)) session '\(navigationModel.path?.path ?? navigationModel.id.uuidString)'"
-        }
-    }
-
-    /// Action that defines what View that are actually displayed
-    public struct SetSelectedPath: NavigationAction {
-        /// The session that is presenting the view
-        public var navigationModel: NavigationModel
-        public var navigationPath: NavigationPath
-
-        public init(navigationModel: NavigationModel, navigationPath: NavigationPath) {
-            self.navigationModel = navigationModel
-            self.navigationPath = navigationPath
-        }
-
-        public var description: String {
-            "\(type(of: self)) \(navigationPath.path ?? "") for target '\(navigationModel.path?.path ?? navigationModel.id.uuidString)'"
-        }
-    }
-
-    /// Action that dismisses a presented view
-    public struct NavigationDismissed: NavigationAction {
-        /// The session that should dismiss the view
-        public var navigationModel: NavigationModel
-
-        public init(navigationModel: NavigationModel) {
-            self.navigationModel = navigationModel
-        }
-
-        public var description: String {
-            "\(type(of: self)) with target: \(navigationModel.path?.path ?? navigationModel.id.uuidString)"
-        }
-    }
-
-    public struct SelectTab: NavigationAction {
-        public var id: UUID
-
-        public init(by id: UUID) {
-            self.id = id
-        }
-
-        public var description: String {
-            "\(type(of: self)) id: \(id.uuidString)"
-        }
-    }
-
-    public struct Replace: NavigationAction {
-        public let path: SwiftReduxRouter.NavigationPath
-        public let newPath: SwiftReduxRouter.NavigationPath
-        public let navigationModel: NavigationModel
-
-        public init(path: SwiftReduxRouter.NavigationPath, with newPath: SwiftReduxRouter.NavigationPath, in navigationModel: NavigationModel) {
-            self.path = path
-            self.newPath = newPath
-            self.navigationModel = navigationModel
-        }
-
-        public var description: String {
-            "\(type(of: self)) path: \(navigationModel.path?.path ?? "")\(path.path ?? "") with \(newPath.path ?? "")"
-        }
-    }
-
-    public struct Deeplink: Codable, CustomLogging, Sendable {
+    /**
+     Provides actions for a URL depending on the NavigationState
+     - parameter url: The url to change the state with
+     */
+    public struct Deeplink: Equatable, NavigationActionProvider {
         public init?(with url: URL?) {
             guard let url = url else { return nil }
             self.url = url
@@ -150,23 +65,26 @@ public enum NavigationActions {
 
         let url: URL
 
-        public func action(for state: NavigationState) -> NavigationAction? {
+        public var description: String {
+            "\(type(of: self))(url: \(url.path))"
+        }
+        public func action(for state: NavigationState) -> NavigationActionProvider? {
             if let model = findNavigationModel(in: state) {
                 let newURL = URL(string: url.path.replacingOccurrences(of: model.path?.url?.absoluteString ?? "", with: ""))
 
                 // Select: URL has a excat match
                 if newURL == model.selectedPath.url || url.path == model.path?.url?.absoluteString {
-                    return NavigationActions.SetSelectedPath(navigationModel: model, navigationPath: model.selectedPath)
+                    return NavigationAction.setSelectedPath(to: model.selectedPath, in: model)
                 }
 
                 if let newURL = newURL {
                     // Found and select already mathing path in model
                     if let foundPath = model.presentedPaths.first(where: { $0.path == newURL.absoluteString }) {
-                        return NavigationActions.SetSelectedPath(navigationModel: model, navigationPath: foundPath)
+                        return NavigationAction.setSelectedPath(to: foundPath, in: model)
                     }
 
                     // Present new path to found model
-                    return NavigationActions.Push(path: NavigationPath(newURL), to: .navigationModel(model, animate: true))
+                    return NavigationAction.add(path: NavigationPath(newURL), to: .navigationModel(model, animate: true))
                 }
             } else {
                 // Push new path to known navigationModel (found in navigation routes)
@@ -174,11 +92,11 @@ public enum NavigationActions {
                     let pattern = URLMatcher().match(url.path, from: state.navigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
                     let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
                 {
-                    return NavigationActions.Push(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular))
+                    return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular))
 
                     // push to new navigationModel
                 } else if let newPath = NavigationPath.create(URL(string: url.path)) {
-                    return NavigationActions.Push(path: newPath, to: .new())
+                    return NavigationAction.add(path: newPath, to: .new())
                 }
                 return nil
             }

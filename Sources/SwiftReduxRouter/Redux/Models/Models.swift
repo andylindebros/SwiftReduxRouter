@@ -3,10 +3,21 @@ import Foundation
     import UIKit
 #endif
 
-public enum NavigationTarget: Equatable, Codable, Sendable {
+public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
+
+    public var description: String {
+        switch self {
+        case let .new(path, type):
+            return ".new(\(path?.path ?? "")\(type != .regular ? " \(type)" : ""))"
+        case .navigationModel:
+            return ".navigationModel"
+        case .current:
+            return ".current"
+        }
+    }
 }
 
 public enum PresentationType: Equatable, Codable, Sendable {
@@ -37,34 +48,31 @@ public struct NavigationRoute: Codable, Sendable {
             }
         }
         guard let url = URL(string: parameters.joined(separator: "/")) else { return nil }
-        return NavigationPath(url)
+        return NavigationPath.create(url)
     }
 }
 
 public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
     public var id: UUID
     public var url: URL?
-    public var hideNavigationBar: Bool
-    public var title: String?
 
-    public init(id: UUID = UUID(), _ url: URL? = nil, hideNavigationBar: Bool = false, title: String? = nil) {
+    public init(id: UUID = UUID(), _ url: URL? = nil) {
         self.id = id
         self.url = url
-        self.hideNavigationBar = hideNavigationBar
-        self.title = title
-    }
-
-    public func pushAction(to target: NavigationTarget) -> NavigationActions.Push {
-        return NavigationActions.Push(path: self, to: target)
     }
 
     public var path: String? {
         url?.path
     }
 
-    public static func create(_ url: URL?, hideNavigationBar: Bool = false, title: String? = nil) -> NavigationPath? {
+    public static func create(_ urlString: String) -> NavigationPath? {
+        guard let url = URL(string: urlString) else { return nil }
+        return NavigationPath(url)
+    }
+
+    public static func create(_ url: URL?) -> NavigationPath? {
         guard let url = url else { return nil }
-        return NavigationPath(url, hideNavigationBar: hideNavigationBar, title: title)
+        return NavigationPath(url)
     }
 }
 

@@ -64,7 +64,7 @@ struct ContentView: View {
             navigationState: navigationState,
             routes: [
                 RouterView.Route(
-                    paths: [NavigationRoute("hello/<int:name>")],
+                    paths: [NavigationRoute("page/<int:name>")],
                     render: { navigationModel, params in
                         let presentedName = params["name"] as? Int ?? 0
                         let next = presentedName + 1
@@ -75,10 +75,10 @@ struct ContentView: View {
                                     .foregroundColor(.black)
                                 Button(action: {
                                     dispatch(
-                                        NavigationActions.Push(
+                                        NavigationAction.add(
                                             path: Self.navigationRoute.reverse(params: ["name": "\(next)"])!,
-                                            target: navigationModel.name
-                                        ) as! Action
+                                            to: navigationModel.name
+                                        )
                                     )
                                 }) {
                                     Text("Push \(next) to current navigationModel").foregroundColor(.black)
@@ -90,10 +90,10 @@ struct ContentView: View {
             ],
             tintColor: .red,
             setSelectedPath: { navigationModel, navigationPath in
-                dispatch(NavigationActions.SetSelectedPath(navigationModel: navigationModel, navigationPath: navigationPath))
+                dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
             },
             onDismiss: { navigationModel in
-                dispatch(NavigationActions.NavigationDismissed(navigationModel: navigationModel))
+                dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
             }
         )
     }
@@ -118,8 +118,9 @@ struct SwiftReduxRouterExampleApp: App {
             // You can let the SwiftReduxRouter handle deep links by using the modifier `onOpenURL`
             .onOpenURL { incomingURL in
                 DispatchQueue.main.async {
-                    guard let deeplink = NavigationActions.Deeplink(with: incomingURL) else { return }
-                    store.dispatch(deeplink.action(for: store.state.navigation)
+                    guard let deeplinkAction = NavigationAction.Deeplink(with: incomingURL)?.action(for: store.state.navigation) else { return }
+
+                    store.dispatch(deeplinkAction)
                 }
             }
         }
@@ -127,20 +128,13 @@ struct SwiftReduxRouterExampleApp: App {
 }
 ```
 
-1. In AppState.swift, extend NavigationActions so they conform to ReSwift.Action.
+1. In AppState.swift, extend NavigationAction so they conform to ReSwift.Action.
 ``` Swift
 import SwiftUIRedux
 import SwiftReduxRouter
 
-extension NavigationActions.SetSelectedPath: Action {}
-extension NavigationActions.Dismiss: Action {}
-extension NavigationActions.NavigationDismissed: Action {}
-extension NavigationActions.Push: Action {}
-extension NavigationActions.Present: Action {}
-extension NavigationActions.SelectTab: Action {}
-extension NavigationActions.SetBadgeValue: Action {}
-extension NavigationActions.Replace: Action {}
-extension NavigationActions.Deeplink: Action {}
+extension NavigationAction: Action {}
+
 ```
 1. Add a init navigationState to your store.
 
@@ -152,7 +146,7 @@ extension AppState {
                 navigationModels: [
                     NavigationModel.createInitModel(
                         path: NavigationPath("/andylindebros/SwiftReduxRouter/tab1"),
-                        selectedPath: NavigationPath("/hello/1"),
+                        selectedPath: NavigationPath("/page/1"),
                         tab: NavigationTab(
                             name: "First Tab",
                             icon: NavigationTab.Icon.system(name: "star.fill")
@@ -160,7 +154,7 @@ extension AppState {
                     ),
                     NavigationModel.createInitModel(
                         path: NavigationPath("/andylindebros/SwiftReduxRouter/tab2"),
-                        selectedPath: NavigationPath("/hello/2"),
+                        selectedPath: NavigationPath("/page/2"),
                         tab: NavigationTab(
                             name: "Second Tab",
                             icon: NavigationTab.Icon.system(name: "heart.fill")
@@ -181,14 +175,29 @@ Setup your scheme and deep links will be opened by the router.
 
 Following rules apply to the example implementation above:
 
-- `swiftreduxrouter://example.com/tab1/hello/2` will be pushed to the first tab
-- `swiftreduxrouter://example.com/tab1/hello/1` will be selected in the first tab
-- `swiftreduxrouter:///tab2/hello/2` will be selected in and will select the second tab. 
-- `swiftreduxrouter:///tab2/hello/1` will be pushed to the second tab
-- `swiftreduxrouter:///standalone/hello/1` will be presented in the standalone navigationController on top of the tab bar
-- `swiftreduxrouter:///standalone/hello/2` will be pushed to the presented standalone navigationController
-- `swiftreduxrouter:///hello/1` will be presented in a new navigationController on top of the tab bar
+- `swiftreduxrouter://example.com/tab1/page/2` will be pushed to the first tab
+- `swiftreduxrouter://example.com/tab1/page/1` will be selected in the first tab
+- `swiftreduxrouter:///tab2/page/2` will be selected in and will select the second tab. 
+- `swiftreduxrouter:///tab2/page/1` will be pushed to the second tab
+- `swiftreduxrouter:///standalone/page/1` will be presented in the standalone navigationController on top of the tab bar
+- `swiftreduxrouter:///standalone/page/2` will be pushed to the presented standalone navigationController
+- `swiftreduxrouter:///page/1` will be presented in a new navigationController on top of the tab bar
 - `swiftreduxrouter:///tab1` will select the first tab
+
+You can dispatch the Deeplink anywhere in your app to navigate to any desired route.
+```Swift
+Button(action: {
+    store.disptach(Deeplink(url: URL(string: "/tab2/page/2")).action(for: store.navigation))
+}) {
+    Text("Take me to page two in the second tab")
+}
+```
+
+Test deeplinks from the terminal:
+```Bash
+xcrun simctl openurl booted '<INSERT_URL_HERE>'
+```
+
 
 ## URL Routing.
 
@@ -219,13 +228,13 @@ Supported dynamic parameters are:
 If you set the tab property of the NavigatoinModel in the init state, the RouterView will render a UITabBar.
 
 ## Presenting views.
-if an unrecognized name of a navigationModel is pushed when dispatching `NavigationActions.Push`, the router will present that navigationModel automatically
+A view gets presented by setting the navigationTarget to NavigationTarget.new(). 
 ```Swift
-dispatch(NavigationActions.Push(path: NavigationPath("some path to a route"), target: "name of a navigationModel that doesn't exist"))
+dispatch(NavigationAction.add(path: NavigationPath("some path to a route"), to: .new()))
 ```
 To dismiss it, you simply use the Dismiss action:
 ``` Swift
-dispatch(NavigationActions.Dismiss(navigationModel: The navigationModel to dismiss))
+dispatch(NavigationAction.Dismiss(navigationModel: The navigationModel to dismiss))
 ```
 You can access the navigationModel object from the renderView method. 
 ``` Swift
@@ -237,7 +246,7 @@ Route(
             .navigationTitle("\(presentedName)")
             .navigationBarItems(trailing: Button(action: {
                 dispatch(
-                    NavigationActions.Dismiss(navigationModel: navigationModel)
+                    NavigationAction.Dismiss(navigationModel: navigationModel)
                 )
             }) {
                 Text(navigationModel.tab == nil ? "Close" : "")

@@ -14,8 +14,8 @@ struct SwiftReduxRouterExampleApp: App {
             ContentView(navigationState: store.state.navigation, dispatch: store.dispatch)
                 .onOpenURL { incomingURL in
                     DispatchQueue.main.async {
-                        guard let deepLinkAction = NavigationActions.Deeplink(with: incomingURL) else { return }
-                        store.dispatch(deepLinkAction)
+                        guard let deepLinkAction = NavigationAction.Deeplink(with: incomingURL) else { return }
+                        store.dispatch(NavigationAction.deeplink(deepLinkAction))
                     }
                 }
         }

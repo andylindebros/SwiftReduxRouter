@@ -1,6 +1,6 @@
 import Foundation
 
-public struct NavigationModel: Codable, Equatable, Sendable {
+public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
     public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular) {
         self.id = id
         self.path = path
@@ -10,6 +10,10 @@ public struct NavigationModel: Codable, Equatable, Sendable {
         self.tab = tab
         self.presentedPaths = presentedPaths
         animate = true
+    }
+
+    public var description: String {
+        "\(type(of: self))(\(path?.path ?? id.uuidString))"
     }
 
     public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {

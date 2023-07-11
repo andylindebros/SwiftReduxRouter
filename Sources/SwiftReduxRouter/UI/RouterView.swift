@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 #if os(iOS)
 import UIKit
 #endif
@@ -8,6 +9,22 @@ import UIKit
  */
 @available(iOS 13, *)
 public struct RouterView: UIViewControllerRepresentable {
+    /// Public init
+    public init(
+        navigationState: NavigationState,
+        routes: [Route],
+        tintColor: UIColor? = nil,
+        setSelectedPath: @escaping (NavigationModel, NavigationPath) -> Void,
+        onDismiss: @escaping (NavigationModel) -> Void
+    ) {
+        self.navigationState = navigationState
+        self.routes = routes
+        self.setSelectedPath = setSelectedPath
+        self.onDismiss = onDismiss
+        self.tintColor = tintColor
+
+        navigationState.setAvailableRoutes(routes.map { $0.paths }.flatMap({ $0 }) )
+    }
 
     /// The navigationState
     @ObservedObject private var navigationState: NavigationState
@@ -23,21 +40,6 @@ public struct RouterView: UIViewControllerRepresentable {
 
     private let tintColor: UIColor?
 
-    /// Public init
-    public init(
-        navigationState: NavigationState,
-        routes: [Route],
-        tintColor: UIColor? = nil,
-        setSelectedPath: @escaping (NavigationModel, NavigationPath) -> Void,
-        onDismiss: @escaping (NavigationModel) -> Void
-    ) {
-        self.navigationState = navigationState
-        self.routes = routes
-        self.setSelectedPath = setSelectedPath
-        self.onDismiss = onDismiss
-        self.tintColor = tintColor
-    }
-
     // MARK: UIVIewControllerRepresentable methods
 
     public func makeUIViewController(context _: Context) -> UIViewController {
@@ -45,7 +47,7 @@ public struct RouterView: UIViewControllerRepresentable {
     }
 
     public func updateUIViewController(_ vc: UIViewController, context _: Context) {
-        _ = recreateViewControllerBasedOnState(rootController: vc)
+        recreateViewControllerBasedOnState(rootController: vc)
     }
 
     // MARK: Router methods
@@ -64,7 +66,7 @@ public struct RouterView: UIViewControllerRepresentable {
         return crlr
     }
 
-    private func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
+    @discardableResult private func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
         // Appear as a tabbar. Initial state has more than one navigationModel
         if navigationState.navigationModels.filter({ $0.tab != nil }).count > 1 {
             let tc = asTabBarController(rootController)
