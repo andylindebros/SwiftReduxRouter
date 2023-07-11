@@ -19,7 +19,7 @@ dependencies: [
 ```
 
 ## Implementation
-In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRedux) but you can integrate `SwiftReduxRouter` with any redux app you want.
+In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRedux) but you can integrate `SwiftReduxRouter` with any pattern you want such as MVVM.
 
 1. Add the NavigationState object to your Redux State.
 
