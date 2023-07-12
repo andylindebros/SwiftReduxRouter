@@ -37,9 +37,6 @@ struct ContentView: View {
                         icon: NavigationTab.Icon.system(name: "star.fill")
                     )
                 )
-            ],
-            availableNavigationModelRoutes: [
-                NavigationRoute("/standalone"),
             ]
         )
     )
