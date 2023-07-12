@@ -21,6 +21,53 @@ dependencies: [
 ## Implementation
 In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRedux) but you can integrate `SwiftReduxRouter` with any pattern you want such as MVVM.
 
+### MVVM Implementation
+```Swift
+import SwiftReduxRouter
+
+struct ContentView: View {
+    let viewModel: MVVMWrapper(
+        state: NavigationState(
+            navigationModels: [
+                NavigationModel.createInitModel(
+                    path: NavigationPath("/tab1"),
+                    selectedPath: NavigationPath("/awesome"),
+                    tab: NavigationTab(
+                        name: "First Tab",
+                        icon: NavigationTab.Icon.system(name: "star.fill")
+                    )
+                )
+            ],
+            availableNavigationModelRoutes: [
+                NavigationRoute("/standalone"),
+            ]
+        )
+    )
+
+    var body: some View {
+        RouterView(
+            navigationState: viewModel.state
+            routes: [
+                RouterView.Route(
+                    paths: [NavigationRoute("/awesome")],
+                    render: { navigationModel, params in
+                        RouteViewController(rootView: Text("Awesome"))
+                    }
+                )
+            ],
+            tintColor: .red,
+            setSelectedPath: { navigationModel, navigationPath in
+                viewModel.dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
+            },
+            onDismiss: { navigationModel in
+                viewModel.dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
+            }
+        )
+    }
+}
+```
+### Redux Implementation
+
 1. Add the NavigationState object to your Redux State.
 
 ``` Swift
