@@ -31,11 +31,7 @@ struct ContentView: View {
             navigationModels: [
                 NavigationModel.createInitModel(
                     path: NavigationPath("/tab1"),
-                    selectedPath: NavigationPath("/awesome"),
-                    tab: NavigationTab(
-                        name: "First Tab",
-                        icon: NavigationTab.Icon.system(name: "star.fill")
-                    )
+                    selectedPath: NavigationPath("/awesome")
                 )
             ]
         )
