@@ -243,13 +243,13 @@ path to your route. Make sure the path is unique, the router maps the first
 matching route to a path.
 
 ```
-mypath/to/a/route
+/mypath/to/a/route
 ```
 
 You can make parts of the URL dynamic and attach multiple rules
 
 ```
-user/<string:username>
+/user/<string:username>
 ```
 
 Supported dynamic parameters are:
