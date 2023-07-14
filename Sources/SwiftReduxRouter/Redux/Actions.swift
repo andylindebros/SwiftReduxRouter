@@ -12,6 +12,8 @@ public protocol NavigationJumpStateAction: CustomLogging, Sendable {
     var navigationState: NavigationState { get }
 }
 
+public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
+
 public enum NavigationAction: Equatable, NavigationActionProvider {
     case add(path: NavigationPath, to: NavigationTarget)
     case dismiss(NavigationModel)
@@ -20,6 +22,8 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
     case selectTab(by: UUID)
     case replace(path: NavigationPath, with: NavigationPath, in: NavigationModel)
     case setIcon(to: String, withModelID: UUID)
+    case alert(AlertModel)
+    case dismissedAlert(with: AlertModel)
     #if canImport(UIKit)
         case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
     #else
@@ -30,6 +34,10 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
     public var description: String {
         let desc = "\(type(of: self))"
         switch self {
+        case let .dismissedAlert(model):
+            return "\(desc).dismissedAlert(\(model))"
+        case let .alert(model):
+            return "\(desc).alert(\(model))"
         case let .add(path: path, to: target):
             return "\(desc).add path: \(path.path ?? path.id.uuidString), to: \(target)"
         case let .dismiss(model):

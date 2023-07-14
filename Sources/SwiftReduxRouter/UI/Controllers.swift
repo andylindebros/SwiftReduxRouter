@@ -56,7 +56,6 @@ public protocol UIRouteViewController: UIViewController {
     var navigationPath: NavigationPath? { get set }
 }
 
-
 public final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     public init(
         rootView: Content,

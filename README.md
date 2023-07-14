@@ -125,11 +125,9 @@ struct ContentView: View {
                 )
             ],
             tintColor: .red,
-            setSelectedPath: { navigationModel, navigationPath in
-                dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
-            },
-            onDismiss: { navigationModel in
-                dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
+            dispatch: { navigationAction in
+                guard let action = navigationAction as? Action else { return }
+                dispatch(action)
             }
         )
     }
@@ -293,8 +291,25 @@ Route(
 )
 ```
 
+### Alerts
+You can trigger alerts by dispatching `NavigationAction.alert`
+```Swift
+    dispatch(
+        Navigation.alert(AlertModel(
+           label: "The label of the alert",
+           message: "Optional message",
+           buttons: [
+              AlertModelButton(
+                 label: "the button label",
+                 action: SomeAction // needs to conform to NavigationActionProvider
+                 type: UIAlertAction.Style = .default
+              )
+           ]
+        ))
+    )
+```
 
-### Support for ReduxMonitor
+## Support for ReduxMonitor
 SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/andylindebros/ReduxMonitor). 
 Just let your JumpState action conform `NavigationJumpStateAction`
 ``` Swift

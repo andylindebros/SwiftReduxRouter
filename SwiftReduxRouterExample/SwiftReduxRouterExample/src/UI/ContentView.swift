@@ -105,13 +105,25 @@ struct ContentView: View {
                                             }
                                             Button(action: {
                                                 dispatch(
-                                                    NavigationAction.add(
-                                                        path: NavigationPath(),
-                                                        to: .new()
-                                                    )
+                                                    NavigationAction.alert(
+                                                        .init(
+                                                            title: "Awesome!",
+                                                            message: "It really works!",
+                                                            buttons: [
+                                                                .init(
+                                                                    label: "Present a view",
+                                                                    type: .default,
+                                                                    action: NavigationAction.add(
+                                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                                        to: .new()
+                                                                    )
+                                                                ),
+                                                                .init(label: "Cancel", type: .cancel)
+                                                            ]
+                                                        ))
                                                 )
                                             }) {
-                                                Text("Present a path that doesn't exist").foregroundColor(.black)
+                                                Text("Present an alert").foregroundColor(.black)
                                             }
                                         }
                                         VStack {
@@ -196,11 +208,11 @@ struct ContentView: View {
                 ),
             ],
             tintColor: .red,
-            setSelectedPath: { navigationModel, navigationPath in
-                dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
-            },
-            onDismiss: { navigationModel in
-                dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
+            dispatch: { navigationAction in
+                guard let action = navigationAction as? Action else {
+                    return
+                }
+                dispatch(action)
             }
         )
         .edgesIgnoringSafeArea(.all)

@@ -143,3 +143,41 @@ public extension NavigationTab {
         }
     }
 }
+
+public struct AlertModel: Identifiable, Codable, Equatable, Sendable {
+    public init(id: UUID = UUID(), title: String, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
+        self.id = id
+        self.title = title
+        self.message = message
+        self.buttons = buttons
+    }
+
+    public let id: UUID
+    public let title: String
+    public var message: String?
+    public let buttons: [AlertButtonModel]?
+}
+
+public struct AlertButtonModel: Identifiable, Codable, Equatable, Sendable {
+    public static func == (lhs: AlertButtonModel, rhs: AlertButtonModel) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, action: (any NavigationActionProvider)? = nil) {
+        self.id = id
+        self.label = label
+        self.type = type
+        self.action = action
+    }
+
+    public var id: UUID
+    let label: String
+    let type: UIAlertAction.Style
+    var action: (any NavigationActionProvider)?
+
+    enum CodingKeys: CodingKey {
+        case id, label, type
+    }
+}
+
+extension UIAlertAction.Style: Codable {}

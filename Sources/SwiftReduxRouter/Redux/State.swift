@@ -38,6 +38,8 @@ public final class NavigationState: ObservableObject, Codable {
     /// Available navigationModels. Tab navigationModels are defined here.
     @Published public private(set) var navigationModels = [NavigationModel]()
 
+    @Published public private(set) var alerts: [AlertModel] = []
+
     public let availableNavigationModelRoutes: [NavigationRoute]
 
     private(set) var availableRoutes: [NavigationRoute] = []
@@ -207,6 +209,12 @@ public extension NavigationState {
             state.navigationModels[index].presentedPaths[currentPathIndex] = newPath
             state.navigationModels[index].animate = false
 
+        case let .alert(model):
+            state.alerts.append(model)
+        case let .dismissedAlert(with: model):
+            if let index = state.alerts.firstIndex(where: { $0.id == model.id }) {
+                state.alerts.remove(at: index)
+            }
         default:
             break
         }
