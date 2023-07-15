@@ -308,6 +308,8 @@ You can trigger alerts by dispatching `NavigationAction.alert`
            ]
         ))
     )
+    
+    extension SomeAction: NavigationActionsProvider {}
 ```
 
 ## Support for ReduxMonitor
