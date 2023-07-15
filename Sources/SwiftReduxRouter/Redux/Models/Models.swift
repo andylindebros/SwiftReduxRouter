@@ -145,15 +145,17 @@ public extension NavigationTab {
 }
 
 public struct AlertModel: Identifiable, Codable, Equatable, Sendable {
-    public init(id: UUID = UUID(), title: String, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
+    public init(id: UUID = UUID(), type: UIAlertController.Style = .alert, title: String? = nil, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
         self.id = id
+        self.type = type
         self.title = title
         self.message = message
         self.buttons = buttons
     }
 
     public let id: UUID
-    public let title: String
+    public let type: UIAlertController.Style
+    public let title: String?
     public var message: String?
     public let buttons: [AlertButtonModel]?
 }
@@ -181,3 +183,4 @@ public struct AlertButtonModel: Identifiable, Codable, Equatable, Sendable {
 }
 
 extension UIAlertAction.Style: Codable {}
+extension UIAlertController.Style: Codable {}

@@ -103,27 +103,52 @@ struct ContentView: View {
                                             }) {
                                                 Text("Present \(next)").foregroundColor(.black)
                                             }
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.alert(
-                                                        .init(
-                                                            title: "Awesome!",
-                                                            message: "It really works!",
-                                                            buttons: [
-                                                                .init(
-                                                                    label: "Present a view",
-                                                                    type: .default,
-                                                                    action: NavigationAction.add(
-                                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                                        to: .new()
-                                                                    )
-                                                                ),
-                                                                .init(label: "Cancel", type: .cancel)
-                                                            ]
-                                                        ))
-                                                )
-                                            }) {
-                                                Text("Present an alert").foregroundColor(.black)
+
+                                            HStack {
+                                                Button(action: {
+                                                    dispatch(
+                                                        NavigationAction.alert(
+                                                            .init(
+                                                                type: .actionSheet,
+                                                                buttons: [
+                                                                    .init(
+                                                                        label: "Present a view",
+                                                                        type: .destructive,
+                                                                        action: NavigationAction.add(
+                                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                                            to: .new()
+                                                                        )
+                                                                    ),
+                                                                    .init(label: "Cancel", type: .cancel),
+                                                                ]
+                                                            ))
+                                                    )
+                                                }) {
+                                                    Text("Present an action sheet").foregroundColor(.black)
+                                                }
+
+                                                Button(action: {
+                                                    dispatch(
+                                                        NavigationAction.alert(
+                                                            .init(
+                                                                title: "Awesome!",
+                                                                message: "It really works!",
+                                                                buttons: [
+                                                                    .init(
+                                                                        label: "Present a view",
+                                                                        type: .default,
+                                                                        action: NavigationAction.add(
+                                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                                            to: .new()
+                                                                        )
+                                                                    ),
+                                                                    .init(label: "Cancel", type: .cancel),
+                                                                ]
+                                                            ))
+                                                    )
+                                                }) {
+                                                    Text("Present an alert").foregroundColor(.black)
+                                                }
                                             }
                                         }
                                         VStack {

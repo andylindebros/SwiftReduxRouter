@@ -296,8 +296,9 @@ You can trigger alerts by dispatching `NavigationAction.alert`
 ```Swift
     dispatch(
         Navigation.alert(AlertModel(
-           label: "The label of the alert",
-           message: "Optional message",
+           type: .alert // .alert || .actionSheet, default is .alert
+           label: "The label of the alert", // Optional
+           message: "Optional message", // Optional
            buttons: [
               AlertModelButton(
                  label: "the button label",

@@ -307,7 +307,7 @@ import SwiftUI
 
     extension RouterView {
         func presentAlert(with model: AlertModel, in viewController: UIViewController) {
-            let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: .alert)
+            let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: model.type)
 
             for button in model.buttons ?? [.init(label: "OK")] {
                 alert.addAction(UIAlertAction(title: button.label, style: button.type) { _ in
