@@ -112,12 +112,23 @@ struct ContentView: View {
                                                                 type: .actionSheet,
                                                                 buttons: [
                                                                     .init(
-                                                                        label: "Present a view",
+                                                                        label: "Close and Present view",
                                                                         type: .destructive,
-                                                                        action: NavigationAction.add(
-                                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                                            to: .new()
-                                                                        )
+                                                                        actions: [
+                                                                            NavigationAction.dismiss(navigationModel),
+                                                                            NavigationAction.add(
+                                                                                path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                                                to: .new()
+                                                                            ),
+                                                                        ]
+                                                                    ),
+                                                                    .init(
+                                                                        label: "Select tab two",
+                                                                        type: .destructive,
+                                                                        actions: [
+                                                                            NavigationAction.dismiss(navigationModel),
+                                                                            NavigationAction.selectTab(by: AppState.tabTwo),
+                                                                        ]
                                                                     ),
                                                                     .init(label: "Cancel", type: .cancel),
                                                                 ]

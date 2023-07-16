@@ -312,8 +312,10 @@ import SwiftUI
             for button in model.buttons ?? [.init(label: "OK")] {
                 alert.addAction(UIAlertAction(title: button.label, style: button.type) { _ in
                     dispatch(NavigationAction.dismissedAlert(with: model))
-                    if let action = button.action {
-                        dispatch(action)
+                    if let actions = button.actions {
+                        for action in actions {
+                            dispatch(action)
+                        }
                     }
                 })
             }

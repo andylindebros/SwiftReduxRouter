@@ -169,13 +169,22 @@ public struct AlertButtonModel: Identifiable, Codable, Equatable, Sendable {
         self.id = id
         self.label = label
         self.type = type
-        self.action = action
+        if let action = action {
+            self.actions = [action]
+        }
+    }
+
+    public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, actions: [(any NavigationActionProvider)]) {
+        self.id = id
+        self.label = label
+        self.type = type
+        self.actions = actions
     }
 
     public var id: UUID
     let label: String
     let type: UIAlertAction.Style
-    var action: (any NavigationActionProvider)?
+    var actions: [(any NavigationActionProvider)]?
 
     enum CodingKeys: CodingKey {
         case id, label, type
