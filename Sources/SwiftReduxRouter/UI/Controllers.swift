@@ -16,12 +16,17 @@ public class TabController: UITabBarController {
 }
 
 @available(iOS 13, *)
-public class NavigationController: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
+open class NavigationController: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
     var navigationModel: NavigationModel?
     var willShow: ((_ navigationModel: NavigationModel, _ navigationPath: NavigationPath) -> Void)?
     var onDismiss: ((_ navigationModel: NavigationModel) -> Void)?
 
-    override public func viewDidLoad() {
+    @discardableResult func setModel(to value: NavigationModel) -> Self {
+        navigationModel = value
+        return self
+    }
+
+    override open func viewDidLoad() {
         super.viewDidLoad()
         delegate = self
         presentationController?.delegate = self

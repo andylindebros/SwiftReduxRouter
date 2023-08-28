@@ -19,6 +19,14 @@ struct ContentView: View {
     var body: some View {
         RouterView(
             navigationState: navigationState,
+            navigationControllerRoutes: [
+                RouterView.NavigationControllerRoute(
+                    paths: [NavigationRoute("test/<string:value>")],
+                    render: { _, _ in
+                        MyCustomNavigationController()
+                    }
+                ),
+            ],
             routes: [
                 RouterView.Route(
                     paths: [

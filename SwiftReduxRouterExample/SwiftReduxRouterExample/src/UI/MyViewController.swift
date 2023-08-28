@@ -2,6 +2,16 @@ import SwiftReduxRouter
 import SwiftUI
 import UIKit
 
+class MyCustomNavigationController: NavigationController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+    }
+}
+
 class HiddenNavigationBarViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     var navigationModel: SwiftReduxRouter.NavigationModel?
     var navigationPath: SwiftReduxRouter.NavigationPath?

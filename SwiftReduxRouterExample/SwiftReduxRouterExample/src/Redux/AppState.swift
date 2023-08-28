@@ -72,9 +72,6 @@ extension AppState {
                             badgeColor: .red
                         )
                     ),
-                ],
-                availableNavigationModelRoutes: [
-                    NavigationRoute("/tab3"),
                 ]
             )
         )

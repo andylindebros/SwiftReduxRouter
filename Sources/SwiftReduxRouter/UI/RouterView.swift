@@ -12,13 +12,14 @@ import SwiftUI
         /// Public init
         public init(
             navigationState: NavigationState,
+            navigationControllerRoutes: [NavigationControllerRoute] = [],
             routes: [Route],
             tintColor: UIColor? = nil,
             dispatch: @escaping NavigationDispatcher
         ) {
             self.navigationState = navigationState
             self.routes = routes
-
+            self.navigationControllerRoutes = navigationControllerRoutes
             self.tintColor = tintColor
             self.dispatch = dispatch
 
@@ -29,7 +30,9 @@ import SwiftUI
                 dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
             }
 
-            navigationState.setAvailableRoutes(routes.map { $0.paths }.flatMap { $0 })
+            navigationState
+                .setAvailableRoutes(routes.map { $0.paths }.flatMap { $0 })
+                .setAvailableNavigationRoutes(navigationControllerRoutes.map { $0.paths }.flatMap { $0 })
         }
 
         /// The navigationState
@@ -37,6 +40,9 @@ import SwiftUI
 
         /// Available routes
         private let routes: [Route]
+
+        /// Available navigationControllerRoutes
+        private let navigationControllerRoutes: [NavigationControllerRoute]
 
         /// setSelectedPath is invoked by the UIViewController when it is in screen
         private let setSelectedPath: (NavigationModel, NavigationPath) -> Void
@@ -86,7 +92,7 @@ import SwiftUI
                 for navigationModel in navigationState.navigationModels {
                     let nc: NavigationController = tc.viewControllers?.compactMap { $0 as? NavigationController }.first(where: { $0.navigationModel?.id == navigationModel.id }) ??
                         findPresented(navigationModel: navigationModel, in: tc) ??
-                        NavigationController()
+                        Self.navigationController(for: navigationModel, in: navigationControllerRoutes)
 
                     recreateNavigation(nc: nc, navigationModel: navigationModel)
 
@@ -345,6 +351,45 @@ import SwiftUI
             public let onWillAppear: ((NavigationPath, [String: Any]?) -> Void)?
             public let render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
             public let defaultRoute: Bool
+        }
+    }
+
+    public extension RouterView {
+        struct NavigationControllerRoute {
+            public init(paths: [NavigationRoute], render: @escaping (NavigationModel, [String: Any]?) -> NavigationController) {
+                self.paths = paths
+                self.render = render
+            }
+
+            public let paths: [NavigationRoute]
+            public let render: (NavigationModel, [String: Any]?) -> NavigationController
+        }
+    }
+
+    private extension RouterView {
+        static func navigationController(for navigationModel: NavigationModel, in routes: [NavigationControllerRoute]) -> NavigationController {
+            guard
+                let (route, urlMatchResult) = Self.navigationControllerRoute(for: navigationModel, in: routes),
+                let route = route
+            else {
+                return NavigationController()
+            }
+
+            return route.render(navigationModel, urlMatchResult?.values)
+        }
+
+        static func navigationControllerRoute(for navigationModel: NavigationModel, in routes: [NavigationControllerRoute]) -> (NavigationControllerRoute?, URLMatchResult?)? {
+            let patterns = routes.flatMap { $0.paths.map { $0.path } }
+
+            guard
+                let path = navigationModel.path?.path,
+                let urlMatchResult = URLMatcher().match(path, from: patterns),
+                let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil }).first
+            else {
+                return nil
+            }
+
+            return (route, urlMatchResult)
         }
     }
 #endif

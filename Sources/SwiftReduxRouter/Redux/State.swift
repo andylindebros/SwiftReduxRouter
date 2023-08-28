@@ -3,10 +3,10 @@ import Foundation
 // MARK: State
 
 public final class NavigationState: ObservableObject, Codable {
-    public init(navigationModels: [NavigationModel]? = nil, availableNavigationModelRoutes: [NavigationRoute] = []) {
+    public init(navigationModels: [NavigationModel]? = nil) {
         selectedModelId = UUID()
         rootSelectedModelID = UUID()
-        self.availableNavigationModelRoutes = availableNavigationModelRoutes
+        availableNavigationModelRoutes = []
 
         if let navigationModels = navigationModels {
             self.navigationModels = navigationModels.map { navigationModel in
@@ -40,7 +40,7 @@ public final class NavigationState: ObservableObject, Codable {
 
     @Published public private(set) var alerts: [AlertModel] = []
 
-    public let availableNavigationModelRoutes: [NavigationRoute]
+    public private(set) var availableNavigationModelRoutes: [NavigationRoute]
 
     private(set) var availableRoutes: [NavigationRoute] = []
 
@@ -78,8 +78,13 @@ public extension NavigationState {
 }
 
 extension NavigationState {
-    func setAvailableRoutes(_ availableRoutes: [NavigationRoute]) {
+    @discardableResult func setAvailableRoutes(_ availableRoutes: [NavigationRoute]) -> Self {
         self.availableRoutes = availableRoutes
+        return self
+    }
+    @discardableResult func setAvailableNavigationRoutes(_ availableRoutes: [NavigationRoute]) -> Self {
+        self.availableNavigationModelRoutes = availableRoutes
+        return self
     }
 }
 

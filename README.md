@@ -98,6 +98,14 @@ struct ContentView: View {
     var body: some View {
         RouterView(
             navigationState: navigationState,
+            navigationControllerRoutes: [
+                RouterView.NavigationControllerRoute(
+                    paths: [NavigationRoute("standalone")],
+                    render: { navigationModel, params in
+                        NavigationController()
+                    }
+                )
+            ],
             routes: [
                 RouterView.Route(
                     paths: [NavigationRoute("page/<int:name>")],
@@ -194,9 +202,6 @@ extension AppState {
                             icon: NavigationTab.Icon.system(name: "heart.fill")
                         )
                     ),
-                ],
-                availableNavigationModelRoutes: [
-                    NavigationRoute("/standalone"),
                 ]
             )
         )
