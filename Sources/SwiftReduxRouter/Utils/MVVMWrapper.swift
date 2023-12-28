@@ -5,7 +5,7 @@ import Foundation
         self.state = state
     }
 
-    private(set) var state: NavigationState
+    public private(set) var state: NavigationState
 
     public func dispatch(_ action: NavigationAction) {
         state = NavigationState.reducer(action: action, state: state)

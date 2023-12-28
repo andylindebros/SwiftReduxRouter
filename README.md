@@ -26,12 +26,12 @@ In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRe
 import SwiftReduxRouter
 
 struct ContentView: View {
-    let viewModel: MVVMWrapper(state: NavigationState(
+        let viewModel = MVVMWrapper(state: NavigationState(
         navigationModels: [
             NavigationModel.createInitModel(
-                path: NavigationPath("/tab1"),
-                selectedPath: NavigationPath("/awesome")
-            )
+                path: NavigationPath.create("/tab1"),
+                selectedPath: NavigationPath.create("/awesome")!
+            ),
         ]
     ))
 
