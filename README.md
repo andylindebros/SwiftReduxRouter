@@ -26,7 +26,7 @@ In this example we use [SwiftUIRedux](https://github.com/andylindebros/SwiftUIRe
 import SwiftReduxRouter
 
 struct ContentView: View {
-        let viewModel = MVVMWrapper(state: NavigationState(
+        let wrapper = MVVMWrapper(state: NavigationState(
         navigationModels: [
             NavigationModel.createInitModel(
                 path: NavigationPath.create("/tab1"),
@@ -37,21 +37,20 @@ struct ContentView: View {
 
     var body: some View {
         RouterView(
-            navigationState: viewModel.state
+            navigationState: wrapper.state,
             routes: [
                 RouterView.Route(
                     paths: [NavigationRoute("/awesome")],
-                    render: { navigationModel, params in
+                    render: { _, _, _ in
                         RouteViewController(rootView: Text("Awesome"))
                     }
-                )
+                ),
             ],
+
             tintColor: .red,
-            setSelectedPath: { navigationModel, navigationPath in
-                viewModel.dispatch(NavigationAction.setSelectedPath(to: navigationPath, in: navigationModel))
-            },
-            onDismiss: { navigationModel in
-                viewModel.dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
+            dispatch: { action in
+                guard let action = action as? NavigationAction else { return }
+                wrapper.dispatch(action)
             }
         )
     }
