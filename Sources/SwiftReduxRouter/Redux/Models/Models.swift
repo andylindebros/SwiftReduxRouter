@@ -4,14 +4,14 @@ import Foundation
 #endif
 
 public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
-    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular)
+    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular())
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 
     public var description: String {
         switch self {
         case let .new(path, type):
-            return ".new(\(path?.path ?? "")\(type != .regular ? " \(type)" : ""))"
+            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""))"
         case .navigationModel:
             return ".navigationModel"
         case .current:
@@ -20,9 +20,52 @@ public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     }
 }
 
+public extension PresentationType {
+    enum Detent: Equatable, Codable, Sendable {
+        case medium, large, custom(identifier: String, height: Double)
+
+        var detent: UISheetPresentationController.Detent {
+            switch self {
+            case .medium:
+                return .medium()
+            case .large:
+                return .large()
+            case let .custom(identifier, height):
+                if #available(iOS 16.0, *) {
+                    let identifier = UISheetPresentationController.Detent.Identifier(identifier)
+                    return .custom(identifier: identifier) { _ in
+                        height
+                    }
+                } else {
+                    return .medium()
+                }
+            }
+        }
+    }
+}
+
 public enum PresentationType: Equatable, Codable, Sendable {
-    case tab
-    case regular
+    case regular(preventDismissal: Bool = false)
+    case fullscreen
+    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: PresentationType.Detent? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
+
+    var style: UIModalPresentationStyle {
+        switch self {
+        case .regular, .detents:
+            .pageSheet
+        case .fullscreen:
+            .overFullScreen
+        }
+    }
+
+    var preventDismissal: Bool? {
+        switch self {
+        case let .regular(preventDismissal), let .detents(_, _, preventDismissal, _, _, _):
+            preventDismissal
+        case .fullscreen:
+            nil
+        }
+    }
 }
 
 public struct NavigationRoute: Codable, Sendable {
@@ -170,11 +213,11 @@ public struct AlertButtonModel: Identifiable, Codable, Equatable, Sendable {
         self.label = label
         self.type = type
         if let action = action {
-            self.actions = [action]
+            actions = [action]
         }
     }
 
-    public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, actions: [(any NavigationActionProvider)]) {
+    public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, actions: [any NavigationActionProvider]) {
         self.id = id
         self.label = label
         self.type = type
@@ -184,7 +227,7 @@ public struct AlertButtonModel: Identifiable, Codable, Equatable, Sendable {
     public var id: UUID
     let label: String
     let type: UIAlertAction.Style
-    var actions: [(any NavigationActionProvider)]?
+    var actions: [any NavigationActionProvider]?
 
     enum CodingKeys: CodingKey {
         case id, label, type

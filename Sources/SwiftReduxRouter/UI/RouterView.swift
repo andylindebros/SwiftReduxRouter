@@ -30,6 +30,10 @@ import SwiftUI
                 dispatch(NavigationAction.setNavigationDismsissed(navigationModel))
             }
 
+            selectedDetentDidChange = { identifier, navigationModel in
+                dispatch(NavigationAction.selectedDetentChanged(to: identifier, in: navigationModel))
+            }
+
             navigationState
                 .setAvailableRoutes(routes.map { $0.paths }.flatMap { $0 })
                 .setAvailableNavigationRoutes(navigationControllerRoutes.map { $0.paths }.flatMap { $0 })
@@ -49,6 +53,7 @@ import SwiftUI
 
         /// onDismiss is invoked when the UIViewController will be dismissed
         private let onDismiss: (NavigationModel) -> Void
+        private let selectedDetentDidChange: (String, NavigationModel) -> Void
 
         private let dispatch: NavigationDispatcher
 
@@ -157,6 +162,7 @@ import SwiftUI
                 rnc.navigationModel = navigationModel
                 rnc.willShow = setSelectedPath
                 rnc.onDismiss = onDismiss
+                rnc.selectedDetentDidChange = selectedDetentDidChange
 
                 recreateNavigation(nc: rnc, navigationModel: navigationModel)
 
@@ -186,6 +192,7 @@ import SwiftUI
             nc.navigationModel = navigationModel
             nc.willShow = setSelectedPath
             nc.onDismiss = onDismiss
+            nc.selectedDetentDidChange = selectedDetentDidChange
 
             let vcs = navigationModel.presentedPaths.compactMap { path in
                 nc.viewControllers.compactMap { $0 as? UIRouteViewController }.first(where: { $0.navigationPath?.id == path.id }) ?? Self.view(for: path, in: navigationModel, andInRoutes: routes)
@@ -248,8 +255,34 @@ import SwiftUI
                     ctrl.navigationModel?.id == controller.navigationModel?.id
                 {
                     topController = ctrl
-
+                    if #available(iOS 16.0, *), let selectedDetentIdentifier = controller.navigationModel?.selectedDetentIdentifier, let sheet = controller.sheetPresentationController,
+                       sheet.detents.map({ $0.identifier.rawValue }).contains(selectedDetentIdentifier),
+                       sheet.selectedDetentIdentifier?.rawValue != selectedDetentIdentifier
+                    {
+                        sheet.animateChanges {
+                            sheet.selectedDetentIdentifier = UISheetPresentationController.Detent.Identifier(rawValue: selectedDetentIdentifier)
+                        }
+                    }
                 } else {
+                    controller.modalPresentationStyle = controller.navigationModel?.presentationType.style ?? .automatic
+
+                    if let preventDismissal = controller.navigationModel?.presentationType.preventDismissal {
+                        controller.isModalInPresentation = preventDismissal
+                    }
+
+                    if let type = controller.navigationModel?.presentationType, case let PresentationType.detents(detents, largestUndimmedDetentIdentifier, _, prefersGrabberVisible, preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge) = type, let sheet = controller.sheetPresentationController {
+                        sheet.prefersGrabberVisible = prefersGrabberVisible
+                        if let preferredCornerRadius = preferredCornerRadius {
+                            sheet.preferredCornerRadius = preferredCornerRadius
+                        }
+                        sheet.detents = Array(Set(detents.map { $0.detent }))
+                        sheet.prefersEdgeAttachedInCompactHeight = true
+                        sheet.widthFollowsPreferredContentSizeWhenEdgeAttached = true
+                        sheet.prefersScrollingExpandsWhenScrolledToEdge = prefersScrollingExpandsWhenScrolledToEdge
+                        if #available(iOS 16.0, *) {
+                            sheet.largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier?.detent.identifier
+                        }
+                    }
                     topController.present(controller, animated: true)
                     topController = controller
                 }

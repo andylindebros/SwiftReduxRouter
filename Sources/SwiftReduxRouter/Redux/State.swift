@@ -179,8 +179,8 @@ public extension NavigationState {
                 }
                 state.navigationModels[index].animate = animate
 
-            case let .new(navigationModelPath, _):
-                let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath())
+            case let .new(navigationModelPath, presentationType):
+                let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType)
                 state.navigationModels.append(navigationModel)
                 state.selectedModelId = navigationModel.id
             }
@@ -220,6 +220,9 @@ public extension NavigationState {
             if let index = state.alerts.firstIndex(where: { $0.id == model.id }) {
                 state.alerts.remove(at: index)
             }
+        case let .selectedDetentChanged(to: identifier, in: navigationModel):
+            guard let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
+            state.navigationModels[index].selectedDetentIdentifier = identifier
         default:
             break
         }

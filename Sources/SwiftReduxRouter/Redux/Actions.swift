@@ -24,6 +24,7 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
     case setIcon(to: String, withModelID: UUID)
     case alert(AlertModel)
     case dismissedAlert(with: AlertModel)
+    case selectedDetentChanged(to: String, in: NavigationModel)
     #if canImport(UIKit)
         case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
     #else
@@ -58,6 +59,8 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
 
         case let .deeplink(deeplink):
             return "\(desc).deeplink with url: \(deeplink.url.path)"
+        case let .selectedDetentChanged(to: identifier, in: navigationModel):
+            return "\(desc).selectedDetentChanged to: \(identifier) in: \(navigationModel.id)"
         }
     }
 
@@ -100,7 +103,7 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
                     let pattern = URLMatcher().match(url.path, from: state.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
                     let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
                 {
-                    return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular))
+                    return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular()))
 
                     // push to new navigationModel
                 } else if let newPath = NavigationPath.create(URL(string: url.path)) {

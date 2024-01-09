@@ -16,6 +16,21 @@ struct ContentView: View {
 
     let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
 
+    var detentedAction: Action {
+        NavigationAction.add(
+            path: NavigationPath.create("/hello/100")!,
+            to: .new(type: .detents([.custom(identifier: "100", height: 100), .medium, .large], largestUndimmedDetentIdentifier: .medium, preventDismissal: true, prefersGrabberVisible: true))
+        )
+    }
+
+    func setDetendedAction(for navigationModel: NavigationModel) -> Action? {
+        if #available(iOS 16.0, *) {
+            return NavigationAction.selectedDetentChanged(to: UISheetPresentationController.Detent.large().identifier.rawValue, in: navigationModel)
+        } else {
+            return nil
+        }
+    }
+
     var body: some View {
         RouterView(
             navigationState: navigationState,
@@ -47,6 +62,17 @@ struct ContentView: View {
                     }
                 ),
                 RouterView.Route(
+                    paths: [
+                        NavigationRoute("/detents"),
+                    ],
+                    render: { _, _, _ in
+                        RouteViewController(rootView: VStack {
+                            Text("/detents")
+
+                        })
+                    }
+                ),
+                RouterView.Route(
                     paths: Self.navigationRoutes,
                     render: { _, navigationModel, params in
                         let presentedName = params?["name"] as? Int ?? 0
@@ -62,15 +88,30 @@ struct ContentView: View {
                                             Text("Presenting \(presentedName)")
                                                 .font(.system(size: 50)).bold()
                                                 .foregroundColor(.black)
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.add(
-                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                        to: .current()
+                                            HStack {
+                                                Button(action: {
+                                                    if let action = setDetendedAction(for: navigationModel) {
+                                                        dispatch(action)
+                                                    }
+                                                }) {
+                                                    Text("Set Detended \(next) to large")
+                                                }
+                                                Button(action: {
+                                                    dispatch(detentedAction)
+                                                }) {
+                                                    Text("Present Detended \(next) to current session")
+                                                }
+
+                                                Button(action: {
+                                                    dispatch(
+                                                        NavigationAction.add(
+                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                            to: .current()
+                                                        )
                                                     )
-                                                )
-                                            }) {
-                                                Text("Push \(next) to current session").foregroundColor(.black)
+                                                }) {
+                                                    Text("Push \(next) to current session").foregroundColor(.black)
+                                                }
                                             }
                                             Button(action: {
                                                 dispatch(
@@ -101,15 +142,28 @@ struct ContentView: View {
                                                 Text("Push \(next) to Tab 2").foregroundColor(.black)
                                             }
 
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.add(
-                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                        to: .new()
+                                            HStack {
+                                                Button(action: {
+                                                    dispatch(
+                                                        NavigationAction.add(
+                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                            to: .new(type: .fullscreen)
+                                                        )
                                                     )
-                                                )
-                                            }) {
-                                                Text("Present \(next)").foregroundColor(.black)
+                                                }) {
+                                                    Text("Fullscreen \(next)").foregroundColor(.black)
+                                                }
+
+                                                Button(action: {
+                                                    dispatch(
+                                                        NavigationAction.add(
+                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                                            to: .new()
+                                                        )
+                                                    )
+                                                }) {
+                                                    Text("Present \(next)").foregroundColor(.black)
+                                                }
                                             }
 
                                             HStack {
