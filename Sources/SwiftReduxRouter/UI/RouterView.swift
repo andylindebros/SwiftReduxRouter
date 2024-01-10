@@ -279,8 +279,8 @@ import SwiftUI
                         sheet.prefersEdgeAttachedInCompactHeight = true
                         sheet.widthFollowsPreferredContentSizeWhenEdgeAttached = true
                         sheet.prefersScrollingExpandsWhenScrolledToEdge = prefersScrollingExpandsWhenScrolledToEdge
-                        if #available(iOS 16.0, *) {
-                            sheet.largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier?.detent.identifier
+                        if #available(iOS 16.0, *), let largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier {
+                            sheet.largestUndimmedDetentIdentifier = UISheetPresentationController.Detent.Identifier(rawValue: largestUndimmedDetentIdentifier)
                         }
                     }
                     topController.present(controller, animated: true)

@@ -24,7 +24,7 @@ public extension PresentationType {
     enum Detent: Equatable, Codable, Sendable {
         case medium, large, custom(identifier: String, height: Double)
 
-        var detent: UISheetPresentationController.Detent {
+        public var detent: UISheetPresentationController.Detent {
             switch self {
             case .medium:
                 return .medium()
@@ -47,7 +47,7 @@ public extension PresentationType {
 public enum PresentationType: Equatable, Codable, Sendable {
     case regular(preventDismissal: Bool = false)
     case fullscreen
-    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: PresentationType.Detent? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
+    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: String? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
 
     var style: UIModalPresentationStyle {
         switch self {

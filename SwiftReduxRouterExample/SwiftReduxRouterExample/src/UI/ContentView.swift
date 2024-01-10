@@ -16,11 +16,15 @@ struct ContentView: View {
 
     let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
 
-    var detentedAction: Action {
-        NavigationAction.add(
-            path: NavigationPath.create("/hello/100")!,
-            to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large], largestUndimmedDetentIdentifier: .medium, preventDismissal: true, prefersGrabberVisible: true))
-        )
+    func detentedAction() -> Action? {
+        if #available(iOS 16.0, *) {
+            NavigationAction.add(
+                path: NavigationPath.create("/hello/100")!,
+                to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large], largestUndimmedDetentIdentifier: PresentationType.Detent.medium.detent.identifier.rawValue, preventDismissal: true, prefersGrabberVisible: true))
+            )
+        }else {
+            nil
+        }
     }
 
     func setDetendedAction(for navigationModel: NavigationModel) -> Action? {
@@ -97,7 +101,9 @@ struct ContentView: View {
                                                     Text("Set Detended \(next) to large")
                                                 }
                                                 Button(action: {
-                                                    dispatch(detentedAction)
+                                                    if let action = detentedAction(){
+                                                        dispatch(action)
+                                                    }
                                                 }) {
                                                     Text("Present Detended \(next) to current session")
                                                 }
