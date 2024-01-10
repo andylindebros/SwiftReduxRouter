@@ -15,7 +15,7 @@ public protocol NavigationJumpStateAction: CustomLogging, Sendable {
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
 public enum NavigationAction: Equatable, NavigationActionProvider {
-    case add(path: NavigationPath, to: NavigationTarget)
+    case add(path: NavigationPath?, to: NavigationTarget)
     case dismiss(NavigationModel)
     case setSelectedPath(to: NavigationPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
@@ -40,7 +40,7 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
         case let .alert(model):
             return "\(desc).alert(\(model))"
         case let .add(path: path, to: target):
-            return "\(desc).add path: \(path.path ?? path.id.uuidString), to: \(target)"
+            return "\(desc).add path: \(path?.path ?? path?.id.uuidString ?? "nil"), to: \(target)"
         case let .dismiss(model):
             return "\(desc).dismiss \(model)"
         case let .setSelectedPath(to: path, in: model):

@@ -82,8 +82,9 @@ extension NavigationState {
         self.availableRoutes = availableRoutes
         return self
     }
+
     @discardableResult func setAvailableNavigationRoutes(_ availableRoutes: [NavigationRoute]) -> Self {
-        self.availableNavigationModelRoutes = availableRoutes
+        availableNavigationModelRoutes = availableRoutes
         return self
     }
 }
@@ -152,8 +153,11 @@ public extension NavigationState {
             }
 
         case let .add(path: navigationPath, to: target):
-            guard let url = navigationPath.url, URLMatcher().match(url, from: state.availableRoutes.map { $0.path }) != nil else {
-                print("⚠️ Cannot add \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route")
+            guard
+                let navigationPath = navigationPath,
+                let url = navigationPath.url, URLMatcher().match(url, from: state.availableRoutes.map { $0.path }) != nil
+            else {
+                print("⚠️ Cannot add \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "nil") since it not supported by any route")
                 return state
             }
             switch target {
