@@ -266,8 +266,8 @@ import SwiftUI
                 } else {
                     controller.modalPresentationStyle = controller.navigationModel?.presentationType.style ?? .automatic
 
-                    if let preventDismissal = controller.navigationModel?.presentationType.preventDismissal {
-                        controller.isModalInPresentation = preventDismissal
+                    if controller.navigationModel?.presentationType.preventDismissal == true {
+                        controller.isModalInPresentation = true
                     }
 
                     if let type = controller.navigationModel?.presentationType, case let PresentationType.detents(detents, largestUndimmedDetentIdentifier, _, prefersGrabberVisible, preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge) = type, let sheet = controller.sheetPresentationController {
