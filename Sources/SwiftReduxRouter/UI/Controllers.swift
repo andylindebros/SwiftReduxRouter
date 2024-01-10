@@ -57,9 +57,10 @@ import SwiftUI
 
     extension NavigationController: UISheetPresentationControllerDelegate {
         public func sheetPresentationControllerDidChangeSelectedDetentIdentifier(_ sheetPresentationController: UISheetPresentationController) {
-            print("🍀", sheetPresentationController.selectedDetentIdentifier)
             guard let navigationModel = navigationModel, let identifier = sheetPresentationController.selectedDetentIdentifier else { return }
-            selectedDetentDidChange?(identifier.rawValue, navigationModel)
+            DispatchQueue.main.async { [weak self] in
+                self?.selectedDetentDidChange?(identifier.rawValue, navigationModel)
+            }
         }
     }
 
