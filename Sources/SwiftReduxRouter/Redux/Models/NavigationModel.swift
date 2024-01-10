@@ -1,7 +1,7 @@
 import Foundation
 
 public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
-    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular()) {
+    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil) {
         self.id = id
         self.path = path
         self.isPresented = isPresented
@@ -9,6 +9,7 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
         self.selectedPath = selectedPath
         self.tab = tab
         self.presentedPaths = presentedPaths
+        self.selectedDetentIdentifier = selectedDetentIdentifier
         animate = true
     }
 

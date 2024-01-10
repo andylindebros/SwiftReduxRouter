@@ -66,6 +66,15 @@ public enum PresentationType: Equatable, Codable, Sendable {
             nil
         }
     }
+
+    var detentItems: [Detent]? {
+        switch self {
+        case let .detents(items, _, _, _, _, _):
+            items
+        default:
+            nil
+        }
+    }
 }
 
 public struct NavigationRoute: Codable, Sendable {
@@ -90,7 +99,12 @@ public struct NavigationRoute: Codable, Sendable {
                 parameters.append(value)
             }
         }
-        guard let url = URL(string: parameters.joined(separator: "/")) else { return nil }
+        var str = parameters.joined(separator: "/")
+
+        if str.prefix(1) != "/" {
+            str = "/" + str
+        }
+        guard let url = URL(string: str) else { return nil }
         return NavigationPath.create(url)
     }
 }

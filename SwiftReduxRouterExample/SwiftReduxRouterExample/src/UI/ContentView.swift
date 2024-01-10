@@ -19,7 +19,7 @@ struct ContentView: View {
     var detentedAction: Action {
         NavigationAction.add(
             path: NavigationPath.create("/hello/100")!,
-            to: .new(type: .detents([.custom(identifier: "100", height: 100), .medium, .large], largestUndimmedDetentIdentifier: .medium, preventDismissal: true, prefersGrabberVisible: true))
+            to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large], largestUndimmedDetentIdentifier: .medium, preventDismissal: true, prefersGrabberVisible: true))
         )
     }
 

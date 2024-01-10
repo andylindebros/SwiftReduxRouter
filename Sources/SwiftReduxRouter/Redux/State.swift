@@ -184,9 +184,15 @@ public extension NavigationState {
                 state.navigationModels[index].animate = animate
 
             case let .new(navigationModelPath, presentationType):
-                let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType)
-                state.navigationModels.append(navigationModel)
-                state.selectedModelId = navigationModel.id
+                if #available(iOS 16.0, *) {
+                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, selectedDetentIdentifier: presentationType.detentItems?.first?.detent.identifier.rawValue)
+                    state.navigationModels.append(navigationModel)
+                    state.selectedModelId = navigationModel.id
+                } else {
+                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType)
+                    state.navigationModels.append(navigationModel)
+                    state.selectedModelId = navigationModel.id
+                }
             }
             state.setSelectedPath(navigationPath)
 
