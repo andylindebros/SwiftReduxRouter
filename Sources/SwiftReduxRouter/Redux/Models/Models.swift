@@ -47,7 +47,7 @@ public extension PresentationType {
 public enum PresentationType: Equatable, Codable, Sendable {
     case regular(preventDismissal: Bool = false)
     case fullscreen
-    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: String? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
+    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: PresentationType.Detent? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
 
     var style: UIModalPresentationStyle {
         switch self {
