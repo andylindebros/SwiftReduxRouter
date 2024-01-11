@@ -47,7 +47,7 @@ public extension PresentationType {
 public enum PresentationType: Equatable, Codable, Sendable {
     case regular(preventDismissal: Bool = false)
     case fullscreen
-    case detents([PresentationType.Detent], largestUndimmedDetentIdentifier: PresentationType.Detent? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
+    case detents([PresentationType.Detent], selected: PresentationType.Detent? = nil, largestUndimmedDetentIdentifier: PresentationType.Detent? = nil, preventDismissal: Bool = false, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
 
     var style: UIModalPresentationStyle {
         switch self {
@@ -60,7 +60,7 @@ public enum PresentationType: Equatable, Codable, Sendable {
 
     var preventDismissal: Bool? {
         switch self {
-        case let .regular(preventDismissal), let .detents(_, _, preventDismissal, _, _, _):
+        case let .regular(preventDismissal), let .detents(_, _, _, preventDismissal, _, _, _):
             preventDismissal
         case .fullscreen:
             nil
@@ -69,8 +69,17 @@ public enum PresentationType: Equatable, Codable, Sendable {
 
     var detentItems: [Detent]? {
         switch self {
-        case let .detents(items, _, _, _, _, _):
+        case let .detents(items, _, _, _, _, _, _):
             items
+        default:
+            nil
+        }
+    }
+
+    var selectedDetent: Detent? {
+        switch self {
+        case let .detents(_, selectedDetent, _, _, _, _, _):
+            selectedDetent
         default:
             nil
         }

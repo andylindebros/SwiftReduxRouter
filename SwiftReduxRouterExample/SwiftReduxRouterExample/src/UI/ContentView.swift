@@ -19,7 +19,8 @@ struct ContentView: View {
     func detentedAction() -> Action {
         NavigationAction.add(
             path: NavigationPath.create("/hello/100")!,
-            to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large], largestUndimmedDetentIdentifier: PresentationType.Detent.medium, preventDismissal: true, prefersGrabberVisible: true))
+            to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large],
+                                    selected: .medium, largestUndimmedDetentIdentifier: PresentationType.Detent.medium, preventDismissal: true, prefersGrabberVisible: true))
         )
     }
 

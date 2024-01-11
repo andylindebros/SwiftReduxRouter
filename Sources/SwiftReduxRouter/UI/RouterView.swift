@@ -270,16 +270,21 @@ import SwiftUI
                         controller.isModalInPresentation = true
                     }
 
-                    if let type = controller.navigationModel?.presentationType, case let PresentationType.detents(detents, largestUndimmedDetentIdentifier, _, prefersGrabberVisible, preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge) = type, let sheet = controller.sheetPresentationController {
+                    if let type = controller.navigationModel?.presentationType, case let PresentationType.detents(detents, selectedDetent, largestUndimmedDetentIdentifier, _, prefersGrabberVisible, preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge) = type, let sheet = controller.sheetPresentationController {
                         sheet.prefersGrabberVisible = prefersGrabberVisible
                         if let preferredCornerRadius = preferredCornerRadius {
                             sheet.preferredCornerRadius = preferredCornerRadius
                         }
                         sheet.detents = Array(Set(detents.map { $0.detent }))
                         sheet.prefersEdgeAttachedInCompactHeight = true
+
+                        if #available(iOS 16.0, *), let selectedDetent = selectedDetent {
+                            sheet.selectedDetentIdentifier = selectedDetent.detent.identifier
+                        }
+
                         sheet.widthFollowsPreferredContentSizeWhenEdgeAttached = true
                         sheet.prefersScrollingExpandsWhenScrolledToEdge = prefersScrollingExpandsWhenScrolledToEdge
-                        if #available(iOS 16.0, *), let largestUndimmedDetentIdentifier =  largestUndimmedDetentIdentifier?.detent.identifier {
+                        if #available(iOS 16.0, *), let largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier?.detent.identifier {
                             sheet.largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier
                         }
                     }

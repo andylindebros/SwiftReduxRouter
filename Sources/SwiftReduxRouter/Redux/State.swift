@@ -185,7 +185,8 @@ public extension NavigationState {
 
             case let .new(navigationModelPath, presentationType):
                 if #available(iOS 16.0, *) {
-                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, selectedDetentIdentifier: presentationType.detentItems?.first?.detent.identifier.rawValue)
+                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue
+                    )
                     state.navigationModels.append(navigationModel)
                     state.selectedModelId = navigationModel.id
                 } else {
