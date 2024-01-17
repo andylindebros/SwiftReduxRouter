@@ -45,15 +45,11 @@ import SwiftUI
                 if let coordinator = viewController.transitionCoordinator, coordinator.isInteractive {
                     coordinator.notifyWhenInteractionChanges { context in
                         if !context.isCancelled {
-                            DispatchQueue.main.async {
-                                willShow(navigationModel, navPath)
-                            }
+                            willShow(navigationModel, navPath)
                         }
                     }
                 } else {
-                    DispatchQueue.main.async {
-                        willShow(navigationModel, navPath)
-                    }
+                    willShow(navigationModel, navPath)
                 }
             }
         }

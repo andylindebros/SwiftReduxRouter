@@ -1,34 +1,32 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "Logger",
-        "repositoryURL": "https://github.com/lindebrothers/Logger",
-        "state": {
-          "branch": null,
-          "revision": "44a44f07de58352bafdf20e909c4ef6cbde01d0e",
-          "version": "1.1.0"
-        }
-      },
-      {
-        "package": "ReduxMonitor",
-        "repositoryURL": "https://github.com/Lindebrothers/ReduxMonitor",
-        "state": {
-          "branch": null,
-          "revision": "0ac8bc6334356953ee71df005fa8c4903f4a03fb",
-          "version": "2.0.1"
-        }
-      },
-      {
-        "package": "SwiftUIRedux",
-        "repositoryURL": "https://github.com/andylindebros/SwiftUIRedux",
-        "state": {
-          "branch": null,
-          "revision": "07ade816ddd464111964f52fa9587ed1f078f36b",
-          "version": "0.2.0"
-        }
+  "pins" : [
+    {
+      "identity" : "logger",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/lindebrothers/Logger",
+      "state" : {
+        "revision" : "44a44f07de58352bafdf20e909c4ef6cbde01d0e",
+        "version" : "1.1.0"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "reduxmonitor",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Lindebrothers/ReduxMonitor",
+      "state" : {
+        "revision" : "0ac8bc6334356953ee71df005fa8c4903f4a03fb",
+        "version" : "2.0.1"
+      }
+    },
+    {
+      "identity" : "swiftuiredux",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/andylindebros/SwiftUIRedux",
+      "state" : {
+        "revision" : "07ade816ddd464111964f52fa9587ed1f078f36b",
+        "version" : "0.2.0"
+      }
+    }
+  ],
+  "version" : 2
 }

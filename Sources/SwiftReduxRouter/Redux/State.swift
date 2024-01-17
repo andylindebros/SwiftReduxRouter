@@ -127,10 +127,6 @@ public extension NavigationState {
 
         case let .setSelectedPath(to: navigationPath, in: navigationModel):
             if let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
-                guard state.navigationModels[index].selectedPath != navigationPath else {
-                    return state
-                }
-
                 state.navigationModels[index].selectedPath = navigationPath
                 if state.navigationModels[index].animate {
                     state.navigationModels[index].animate = true
