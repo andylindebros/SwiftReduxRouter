@@ -313,6 +313,9 @@ import SwiftUI
             viewController.navigationModel = navigationModel
             viewController.navigationPath = navigationPath
 
+            DispatchQueue.main.async {
+                route.onDidAppear?(navigationPath, navigationModel, urlMatchResult?.values)
+            }
             return viewController
         }
 
@@ -375,18 +378,18 @@ import SwiftUI
         struct Route {
             public init(
                 paths: [NavigationRoute],
-                onWillAppear: ((NavigationPath, [String: Any]?) -> Void)? = nil,
+                onDidAppear: ((NavigationPath, NavigationModel, [String: Any]?) -> Void)? = nil,
                 render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.paths = paths
-                self.onWillAppear = onWillAppear
+                self.onDidAppear = onDidAppear
                 self.render = render
                 self.defaultRoute = defaultRoute
             }
 
             public let paths: [NavigationRoute]
-            public let onWillAppear: ((NavigationPath, [String: Any]?) -> Void)?
+            public let onDidAppear: ((NavigationPath, NavigationModel, [String: Any]?) -> Void)?
             public let render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
             public let defaultRoute: Bool
         }
