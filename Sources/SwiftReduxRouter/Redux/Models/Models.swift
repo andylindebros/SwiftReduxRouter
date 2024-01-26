@@ -4,14 +4,14 @@ import Foundation
 #endif
 
 public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
-    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular())
+    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 
     public var description: String {
         switch self {
-        case let .new(path, type):
-            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""))"
+        case let .new(path, type, animate):
+            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate)"
         case .navigationModel:
             return ".navigationModel"
         case .current:
@@ -171,23 +171,27 @@ public struct NavigationTab: Codable, Sendable {
 
 public extension NavigationTab {
     enum Icon: Codable, Sendable {
+        case fileName(String)
         case local(name: String)
         case system(name: String)
 
         private enum CodingKeys: String, CodingKey {
-            case name, type
+            case name, type, fileName
         }
 
         private enum IconType: String, Codable {
-            case local, system
+            case local, system, fileName
         }
 
         public init(from decoder: Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
             let type = try values.decode(IconType.self, forKey: .type)
             let name = try values.decode(String.self, forKey: .name)
+            let fileName = try values.decode(String.self, forKey: .fileName)
 
             switch type {
+            case .fileName:
+                self = Icon.fileName(name)
             case .local:
                 self = Icon.local(name: name)
             case .system:
@@ -205,6 +209,9 @@ public extension NavigationTab {
             case let .system(name):
                 try container.encode(IconType.system, forKey: .type)
                 try container.encode(name, forKey: .name)
+            case let .fileName(fileName):
+                try container.encode(IconType.fileName, forKey: .type)
+                try container.encode(fileName, forKey: .fileName)
             }
         }
     }

@@ -1,6 +1,6 @@
-import SwiftUIRedux
 import SwiftReduxRouter
 import SwiftUI
+import SwiftUIRedux
 
 @main
 struct SwiftReduxRouterExampleApp: App {

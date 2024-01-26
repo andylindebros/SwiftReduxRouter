@@ -141,6 +141,15 @@ public extension NavigationState {
                 state.removeRedundantPaths(at: index)
             }
 
+        case let .prepareAndDismiss(navigationModel, animated, completionAction):
+            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
+                var model = state.navigationModels[index]
+                model.animate = animated
+                model.dismissCompletionAction = completionAction
+                model.shouldBeDismsised = true
+                state.navigationModels[index] = model
+            }
+
         case let .dismiss(navigationModel):
             if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
                 state.navigationModels.remove(at: index)
@@ -183,14 +192,19 @@ public extension NavigationState {
                 }
                 state.navigationModels[index].animate = animate
 
-            case let .new(navigationModelPath, presentationType):
+            case let .new(navigationModelPath, presentationType, animate):
                 if #available(iOS 16.0, *) {
-                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue
+                    let navigationModel = NavigationModel(
+                        path: navigationModelPath,
+                        selectedPath: NavigationPath(),
+                        presentationType: presentationType,
+                        selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue,
+                        animate: animate
                     )
                     state.navigationModels.append(navigationModel)
                     state.selectedModelId = navigationModel.id
                 } else {
-                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType)
+                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, animate: animate)
                     state.navigationModels.append(navigationModel)
                     state.selectedModelId = navigationModel.id
                 }

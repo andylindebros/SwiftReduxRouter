@@ -1,7 +1,7 @@
 import Foundation
 
 public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
-    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil) {
+    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
         self.id = id
         self.path = path
         self.isPresented = isPresented
@@ -10,7 +10,7 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
         self.tab = tab
         self.presentedPaths = presentedPaths
         self.selectedDetentIdentifier = selectedDetentIdentifier
-        animate = true
+        self.animate = animate
     }
 
     public var description: String {
@@ -30,6 +30,8 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
     public var isPresented: Bool
     public var presentationType: PresentationType
     public var selectedDetentIdentifier: String?
+    public var shouldBeDismsised: Bool = false
+    public var dismissCompletionAction: NavigationAction?
     var animate: Bool
 
     public static func createInitModel(id: UUID = UUID(), path: NavigationPath?, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationModel {

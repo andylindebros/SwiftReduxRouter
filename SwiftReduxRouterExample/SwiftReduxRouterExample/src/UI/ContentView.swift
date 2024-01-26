@@ -148,7 +148,7 @@ struct ContentView: View {
                                                     dispatch(
                                                         NavigationAction.add(
                                                             path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                            to: .new(type: .fullscreen)
+                                                            to: .new(type: .fullscreen, animate: false)
                                                         )
                                                     )
                                                 }) {
@@ -286,13 +286,22 @@ struct ContentView: View {
                             .background(backgrounds.randomElement() ?? Color.white)
 
                             .navigationTitle("\(presentedName)")
-                            .navigationBarItems(trailing: Button(action: {
-                                dispatch(
-                                    NavigationAction.dismiss(navigationModel)
-                                )
-                            }) {
-                                Text(navigationModel.tab == nil ? "Close" : "")
-                            })
+                            .navigationBarItems(
+                                leading: Button(action: {
+                                    dispatch(NavigationAction.prepareAndDismiss(navigationModel, animated: true, completionAction: NavigationAction.add(
+                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                        to: .new()
+                                    )))
+                                }) { Text("Prepare") },
+
+                                trailing: Button(action: {
+                                    dispatch(
+                                        NavigationAction.dismiss(navigationModel)
+                                    )
+                                }) {
+                                    Text(navigationModel.tab == nil ? "Close" : "")
+                                }
+                            )
 
                             .background(backgrounds.randomElement() ?? Color.white)
                         )

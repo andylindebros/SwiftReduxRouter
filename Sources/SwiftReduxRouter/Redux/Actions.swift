@@ -14,9 +14,10 @@ public protocol NavigationJumpStateAction: CustomLogging, Sendable {
 
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
-public enum NavigationAction: Equatable, NavigationActionProvider {
+public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case add(path: NavigationPath?, to: NavigationTarget)
     case dismiss(NavigationModel)
+    case prepareAndDismiss(NavigationModel, animated:Bool = true, completionAction: NavigationAction? = nil)
     case setSelectedPath(to: NavigationPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
     case selectTab(by: UUID)
@@ -61,6 +62,8 @@ public enum NavigationAction: Equatable, NavigationActionProvider {
             return "\(desc).deeplink with url: \(deeplink.url.path)"
         case let .selectedDetentChanged(to: identifier, in: navigationModel):
             return "\(desc).selectedDetentChanged to: \(identifier) in: \(navigationModel.id)"
+        case let .prepareAndDismiss(model, animated, completionAction):
+            return "\(desc).prepareForDismissal \(model) animated: \(animated), completionAction: \(completionAction?.description ?? "nil")"
         }
     }
 

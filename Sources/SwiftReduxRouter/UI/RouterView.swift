@@ -114,6 +114,8 @@ import SwiftUI
 
                         if let selectedIcon = tab.selectedIcon {
                             switch selectedIcon {
+                            case let .fileName(fileName):
+                                selectedImage = UIImage(contentsOfFile: fileName)
                             case let .local(name):
                                 selectedImage = UIImage(named: name)
                             case let .system(name: name):
@@ -122,6 +124,8 @@ import SwiftUI
                         }
 
                         switch tab.icon {
+                        case let .fileName(fileName):
+                            icon = UIImage(contentsOfFile: fileName)
                         case let .local(name):
                             icon = UIImage(named: name)
                         case let .system(name: name):
@@ -236,9 +240,15 @@ import SwiftUI
             let controller = controllers[index]
 
             if
-                navigationState.navigationModels.firstIndex(where: { $0.id == controller.navigationModel?.id }) == nil
+                navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
             {
-                controller.dismiss(animated: true) {
+                controller.dismiss(animated: controller.navigationModel?.animate ?? true) {
+                    if let removalModel = controller.navigationModel, let completionAction = removalModel.dismissCompletionAction {
+                        DispatchQueue.main.async {
+                            dispatch(NavigationAction.dismiss(removalModel))
+                            dispatch(completionAction)
+                        }
+                    }
                     dismiss(in: controllers, at: index + 1, completion: completion)
                 }
             } else {
@@ -264,6 +274,9 @@ import SwiftUI
                         }
                     }
                 } else {
+                    guard (controller.navigationModel?.shouldBeDismsised ?? false) == false else {
+                        continue
+                    }
                     controller.modalPresentationStyle = controller.navigationModel?.presentationType.style ?? .automatic
 
                     if controller.navigationModel?.presentationType.preventDismissal == true {
@@ -288,7 +301,7 @@ import SwiftUI
                             sheet.largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier
                         }
                     }
-                    topController.present(controller, animated: true)
+                    topController.present(controller, animated: controller.navigationModel?.animate ?? true)
                     topController = controller
                 }
             }
