@@ -142,7 +142,7 @@ public extension NavigationState {
             }
 
         case let .prepareAndDismiss(navigationModel, animated, completionAction):
-            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
+            if let index = state.navigationModels.firstIndex(where: { $0.tab == nil && $0.id == navigationModel.id }) {
                 var model = state.navigationModels[index]
                 model.animate = animated
                 model.dismissCompletionAction = completionAction
