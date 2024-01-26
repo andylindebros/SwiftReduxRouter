@@ -243,9 +243,13 @@ import SwiftUI
                 navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
             {
                 controller.dismiss(animated: controller.navigationModel?.animate ?? true) {
-                    if let removalModel = controller.navigationModel, let completionAction = removalModel.dismissCompletionAction {
+                    if let removalModel = controller.navigationModel {
                         DispatchQueue.main.async {
                             dispatch(NavigationAction.dismiss(removalModel))
+                        }
+                    }
+                    if let completionAction = controller.navigationModel?.dismissCompletionAction {
+                        DispatchQueue.main.async {
                             dispatch(completionAction)
                         }
                     }
