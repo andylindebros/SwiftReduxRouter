@@ -170,28 +170,36 @@ public struct NavigationTab: Codable, Sendable {
 }
 
 public extension NavigationTab {
+    struct IconImage: Identifiable, Sendable {
+        init(id: String, image: UIImage) {
+            self.id = id
+            self.image = image
+        }
+
+        public let id: String
+        public let image: UIImage
+    }
     enum Icon: Codable, Sendable {
-        case fileName(String)
+        case iconImage(id: String)
         case local(name: String)
         case system(name: String)
 
         private enum CodingKeys: String, CodingKey {
-            case name, type, fileName
+            case name, type, iconImage
         }
 
         private enum IconType: String, Codable {
-            case local, system, fileName
+            case local, system, iconImage
         }
 
         public init(from decoder: Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
             let type = try values.decode(IconType.self, forKey: .type)
             let name = try values.decode(String.self, forKey: .name)
-            let fileName = try values.decode(String.self, forKey: .fileName)
 
             switch type {
-            case .fileName:
-                self = Icon.fileName(name)
+            case .iconImage:
+                self = Icon.iconImage(id: name)
             case .local:
                 self = Icon.local(name: name)
             case .system:
@@ -209,9 +217,9 @@ public extension NavigationTab {
             case let .system(name):
                 try container.encode(IconType.system, forKey: .type)
                 try container.encode(name, forKey: .name)
-            case let .fileName(fileName):
-                try container.encode(IconType.fileName, forKey: .type)
-                try container.encode(fileName, forKey: .fileName)
+            case let .iconImage(imageID):
+                try container.encode(IconType.iconImage, forKey: .type)
+                try container.encode(imageID, forKey: .iconImage)
             }
         }
     }

@@ -15,10 +15,12 @@ import SwiftUI
             navigationControllerRoutes: [NavigationControllerRoute] = [],
             routes: [Route],
             tintColor: UIColor? = nil,
+            tabBarIconImages: [NavigationTab.IconImage]? = nil,
             dispatch: @escaping NavigationDispatcher
         ) {
             self.navigationState = navigationState
             self.routes = routes
+            self.tabBarIconImages = tabBarIconImages
             self.navigationControllerRoutes = navigationControllerRoutes
             self.tintColor = tintColor
             self.dispatch = dispatch
@@ -59,6 +61,7 @@ import SwiftUI
 
         private let tintColor: UIColor?
 
+        private let tabBarIconImages: [NavigationTab.IconImage]?
         // MARK: UIVIewControllerRepresentable methods
 
         public func makeUIViewController(context _: Context) -> UIViewController {
@@ -114,8 +117,10 @@ import SwiftUI
 
                         if let selectedIcon = tab.selectedIcon {
                             switch selectedIcon {
-                            case let .fileName(fileName):
-                                selectedImage = UIImage(contentsOfFile: fileName)
+                            case let .iconImage(id: id):
+                                if let model = tabBarIconImages?.first(where: { $0.id == id }) {
+                                    selectedImage = model.image
+                                }
                             case let .local(name):
                                 selectedImage = UIImage(named: name)
                             case let .system(name: name):
@@ -124,8 +129,10 @@ import SwiftUI
                         }
 
                         switch tab.icon {
-                        case let .fileName(fileName):
-                            icon = UIImage(contentsOfFile: fileName)
+                        case let .iconImage(id: id):
+                            if let model = tabBarIconImages?.first(where: { $0.id == id }) {
+                                icon = model.image
+                            }
                         case let .local(name):
                             icon = UIImage(named: name)
                         case let .system(name: name):
