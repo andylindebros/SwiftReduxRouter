@@ -68,7 +68,7 @@ extension AppState {
                         selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
                         tab: NavigationTab(
                             name: "Second Tab",
-                            icon: NavigationTab.Icon.system(name: "heart.fill"),
+                            icon: NavigationTab.Icon.iconImage(id: "heart.fill"),
                             badgeColor: .red
                         )
                     ),

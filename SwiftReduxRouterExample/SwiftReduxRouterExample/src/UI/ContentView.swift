@@ -316,6 +316,9 @@ struct ContentView: View {
                 ),
             ],
             tintColor: .red,
+            tabBarIconImages: [
+                NavigationTab.IconImage(id: "heart.fill", image: UIImage(systemName: "heart.fill")!)
+            ],
             dispatch: { navigationAction in
                 guard let action = navigationAction as? Action else {
                     return

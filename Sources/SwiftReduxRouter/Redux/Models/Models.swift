@@ -171,13 +171,13 @@ public struct NavigationTab: Codable, Sendable {
 
 public extension NavigationTab {
     struct IconImage: Identifiable, Sendable {
-        init(id: String, image: UIImage) {
+        public init(id: String, image: UIImage) {
             self.id = id
             self.image = image
         }
 
         public let id: String
-        public let image: UIImage
+        public let image: UIImage?
     }
     enum Icon: Codable, Sendable {
         case iconImage(id: String)

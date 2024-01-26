@@ -118,8 +118,8 @@ import SwiftUI
                         if let selectedIcon = tab.selectedIcon {
                             switch selectedIcon {
                             case let .iconImage(id: id):
-                                if let model = tabBarIconImages?.first(where: { $0.id == id }) {
-                                    selectedImage = model.image
+                                if let image = tabBarIconImages?.first(where: { $0.id == id })?.image {
+                                    selectedImage = image
                                 }
                             case let .local(name):
                                 selectedImage = UIImage(named: name)
@@ -130,8 +130,8 @@ import SwiftUI
 
                         switch tab.icon {
                         case let .iconImage(id: id):
-                            if let model = tabBarIconImages?.first(where: { $0.id == id }) {
-                                icon = model.image
+                            if let image = tabBarIconImages?.first(where: { $0.id == id })?.image {
+                                icon = image
                             }
                         case let .local(name):
                             icon = UIImage(named: name)
