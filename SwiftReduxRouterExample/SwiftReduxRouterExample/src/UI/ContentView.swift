@@ -75,7 +75,7 @@ struct ContentView: View {
                 ),
                 RouterView.Route(
                     paths: Self.navigationRoutes,
-                    render: { _, navigationModel, params in
+                    render: { path, navigationModel, params in
                         let presentedName = params?["name"] as? Int ?? 0
                         let next = presentedName + 1
                         return RouteViewController(rootView:
@@ -296,7 +296,7 @@ struct ContentView: View {
 
                                 trailing: Button(action: {
                                     dispatch(
-                                        NavigationAction.dismiss(navigationModel)
+                                        NavigationAction.dismissPath(path)
                                     )
                                 }) {
                                     Text(navigationModel.tab == nil ? "Close" : "")

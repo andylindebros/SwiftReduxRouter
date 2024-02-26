@@ -17,6 +17,7 @@ public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case add(path: NavigationPath?, to: NavigationTarget)
     case dismiss(NavigationModel)
+    case dismissPath(NavigationPath)
     case prepareAndDismiss(NavigationModel, animated:Bool = true, completionAction: NavigationAction? = nil)
     case setSelectedPath(to: NavigationPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
@@ -44,6 +45,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             return "\(desc).add path: \(path?.path ?? path?.id.uuidString ?? "nil"), to: \(target)"
         case let .dismiss(model):
             return "\(desc).dismiss \(model)"
+        case let .dismissPath(path):
+            return "\(desc).dismissPath \(path)"
         case let .setSelectedPath(to: path, in: model):
             return "\(desc).setSelectedPath to: \(path.path ?? path.id.uuidString) in: \(model)"
         case let .setNavigationDismsissed(model):

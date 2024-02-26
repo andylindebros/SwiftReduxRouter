@@ -161,6 +161,42 @@ public extension NavigationState {
                 }
             }
 
+        case let .dismissPath(navigationPath):
+            if let index = state.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navigationPath.id) }) {
+                // Close presented model if no more paths are presented
+                if state.navigationModels[index].isPresented, state.navigationModels[index].presentedPaths.count == 1 {
+                    state.navigationModels.remove(at: index)
+
+                    if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
+                        state.selectedModelId = lastPresentedModel.id
+                    } else {
+                        state.selectedModelId = state.rootSelectedModelID
+                    }
+                    return state
+                }
+
+                // We cannot remove the root controller of the navigationController
+                guard state.navigationModels[index].presentedPaths.count > 0 else {
+                    return state
+                }
+
+                if let pathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationPath.id }), pathIndex - 1 >= 0 {
+                    let nextPath = state.navigationModels[index].presentedPaths[pathIndex - 1]
+                    state.navigationModels[index].selectedPath = nextPath
+                    if state.navigationModels[index].animate {
+                        state.navigationModels[index].animate = true
+                    }
+                    state.selectedModelId = state.navigationModels[index].id
+
+                    if !state.navigationModels[index].isPresented {
+                        state.rootSelectedModelID = state.navigationModels[index].id
+                    }
+
+                    // Remove all indexes that comes after current path
+                    state.removeRedundantPaths(at: index)
+                }
+            }
+
         case let .add(path: navigationPath, to: target):
             guard
                 let navigationPath = navigationPath,
