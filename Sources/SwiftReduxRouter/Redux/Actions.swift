@@ -18,7 +18,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case add(path: NavigationPath?, to: NavigationTarget)
     case dismiss(NavigationModel)
     case dismissPath(NavigationPath)
-    case prepareAndDismiss(NavigationModel, animated:Bool = true, completionAction: NavigationAction? = nil)
+    case prepareAndDismiss(NavigationModel, animated: Bool = true, completionAction: NavigationAction? = nil)
     case setSelectedPath(to: NavigationPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
     case selectTab(by: UUID)
@@ -27,6 +27,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case alert(AlertModel)
     case dismissedAlert(with: AlertModel)
     case selectedDetentChanged(to: String, in: NavigationModel)
+    case setAvailableRoutes(to: [NavigationRoute])
+    case setAvailableNavigationModelRoutes(to: [NavigationRoute])
     #if canImport(UIKit)
         case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
     #else
@@ -37,6 +39,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     public var description: String {
         let desc = "\(type(of: self))"
         switch self {
+        case .setAvailableRoutes: return "\(desc).setAvailableRoutes"
+        case .setAvailableNavigationModelRoutes: return "\(desc).setAvailableNavigationModelRoutes"
         case let .dismissedAlert(model):
             return "\(desc).dismissedAlert(\(model))"
         case let .alert(model):
@@ -85,7 +89,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         public var description: String {
             "\(type(of: self))(url: \(url.path))"
         }
-        public func action(for state: NavigationState) -> NavigationActionProvider? {
+
+        public func action(for state: Navigation.State) -> NavigationActionProvider? {
             if let model = findNavigationModel(in: state) {
                 let newURL = URL(string: url.path.replacingOccurrences(of: model.path?.url?.absoluteString ?? "", with: ""))
 
@@ -106,7 +111,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             } else {
                 // Push new path to known navigationModel (found in navigation routes)
                 if
-                    let pattern = URLMatcher().match(url.path, from: state.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
+                    let pattern = URLMatcher().match(url.path, from: state.observed.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
                     let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
                 {
                     return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular()))
@@ -120,10 +125,10 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             return nil
         }
 
-        private func findNavigationModel(in state: NavigationState) -> NavigationModel? {
+        private func findNavigationModel(in state: Navigation.State) -> NavigationModel? {
             guard
-                let pattern = URLMatcher().match(url.path, from: state.navigationModels.compactMap { $0.path?.url?.absoluteString }, ensureComponentsCount: false)?.pattern,
-                let navigationModel = state.navigationModels.first(where: { $0.path?.url?.absoluteString == pattern })
+                let pattern = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.path?.url?.absoluteString }, ensureComponentsCount: false)?.pattern,
+                let navigationModel = state.observed.navigationModels.first(where: { $0.path?.url?.absoluteString == pattern })
             else {
                 return nil
             }

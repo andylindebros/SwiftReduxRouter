@@ -86,7 +86,7 @@ public enum PresentationType: Equatable, Codable, Sendable {
     }
 }
 
-public struct NavigationRoute: Codable, Sendable {
+public struct NavigationRoute: Equatable, Codable, Sendable {
     public init(_ path: String) {
         self.path = path
     }
@@ -179,6 +179,7 @@ public extension NavigationTab {
         public let id: String
         public let image: UIImage?
     }
+
     enum Icon: Codable, Sendable {
         case iconImage(id: String)
         case local(name: String)

@@ -4,14 +4,15 @@ import SwiftUI
     import UIKit
 #endif
 #if canImport(UIKit)
+
     /**
      RouterView provides a SwiftUI view to a navigationState
      */
     @available(iOS 13, *)
-    public struct RouterView: UIViewControllerRepresentable {
+    @MainActor public struct RouterView: UIViewControllerRepresentable {
         /// Public init
         public init(
-            navigationState: NavigationState,
+            navigationState: Navigation.State,
             navigationControllerRoutes: [NavigationControllerRoute] = [],
             routes: [Route],
             tintColor: UIColor? = nil,
@@ -35,14 +36,10 @@ import SwiftUI
             selectedDetentDidChange = { identifier, navigationModel in
                 dispatch(NavigationAction.selectedDetentChanged(to: identifier, in: navigationModel))
             }
-
-            navigationState
-                .setAvailableRoutes(routes.map { $0.paths }.flatMap { $0 })
-                .setAvailableNavigationRoutes(navigationControllerRoutes.map { $0.paths }.flatMap { $0 })
         }
 
         /// The navigationState
-        @ObservedObject private var navigationState: NavigationState
+        private var navigationState: Navigation.State
 
         /// Available routes
         private let routes: [Route]
@@ -62,6 +59,7 @@ import SwiftUI
         private let tintColor: UIColor?
 
         private let tabBarIconImages: [NavigationTab.IconImage]?
+
         // MARK: UIVIewControllerRepresentable methods
 
         public func makeUIViewController(context _: Context) -> UIViewController {
@@ -90,14 +88,14 @@ import SwiftUI
 
         @discardableResult private func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
             // Appear as a tabbar. Initial state has more than one navigationModel
-            if navigationState.navigationModels.filter({ $0.tab != nil }).count > 1 {
+            if navigationState.observed.navigationModels.filter({ $0.tab != nil }).count > 1 {
                 let tc = asTabBarController(rootController)
                 if let tintColor = tintColor {
                     tc.tabBar.tintColor = tintColor
                 }
                 var ncs = [NavigationController]()
                 var presentedControllers = [NavigationController]()
-                for navigationModel in navigationState.navigationModels {
+                for navigationModel in navigationState.observed.navigationModels {
                     let nc: NavigationController = tc.viewControllers?.compactMap { $0 as? NavigationController }.first(where: { $0.navigationModel?.id == navigationModel.id }) ??
                         findPresented(navigationModel: navigationModel, in: tc) ??
                         Self.navigationController(for: navigationModel, in: navigationControllerRoutes)
@@ -106,8 +104,8 @@ import SwiftUI
 
                     if let tab = navigationModel.tab {
                         if
-                            navigationState.rootSelectedModelID == navigationModel.id,
-                            let selectedIndex = navigationState.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
+                            navigationState.observed.rootSelectedModelID == navigationModel.id,
+                            let selectedIndex = navigationState.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                         {
                             tc.selectedIndex = selectedIndex
                         }
@@ -145,7 +143,9 @@ import SwiftUI
                             selectedImage: selectedImage == nil ? icon : selectedImage
                         )
 
-                        nc.tabBarItem.badgeColor = tab.badgeColor ?? .red
+                        if let badgeColor = tab.badgeColor {
+                            nc.tabBarItem.badgeColor = badgeColor
+                        }
                         nc.tabBarItem.badgeValue = tab.badgeValue
                         ncs.append(nc)
                         continue
@@ -168,7 +168,7 @@ import SwiftUI
                 // Appear as a NavigationController. Initial state has only one navigationModel
             } else {
                 let rnc = asNavigationController(rootController)
-                guard let navigationModel = navigationState.navigationModels.first else { return rnc }
+                guard let navigationModel = navigationState.observed.navigationModels.first else { return rnc }
 
                 rnc.navigationModel = navigationModel
                 rnc.willShow = setSelectedPath
@@ -178,7 +178,7 @@ import SwiftUI
                 recreateNavigation(nc: rnc, navigationModel: navigationModel)
 
                 var presentedControllers = [NavigationController]()
-                for navigationModel in navigationState.navigationModels.filter({ $0.id != rnc.navigationModel?.id }) {
+                for navigationModel in navigationState.observed.navigationModels.filter({ $0.id != rnc.navigationModel?.id }) {
                     let nc: NavigationController = findPresented(navigationModel: navigationModel, in: rnc) ??
                         NavigationController()
 
@@ -247,7 +247,7 @@ import SwiftUI
             let controller = controllers[index]
 
             if
-                navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
+                navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
             {
                 controller.dismiss(animated: controller.navigationModel?.animate ?? true) {
                     if let removalModel = controller.navigationModel {
@@ -317,7 +317,7 @@ import SwiftUI
                 }
             }
 
-            if let alertModel = navigationState.alerts.first {
+            if let alertModel = navigationState.observed.alerts.first {
                 presentAlert(with: alertModel, in: topController)
             }
         }

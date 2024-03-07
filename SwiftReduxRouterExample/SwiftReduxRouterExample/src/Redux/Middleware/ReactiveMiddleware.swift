@@ -4,7 +4,7 @@ import SwiftUIRedux
 
 public enum ReactiveMiddleware {
     static func createMiddleware() -> Middleware<AppState> {
-        return { dispatch, state in
+        return { _, state in
             { next in
                 { action in
                     let nextAction: Void = next(action)
