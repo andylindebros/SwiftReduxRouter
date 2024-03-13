@@ -247,8 +247,10 @@ import SwiftUI
             let controller = controllers[index]
 
             if
+                controller.isDismissing == false, 
                 navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
             {
+                controller.isDismissing = true
                 controller.dismiss(animated: controller.navigationModel?.animate ?? true) {
                     if let removalModel = controller.navigationModel {
                         DispatchQueue.main.async {

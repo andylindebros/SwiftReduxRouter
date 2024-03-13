@@ -21,7 +21,7 @@ import SwiftUI
         var willShow: ((_ navigationModel: NavigationModel, _ navigationPath: NavigationPath) -> Void)?
         var onDismiss: ((_ navigationModel: NavigationModel) -> Void)?
         var selectedDetentDidChange: ((String, NavigationModel) -> Void)?
-
+        var isDismissing: Bool = false
         @discardableResult func setModel(to value: NavigationModel) -> Self {
             navigationModel = value
             return self
