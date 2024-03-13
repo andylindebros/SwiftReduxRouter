@@ -29,6 +29,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case selectedDetentChanged(to: String, in: NavigationModel)
     case setAvailableRoutes(to: [NavigationRoute])
     case setAvailableNavigationModelRoutes(to: [NavigationRoute])
+    case multiAction([NavigationAction])
     #if canImport(UIKit)
         case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
     #else
@@ -39,6 +40,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     public var description: String {
         let desc = "\(type(of: self))"
         switch self {
+        case let .multiAction(actions): return "\(desc).multiAction \(actions.map { $0.description })"
         case .setAvailableRoutes: return "\(desc).setAvailableRoutes"
         case .setAvailableNavigationModelRoutes: return "\(desc).setAvailableNavigationModelRoutes"
         case let .dismissedAlert(model):
@@ -134,5 +136,20 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             }
             return navigationModel
         }
+    }
+}
+
+@resultBuilder
+public enum MultiActionBuilder {
+    public static func buildBlock(_ content: NavigationAction...) -> [NavigationAction] {
+        Array(
+            content.compactMap { $0 }
+        )
+    }
+}
+
+public extension NavigationAction {
+    init(@MultiActionBuilder _ actions: () -> [NavigationAction]) {
+        self = .multiAction(actions())
     }
 }

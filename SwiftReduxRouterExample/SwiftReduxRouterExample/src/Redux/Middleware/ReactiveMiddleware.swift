@@ -4,7 +4,7 @@ import SwiftUIRedux
 
 public enum ReactiveMiddleware {
     static func createMiddleware() -> Middleware<AppState> {
-        return { _, state in
+        return { dispatch, state in
             { next in
                 { action in
                     let nextAction: Void = next(action)
@@ -15,7 +15,7 @@ public enum ReactiveMiddleware {
 
                     if
                         case let NavigationAction.deeplink(deeplink) = action,
-                        let reaction = deeplink.action(for: state.navigation),
+                        let reaction = deeplink.action(for: state.navigation.state),
                         let navigationAction = reaction as? Action
                     {
                         dispatch(navigationAction)

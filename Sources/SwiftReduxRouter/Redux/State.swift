@@ -45,6 +45,16 @@ public extension Navigation.State {
         }
 
         switch action as? NavigationAction {
+        case let .multiAction(actions):
+            for action in actions {
+                switch action {
+                case .multiAction:
+                    continue
+                default:
+                    state = reducer(action: action, state: state)
+                }
+            }
+
         case let .setAvailableRoutes(routes):
             state.observed.availableRoutes = routes
         case let .setAvailableNavigationModelRoutes(routes):
