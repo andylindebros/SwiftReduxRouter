@@ -286,7 +286,7 @@ struct TestRoute: View {
                             buttons: [
                                 .init(
                                     label: "Close and Present view",
-                                    type: .destructive,
+                                    type: .default,
                                     actions: [
                                         NavigationAction.dismiss(navigationModel),
                                         NavigationAction.add(

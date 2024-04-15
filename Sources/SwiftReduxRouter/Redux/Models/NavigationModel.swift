@@ -1,7 +1,7 @@
 import Foundation
 
 public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
-    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
+    public init(id: UUID = UUID(), path: NavigationPath? = nil, selectedPath: NavigationPath, parentNavigationModelId: UUID = UUID(), parentNavigationModelName: String? = nil, tab: NavigationTab? = nil, presentedPaths: [NavigationPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
         self.id = id
         self.path = path
         self.isPresented = isPresented
@@ -11,6 +11,8 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
         self.presentedPaths = presentedPaths
         self.selectedDetentIdentifier = selectedDetentIdentifier
         self.animate = animate
+        self.parentNavigationModelId = parentNavigationModelId
+        self.parentNavigationModelName = parentNavigationModelName
     }
 
     public var description: String {
@@ -22,6 +24,8 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
     }
 
     public let id: UUID
+    public let parentNavigationModelId: UUID
+    public let parentNavigationModelName: String?
     public let path: NavigationPath?
     public var selectedPath: NavigationPath
 
@@ -34,7 +38,7 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
     public var dismissCompletionAction: NavigationAction?
     var animate: Bool
 
-    public static func createInitModel(id: UUID = UUID(), path: NavigationPath?, selectedPath: NavigationPath, tab: NavigationTab? = nil) -> NavigationModel {
-        NavigationModel(id: id, path: path, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+    public static func createInitModel(id: UUID = UUID(), path: NavigationPath?, selectedPath: NavigationPath, tab: NavigationTab? = nil, parentNavigationModelId: UUID = .init(), parentNavigationModelName: String? = nil) -> NavigationModel {
+        NavigationModel(id: id, path: path, selectedPath: selectedPath, parentNavigationModelId: parentNavigationModelId, parentNavigationModelName: parentNavigationModelName ?? tab?.name, tab: tab, presentedPaths: [selectedPath], isPresented: false)
     }
 }

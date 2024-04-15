@@ -190,6 +190,8 @@ public extension Navigation.State {
                     let navigationModel = NavigationModel(
                         path: navigationModelPath,
                         selectedPath: NavigationPath(),
+                        parentNavigationModelId: state.observed.selectedModelId,
+                        parentNavigationModelName: state.observed.navigationModels.first(where: { $0.id == state.observed.selectedModelId })?.tab?.name ?? "presented",
                         presentationType: presentationType,
                         selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue,
                         animate: animate
