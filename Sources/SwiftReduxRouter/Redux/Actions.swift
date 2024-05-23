@@ -89,13 +89,18 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         let url: URL
 
         public var description: String {
-            "\(type(of: self))(url: \(url.path))"
+            "\(type(of: self))(url: \(url.path)) ? \(url.query != nil ? "?\(url.query ?? "")" : "")"
         }
 
+        private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
+            var urlComponents = URLComponents(string: url.absoluteString)
+            urlComponents?.path = url.path.replacingOccurrences(of: removeFromPath, with: "")
+
+            return urlComponents?.url
+        }
         public func action(for state: Navigation.State) -> NavigationActionProvider? {
             if let model = findNavigationModel(in: state) {
-                let newURL = URL(string: url.path.replacingOccurrences(of: model.path?.url?.absoluteString ?? "", with: ""))
-
+                let newURL = createNewURL(from: url, removeFromPath: model.path?.url?.absoluteString ?? "")
                 // Select: URL has a excat match
                 if newURL == model.selectedPath.url || url.path == model.path?.url?.absoluteString {
                     return NavigationAction.setSelectedPath(to: model.selectedPath, in: model)
@@ -114,12 +119,13 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 // Push new path to known navigationModel (found in navigation routes)
                 if
                     let pattern = URLMatcher().match(url.path, from: state.observed.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
-                    let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
+                    //let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
+                    let newPath = NavigationPath.create(createNewURL(from: url, removeFromPath: pattern.path))
                 {
                     return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular()))
 
                     // push to new navigationModel
-                } else if let newPath = NavigationPath.create(URL(string: url.path)) {
+                } else if let newPath = NavigationPath.create(createNewURL(from: url, removeFromPath: "")) {
                     return NavigationAction.add(path: newPath, to: .new())
                 }
                 return nil
