@@ -94,7 +94,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
 
         private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
             var urlComponents = URLComponents(string: url.absoluteString)
-            urlComponents?.path = url.path.replacingOccurrences(of: removeFromPath, with: "")
+            urlComponents?.path = url.path.replaceFirstExpression(of: removeFromPath, with: "")
 
             return urlComponents?.url
         }
