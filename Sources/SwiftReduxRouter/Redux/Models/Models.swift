@@ -135,7 +135,7 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
         url?.path
     }
 
-    public static func create(_ urlString: String) -> NavigationPath? {
+    public static func create(_ urlString: String, name: String? = nil) -> NavigationPath? {
         guard let url = URL(string: urlString) else { return nil }
         return NavigationPath(url)
     }
