@@ -87,11 +87,13 @@ public enum PresentationType: Equatable, Codable, Sendable {
 }
 
 public struct NavigationRoute: Equatable, Codable, Sendable {
-    public init(_ path: String) {
+    public init(_ path: String, name: String? = nil) {
         self.path = path
+        self.name = name
     }
 
     public var path: String
+    public var name: String?
 
     public func reverse(params: [String: String] = [:]) -> NavigationPath? {
         let urlMatcher = URLMatcher()
@@ -120,11 +122,13 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
 
 public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
     public var id: UUID
-    public var url: URL?
+    public let url: URL?
+    public let name: String?
 
-    public init(id: UUID = UUID(), _ url: URL? = nil) {
+    public init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil) {
         self.id = id
         self.url = url
+        self.name = name
     }
 
     public var path: String? {
