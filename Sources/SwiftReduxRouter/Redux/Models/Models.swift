@@ -116,7 +116,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
             str = "/" + str
         }
         guard let url = URL(string: str) else { return nil }
-        return NavigationPath.create(url)
+        return NavigationPath.create(url, name: name)
     }
 }
 
@@ -140,9 +140,9 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
         return NavigationPath(url)
     }
 
-    public static func create(_ url: URL?) -> NavigationPath? {
+    public static func create(_ url: URL?, name: String? = nil) -> NavigationPath? {
         guard let url = url else { return nil }
-        return NavigationPath(url)
+        return NavigationPath(url, name)
     }
 }
 
