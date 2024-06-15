@@ -11,9 +11,9 @@ public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     public var description: String {
         switch self {
         case let .new(path, type, animate):
-            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate)"
-        case .navigationModel:
-            return ".navigationModel"
+            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate))"
+        case let .navigationModel(model, _):
+            return ".navigationModel(\(model)"
         case .current:
             return ".current"
         }
@@ -146,7 +146,7 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable, Custom
     }
 
     public var description: String {
-        "\(name ?? "")(\(path ?? id.uuidString)"
+        "\(name ?? "")(\(path ?? id.uuidString))"
     }
 }
 
