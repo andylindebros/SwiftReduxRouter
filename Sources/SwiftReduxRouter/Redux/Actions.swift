@@ -48,19 +48,19 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         case let .alert(model):
             return "\(desc).alert(\(model))"
         case let .add(path: path, to: target):
-            return "\(desc).add path: \(path?.path ?? path?.id.uuidString ?? "nil"), to: \(target)"
+            return "\(desc).add path: \(path?.description ?? "nil"), to: \(target)"
         case let .dismiss(model):
             return "\(desc).dismiss \(model)"
         case let .dismissPath(path):
             return "\(desc).dismissPath \(path)"
         case let .setSelectedPath(to: path, in: model):
-            return "\(desc).setSelectedPath to: \(path.path ?? path.id.uuidString) in: \(model)"
+            return "\(desc).setSelectedPath to: \(path) in: \(model)"
         case let .setNavigationDismsissed(model):
             return "\(desc).setNavigationDismsissed \(model)"
         case let .selectTab(by: id):
             return "\(desc).selectTab by: \(id)"
         case let .replace(path: path, with: newPath, in: model):
-            return "\(desc).replace path: \(path.path ?? path.id.uuidString) with newPath: \(newPath.path ?? path.id.uuidString) in: \(model)"
+            return "\(desc).replace path: \(path) with newPath: \(newPath.path ?? path.id.uuidString) in: \(model)"
         case let .setIcon(to: value, withModelID: modelID):
             return "\(desc).setIcon to: \(value) withModelID: \(modelID.uuidString)"
 

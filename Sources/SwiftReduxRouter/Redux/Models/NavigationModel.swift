@@ -16,7 +16,7 @@ public struct NavigationModel: Codable, CustomLogging, Equatable, Sendable {
     }
 
     public var description: String {
-        "\(type(of: self))(\(path?.path ?? id.uuidString))"
+        "\(type(of: self))(\(path?.name ?? path?.path ?? id.uuidString))"
     }
 
     public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {

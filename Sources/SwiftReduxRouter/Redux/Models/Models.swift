@@ -120,7 +120,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
     }
 }
 
-public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
+public struct NavigationPath: Identifiable, Equatable, Codable, Sendable, CustomLogging {
     public var id: UUID
     public let url: URL?
     public let name: String?
@@ -135,7 +135,7 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
         url?.path
     }
 
-    public static func create(_ urlString: String, name: String? = nil) -> NavigationPath? {
+    public static func create(_ urlString: String, name _: String? = nil) -> NavigationPath? {
         guard let url = URL(string: urlString) else { return nil }
         return NavigationPath(url)
     }
@@ -143,6 +143,10 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
     public static func create(_ url: URL?, name: String? = nil) -> NavigationPath? {
         guard let url = url else { return nil }
         return NavigationPath(url, name)
+    }
+
+    public var description: String {
+        "\(name ?? "")(\(path ?? id.uuidString)"
     }
 }
 
