@@ -5,13 +5,26 @@ import SwiftUI
 #endif
 #if canImport(UIKit)
     @available(iOS 13, *)
-    public class TabController: UITabBarController {
+    public class TabController: UITabBarController, UITabBarControllerDelegate {
         override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
             super.dismiss(animated: flag, completion: completion)
         }
 
         override public func viewDidLoad() {
             super.viewDidLoad()
+            delegate = self
+        }
+
+        public var onTabAlreadySelected: ((NavigationPath) -> Void)?
+        public func tabBarController(_ tabBarController: UITabBarController, shouldSelect controller: UIViewController) -> Bool {
+            if
+                let selected = (tabBarController.selectedViewController as? NavigationController)?.navigationModel,
+                let shouldSelectNavigationModel = (controller as? NavigationController)?.navigationModel,
+                selected.id == shouldSelectNavigationModel.id
+            {
+                onTabAlreadySelected?(selected.selectedPath)
+            }
+            return true
         }
     }
 

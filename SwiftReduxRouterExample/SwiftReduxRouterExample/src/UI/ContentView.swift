@@ -98,6 +98,7 @@ struct ContentView: View {
                     let next = presentedName + 1
                     return RouteViewController(rootView:
                         TestRoute(
+                            main: store.state.main,
                             navigationPath: path,
                             navigationModel: navigationModel,
                             name: presentedName,
@@ -121,6 +122,7 @@ struct ContentView: View {
 
 @MainActor
 struct TestRoute: View {
+    @ObservedObject var main: Observed<MainState>
     let navigationPath: SwiftReduxRouter.NavigationPath
     let navigationModel: NavigationModel
     let name: Int
@@ -146,21 +148,32 @@ struct TestRoute: View {
 
     var body: some View {
         ScrollView {
-            HStack {
-                Spacer()
-                VStack(spacing: 10) {
+            ScrollViewReader { scrollProxy in
+                HStack {
                     Spacer()
+                    VStack(spacing: 10) {
+                        Spacer()
 
-                    VStack {
-                        firstSection
-                        secondSection
+                        VStack {
+                            firstSection
+                            secondSection
 
-                        thirdSection
-                        fourthSection
-                        fithSection
+                            thirdSection
+                            fourthSection
+                            fithSection
+                            sixSection
+                        }
                     }
-                }
-                Spacer()
+                    Spacer()
+                }.id("topItem")
+                    .onChange(of: main.state.observed.pathScrollToTop) { selectedPath in
+                        if selectedPath?.id == navigationPath.id {
+                            withAnimation {
+                                scrollProxy.scrollTo("topItem", anchor: .top)
+                                dispatch(MainState.Actions.resetScroll)
+                            }
+                        }
+                    }
             }
         }
         .background(ContentView.backgrounds.randomElement() ?? Color.white)
@@ -392,6 +405,31 @@ struct TestRoute: View {
                 )
             }) {
                 Text("Replace current path with new")
+            }
+        }
+    }
+
+    let colors: [Color] = [
+        .red, .green, .blue, .yellow, .purple, .pink, .gray, .brown, .white,
+    ]
+    var sixSection: some View {
+        VStack {
+            ForEach(colors, id: \.self) { color in
+                color.frame(height: 200)
+            }
+
+            Button(action: {
+                dispatch(
+                    NavigationAction.selectTab(by: AppState.tabOne)
+                )
+                dispatch(
+                    NavigationAction.add(
+                        path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                    )
+                )
+            }) {
+                Text("Push \(next) to Tab 1").foregroundColor(.black)
             }
         }
     }

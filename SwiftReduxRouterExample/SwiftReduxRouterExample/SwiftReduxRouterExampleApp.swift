@@ -8,6 +8,7 @@ struct SwiftReduxRouterExampleApp: App {
     let routes: [RouterView.Route]
     init() {
         store = AppState.createStore(initState: AppState(
+            main: MainState(),
             navigation: Navigation.State(observed: .init(
                 navigationModels: [
                     NavigationModel.createInitModel(

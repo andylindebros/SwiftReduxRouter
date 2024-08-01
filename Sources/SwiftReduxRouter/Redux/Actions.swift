@@ -36,6 +36,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         case setBadgeValue(to: String?, withModelID: UUID, withColor: String? = nil)
     #endif
     case deeplink(Deeplink)
+    case shouldScrollToTop(NavigationPath)
 
     public var description: String {
         let desc = "\(type(of: self))"
@@ -73,6 +74,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             return "\(desc).selectedDetentChanged to: \(identifier) in: \(navigationModel.id)"
         case let .prepareAndDismiss(model, animated, completionAction):
             return "\(desc).prepareForDismissal \(model) animated: \(animated), completionAction: \(completionAction?.description ?? "nil")"
+        case let .shouldScrollToTop(path):
+            return "\(desc).shouldScrollToTop \(path.path ?? path.id.uuidString)"
         }
     }
 

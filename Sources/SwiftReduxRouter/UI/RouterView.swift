@@ -73,8 +73,12 @@ import SwiftUI
         // MARK: Router methods
 
         private func asTabBarController(_ controller: UIViewController?) -> UITabBarController {
-            guard let crlr = controller as? UITabBarController else {
-                return UITabBarController()
+            guard let crlr = controller as? TabController else {
+                let tc = TabController()
+                tc.onTabAlreadySelected = { navPath in
+                    dispatch(NavigationAction.shouldScrollToTop(navPath))
+                }
+                return tc
             }
             return crlr
         }
@@ -90,6 +94,7 @@ import SwiftUI
             // Appear as a tabbar. Initial state has more than one navigationModel
             if navigationState.observed.navigationModels.filter({ $0.tab != nil }).count > 1 {
                 let tc = asTabBarController(rootController)
+
                 if let tintColor = tintColor {
                     tc.tabBar.tintColor = tintColor
                 }
@@ -247,7 +252,7 @@ import SwiftUI
             let controller = controllers[index]
 
             if
-                controller.isDismissing == false, 
+                controller.isDismissing == false,
                 navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
             {
                 controller.isDismissing = true

@@ -14,12 +14,53 @@ extension Navigation.ObservedState: ObservedStruct {
     func isObservedStateEqual(to newValue: any ObservedStruct) -> Bool { (newValue as? Navigation.ObservedState) == self }
 }
 
-/// The state of the app
-struct AppState: Codable {
-    init(navigation: Navigation.State) {
-        self.navigation = Observed(initialState: navigation)
+public struct MainState: Sendable, Codable, SubState {
+    var observedState: any ObservedStruct { observed }
+
+    enum Actions: Action {
+        case resetScroll
     }
 
+    public init(observed: MainState.Observed = .init()) {
+        self.observed = observed
+    }
+
+    public var observed: MainState.Observed
+
+    @MainActor static func reducer<Action>(action: Action, state: MainState) -> MainState {
+        var state = state
+        switch action as? NavigationAction {
+        case let .shouldScrollToTop(path):
+            state.observed.pathScrollToTop = path
+        default:
+            break
+        }
+        switch action as? MainState.Actions {
+        case .resetScroll:
+            state.observed.pathScrollToTop = nil
+        default:
+            break
+        }
+        return state
+    }
+}
+
+public extension MainState {
+    struct Observed: Sendable, Equatable, Codable, ObservedStruct {
+        public init() {}
+        var pathScrollToTop: NavigationPath?
+        func isObservedStateEqual(to newValue: any ObservedStruct) -> Bool { (newValue as? MainState.Observed) == self }
+    }
+}
+
+/// The state of the app
+struct AppState: Codable {
+    init(main: MainState, navigation: Navigation.State) {
+        self.navigation = Observed(initialState: navigation)
+        self.main = Observed(initialState: main)
+    }
+
+    private(set) var main: Observed<MainState>
     private(set) var navigation: Observed<Navigation.State>
 
     static let tabOne = UUID()
@@ -53,6 +94,7 @@ struct AppState: Codable {
 
     @MainActor static func reducer(action: Action, state: AppState) -> AppState {
         state.navigation.setState(Navigation.State.reducer(action: action, state: state.navigation.state))
+        state.main.setState(MainState.reducer(action: action, state: state.main.state))
         return state
     }
 }
