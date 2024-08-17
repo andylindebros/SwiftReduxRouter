@@ -139,13 +139,6 @@ extension AppState {
     }
 }
 
-struct JumpState: NavigationJumpStateAction, Action {
-    let navigationState: NavigationState
-
-    var description: String {
-        "JumpState"
-    }
-}
 
 struct Launch: Action, Encodable {}
 

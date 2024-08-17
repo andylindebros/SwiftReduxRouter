@@ -181,7 +181,7 @@ struct TestRoute: View {
         .navigationTitle("\(name)")
         .navigationBarItems(
             leading: Button(action: {
-                dispatch(NavigationAction.prepareAndDismiss(navigationModel, animated: true, completionAction: NavigationAction.add(
+                dispatch(NavigationAction.dismiss(.navigationModel(navigationModel), withCompletion: NavigationAction.add(
                     path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                     to: .new()
                 )))
@@ -189,7 +189,7 @@ struct TestRoute: View {
 
             trailing: Button(action: {
                 dispatch(
-                    NavigationAction.dismissPath(navigationPath)
+                    NavigationAction.dismiss(.navigationPath(navigationPath))
                 )
             }) {
                 Text(navigationModel.tab == nil ? "Close" : "")
@@ -301,7 +301,7 @@ struct TestRoute: View {
                                     label: "Close and Present view",
                                     type: .default,
                                     actions: [
-                                        NavigationAction.dismiss(navigationModel),
+                                        NavigationAction.dismiss(.navigationModel(navigationModel)),
                                         NavigationAction.add(
                                             path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
                                             to: .new()
@@ -312,7 +312,7 @@ struct TestRoute: View {
                                     label: "Select tab two",
                                     type: .destructive,
                                     actions: [
-                                        NavigationAction.dismiss(navigationModel),
+                                        NavigationAction.dismiss(.navigationModel(navigationModel)),
                                         NavigationAction.selectTab(by: AppState.tabTwo),
                                     ]
                                 ),

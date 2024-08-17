@@ -8,17 +8,12 @@ import SwiftUI
 
 public protocol NavigationActionProvider: Codable, CustomLogging, Sendable {}
 
-public protocol NavigationJumpStateAction: CustomLogging, Sendable {
-    var navigationState: NavigationState { get }
-}
 
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
 public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case add(path: NavigationPath?, to: NavigationTarget)
-    case dismiss(NavigationModel)
-    case dismissPath(NavigationPath)
-    case prepareAndDismiss(NavigationModel, animated: Bool = true, completionAction: NavigationAction? = nil)
+    case dismiss(DismissTarget, withCompletion: NavigationAction? = nil)
     case setSelectedPath(to: NavigationPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
     case selectTab(by: UUID)
@@ -50,10 +45,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             return "\(desc).alert(\(model))"
         case let .add(path: path, to: target):
             return "\(desc).add path: \(path?.description ?? "nil"), to: \(target)"
-        case let .dismiss(model):
-            return "\(desc).dismiss \(model)"
-        case let .dismissPath(path):
-            return "\(desc).dismissPath \(path)"
+        case let .dismiss(model, completion):
+            return "\(desc).dismiss \(model), completion: completion"
         case let .setSelectedPath(to: path, in: model):
             return "\(desc).setSelectedPath to: \(path) in: \(model)"
         case let .setNavigationDismsissed(model):
@@ -72,8 +65,6 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             return "\(desc).deeplink with url: \(deeplink.url.path)"
         case let .selectedDetentChanged(to: identifier, in: navigationModel):
             return "\(desc).selectedDetentChanged to: \(identifier) in: \(navigationModel.id)"
-        case let .prepareAndDismiss(model, animated, completionAction):
-            return "\(desc).prepareForDismissal \(model) animated: \(animated), completionAction: \(completionAction?.description ?? "nil")"
         case let .shouldScrollToTop(path):
             return "\(desc).shouldScrollToTop \(path.path ?? path.id.uuidString)"
         }

@@ -98,59 +98,88 @@ public extension Navigation.State {
                 state = Self.removeRedundantPaths(at: index, from: state)
             }
 
-        case let .prepareAndDismiss(navigationModel, animated, completionAction):
-            if let index = state.observed.navigationModels.firstIndex(where: { $0.tab == nil && $0.id == navigationModel.id }) {
-                var model = state.observed.navigationModels[index]
-                model.animate = animated
-                model.dismissCompletionAction = completionAction
-                model.shouldBeDismsised = true
-                state.observed.navigationModels[index] = model
-            }
+        case let .dismiss(dismissTarget, completionAction):
+            switch dismissTarget {
+            case let .currentNavigationModel(animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == state.observed.selectedModelId }) {
+                    if let completionAction {
+                        var model = state.observed.navigationModels[index]
+                        model.animate = animated
+                        model.dismissCompletionAction = completionAction
+                        model.shouldBeDismsised = true
+                        state.observed.navigationModels[index] = model
 
-        case let .dismiss(navigationModel):
-            if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
-                state.observed.navigationModels.remove(at: index)
-
-                if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
-                    state.observed.selectedModelId = lastPresentedModel.id
-                } else {
-                    state.observed.selectedModelId = state.observed.rootSelectedModelID
-                }
-            }
-
-        case let .dismissPath(navigationPath):
-            if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navigationPath.id) }) {
-                // Close presented model if no more paths are presented
-                if state.observed.navigationModels[index].isPresented, state.observed.navigationModels[index].presentedPaths.count == 1 {
-                    state.observed.navigationModels.remove(at: index)
-
-                    if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
-                        state.observed.selectedModelId = lastPresentedModel.id
                     } else {
-                        state.observed.selectedModelId = state.observed.rootSelectedModelID
+                        state.observed.navigationModels.remove(at: index)
+                        if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                            state.observed.selectedModelId = lastPresentedModel.id
+                        } else {
+                            state.observed.selectedModelId = state.observed.rootSelectedModelID
+                        }
                     }
-                    return state
                 }
 
-                // We cannot remove the root controller of the navigationController
-                guard state.observed.navigationModels[index].presentedPaths.count > 0 else {
-                    return state
+            case let .navigationModel(navigationModel, animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
+                    if let completionAction {
+                        var model = state.observed.navigationModels[index]
+                        model.animate = animated
+                        model.dismissCompletionAction = completionAction
+                        model.shouldBeDismsised = true
+                        state.observed.navigationModels[index] = model
+                    } else {
+                        state.observed.navigationModels.remove(at: index)
+
+                        if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                            state.observed.selectedModelId = lastPresentedModel.id
+                        } else {
+                            state.observed.selectedModelId = state.observed.rootSelectedModelID
+                        }
+                    }
                 }
 
-                if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationPath.id }), pathIndex - 1 >= 0 {
-                    let nextPath = state.observed.navigationModels[index].presentedPaths[pathIndex - 1]
-                    state.observed.navigationModels[index].selectedPath = nextPath
-                    if state.observed.navigationModels[index].animate {
-                        state.observed.navigationModels[index].animate = true
-                    }
-                    state.observed.selectedModelId = state.observed.navigationModels[index].id
+            case let .navigationPath(navigationPath, animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navigationPath.id) }) {
+                    // Close presented model if no more paths are presented
+                    if state.observed.navigationModels[index].isPresented, state.observed.navigationModels[index].presentedPaths.count == 1 {
+                        if let completionAction {
+                            var model = state.observed.navigationModels[index]
+                            model.animate = animated
+                            model.dismissCompletionAction = completionAction
+                            model.shouldBeDismsised = true
+                            state.observed.navigationModels[index] = model
+                        } else {
+                            state.observed.navigationModels.remove(at: index)
 
-                    if !state.observed.navigationModels[index].isPresented {
-                        state.observed.rootSelectedModelID = state.observed.navigationModels[index].id
+                            if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                                state.observed.selectedModelId = lastPresentedModel.id
+                            } else {
+                                state.observed.selectedModelId = state.observed.rootSelectedModelID
+                            }
+                        }
+                        return state
                     }
 
-                    // Remove all indexes that comes after current path
-                    state = Self.removeRedundantPaths(at: index, from: state)
+                    // We cannot remove the root controller of the navigationController
+                    guard state.observed.navigationModels[index].presentedPaths.count > 0 else {
+                        return state
+                    }
+
+                    if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationPath.id }), pathIndex - 1 >= 0 {
+                        let nextPath = state.observed.navigationModels[index].presentedPaths[pathIndex - 1]
+                        state.observed.navigationModels[index].selectedPath = nextPath
+                        if state.observed.navigationModels[index].animate {
+                            state.observed.navigationModels[index].animate = true
+                        }
+                        state.observed.selectedModelId = state.observed.navigationModels[index].id
+
+                        if !state.observed.navigationModels[index].isPresented {
+                            state.observed.rootSelectedModelID = state.observed.navigationModels[index].id
+                        }
+
+                        // Remove all indexes that comes after current path
+                        state = Self.removeRedundantPaths(at: index, from: state)
+                    }
                 }
             }
 

@@ -3,6 +3,12 @@ import Foundation
     import UIKit
 #endif
 
+public enum DismissTarget: Equatable, Codable, CustomLogging, Sendable {
+    case currentNavigationModel(animated: Bool = true)
+    case navigationModel(NavigationModel, animated: Bool = true)
+    case navigationPath(NavigationPath, animated: Bool = true)
+}
+
 public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
