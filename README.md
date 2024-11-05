@@ -9,12 +9,16 @@ The routerView uses the UINavigationController in the background since the curre
 
 This package also provides a nessecary actions to use to changed the navigation state.
 
+## Works with:
+
+- SwiftUIRedux: https://github.com/andylindebros/SwiftUIRedux
+
 ## Install with Swift Package Manager
 
 ```Bash
 
 dependencies: [
-    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "10.0.0"))
+    .package(url: "https://github.com/lindebrothers/SwiftReduxRouter.git", .upToNextMajor(from: "<Desired version>"))
 ]
 ```
 
@@ -141,3 +145,6 @@ struct JumpState: NavigationJumpStateAction, Action {
 ### Example app.
 Try the example app `SwiftReduxRouterExample` to find out more
 
+## Links
+
+- SwiftUIRedux: https://github.com/andylindebros/SwiftUIRedux
