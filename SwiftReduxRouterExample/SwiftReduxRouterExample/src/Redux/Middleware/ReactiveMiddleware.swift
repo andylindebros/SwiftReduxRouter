@@ -7,18 +7,14 @@ public enum ReactiveMiddleware {
         return { dispatch, state in
             { next in
                 { action in
-                    let nextAction: Void = next(action)
-
-                    guard let state = state() else {
-                        return nextAction
-                    }
+                    let nextAction: Void = await next(action)
 
                     if
                         case let NavigationAction.deeplink(deeplink) = action,
-                        let reaction = deeplink.action(for: state.navigation),
+                        let reaction = await deeplink.action(for: state.navigation.state),
                         let navigationAction = reaction as? Action
                     {
-                        dispatch(navigationAction)
+                        await dispatch(navigationAction)
                     }
 
                     return nextAction

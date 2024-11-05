@@ -1,112 +1,69 @@
 import Foundation
 
-// MARK: State
+public enum Navigation {
+    public struct State: Sendable, Equatable, Codable {
+        public init(observed: Navigation.ObservedState = .init()) {
+            self.observed = observed
+        }
 
-public final class NavigationState: ObservableObject, Codable {
-    public init(navigationModels: [NavigationModel]? = nil) {
-        selectedModelId = UUID()
-        rootSelectedModelID = UUID()
-        availableNavigationModelRoutes = []
+        public var observed: ObservedState
+    }
 
-        if let navigationModels = navigationModels {
+    public struct ObservedState: Sendable, Equatable, Codable {
+        public init(navigationModels: [NavigationModel] = [NavigationModel](), alerts: [AlertModel] = [], availableNavigationModelRoutes: [NavigationRoute] = [], availableRoutes: [NavigationRoute] = []) {
+            self.availableNavigationModelRoutes = availableNavigationModelRoutes
+            self.availableRoutes = availableRoutes
+            self.alerts = alerts
+
             self.navigationModels = navigationModels.map { navigationModel in
                 var navigationModel = navigationModel
                 navigationModel.isPresented = false
                 return navigationModel
             }
 
-            if let first = navigationModels.first {
-                selectedModelId = first.id
-                rootSelectedModelID = first.id
-            }
+            let first = navigationModels.first?.id ?? UUID()
+            selectedModelId = first
+            rootSelectedModelID = first
         }
-    }
 
-    public required init(from decoder: Decoder) throws {
-        let values = try decoder.container(keyedBy: CodingKeys.self)
-        selectedModelId = try values.decode(UUID.self, forKey: .selectedModelId)
-        rootSelectedModelID = try values.decode(UUID.self, forKey: .rootSelectedModelID)
-        navigationModels = try values.decode([NavigationModel].self, forKey: .navigationModels)
-        availableNavigationModelRoutes = try values.decode([NavigationRoute].self, forKey: .availableNavigationModelRoutes)
-        availableRoutes = try values.decode([NavigationRoute].self, forKey: .availableRoutes)
-    }
-
-    /// Active navigationModel. It can only be one sessin at the time
-    @Published public private(set) var selectedModelId: UUID
-    @Published public private(set) var rootSelectedModelID: UUID
-
-    /// Available navigationModels. Tab navigationModels are defined here.
-    @Published public private(set) var navigationModels = [NavigationModel]()
-
-    @Published public private(set) var alerts: [AlertModel] = []
-
-    public private(set) var availableNavigationModelRoutes: [NavigationRoute]
-
-    private(set) var availableRoutes: [NavigationRoute] = []
-
-    enum CodingKeys: CodingKey {
-        case selectedModelId, navigationModels, rootSelectedModelID, availableNavigationModelRoutes, availableRoutes
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(navigationModels, forKey: .navigationModels)
-        try container.encode(selectedModelId, forKey: .selectedModelId)
-        try container.encode(rootSelectedModelID, forKey: .rootSelectedModelID)
-        try container.encode(availableNavigationModelRoutes, forKey: .availableNavigationModelRoutes)
-        try container.encode(availableRoutes, forKey: .availableRoutes)
+        /// Active navigationModel. It can only be one sessin at the time
+        public var selectedModelId: UUID
+        public var rootSelectedModelID: UUID
+        public var navigationModels = [NavigationModel]()
+        public var alerts: [AlertModel] = []
+        public var availableNavigationModelRoutes: [NavigationRoute]
+        public var availableRoutes: [NavigationRoute] = []
+        public var lastModifiedID: UUID = .init()
     }
 }
 
-public extension NavigationState {
-    func isTopModel(_ navigationModel: NavigationModel) -> Bool {
-        guard let topModel = getTopModel() else { return false }
-
-        return topModel.id == navigationModel.id
-    }
-
-    func getTopModel() -> NavigationModel? {
-        if let presentedModel = navigationModels.first(where: { $0.isPresented && $0.id == selectedModelId }) {
-            return presentedModel
-        }
-
-        if let rootModel = navigationModels.first(where: { $0.id == rootSelectedModelID }) {
-            return rootModel
-        }
-        return nil
-    }
-}
-
-extension NavigationState {
-    @discardableResult func setAvailableRoutes(_ availableRoutes: [NavigationRoute]) -> Self {
-        self.availableRoutes = availableRoutes
-        return self
-    }
-
-    @discardableResult func setAvailableNavigationRoutes(_ availableRoutes: [NavigationRoute]) -> Self {
-        availableNavigationModelRoutes = availableRoutes
-        return self
-    }
-}
-
-// MARK: Reducer
-
-public extension NavigationState {
-    @MainActor static func reducer<Action>(action: Action, state: NavigationState?) -> NavigationState {
-        let state = state ?? NavigationState()
-
-        if let action = action as? NavigationJumpStateAction {
-            state.navigationModels = action.navigationState.navigationModels
-            state.selectedModelId = action.navigationState.selectedModelId
-            state.rootSelectedModelID = action.navigationState.rootSelectedModelID
-            return state
+public extension Navigation.State {
+    static func reducer<Action>(action: Action, state: Navigation.State) -> Navigation.State {
+        var state = state
+        if action is NavigationAction {
+            state.observed.lastModifiedID = UUID()
         }
 
         switch action as? NavigationAction {
+        case let .multiAction(actions):
+            for action in actions {
+                switch action {
+                case .multiAction:
+                    continue
+                default:
+                    state = reducer(action: action, state: state)
+                }
+            }
+
+        case let .setAvailableRoutes(routes):
+            state.observed.availableRoutes = routes
+        case let .setAvailableNavigationModelRoutes(routes):
+            state.observed.availableNavigationModelRoutes = routes
+
         case let .setBadgeValue(to: badgeValue, withModelID: navigationModelID, withColor: color):
             guard
-                let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == navigationModelID }),
-                var tab = state.navigationModels.first(where: { $0.id == navigationModelID })?.tab
+                let navigationModelIndex = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModelID }),
+                var tab = state.observed.navigationModels.first(where: { $0.id == navigationModelID })?.tab
             else {
                 return state
             }
@@ -116,91 +73,120 @@ public extension NavigationState {
                     tab.badgeColor = color
                 }
             #endif
-            state.navigationModels[navigationModelIndex].tab = tab
+            state.observed.navigationModels[navigationModelIndex].tab = tab
 
         case let .setIcon(to: iconName, withModelID: navigationModelID):
-            guard let navigationModelIndex = state.navigationModels.firstIndex(where: { $0.id == navigationModelID })
+            guard let navigationModelIndex = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModelID })
             else {
                 return state
             }
-            state.navigationModels[navigationModelIndex].tab?.icon = .system(name: iconName)
+            state.observed.navigationModels[navigationModelIndex].tab?.icon = .system(name: iconName)
 
         case let .setSelectedPath(to: navigationPath, in: navigationModel):
-            if let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
-                state.navigationModels[index].selectedPath = navigationPath
-                if state.navigationModels[index].animate {
-                    state.navigationModels[index].animate = true
+            if let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
+                state.observed.navigationModels[index].selectedPath = navigationPath
+                if state.observed.navigationModels[index].animate {
+                    state.observed.navigationModels[index].animate = true
                 }
-                state.selectedModelId = state.navigationModels[index].id
+                state.observed.selectedModelId = state.observed.navigationModels[index].id
 
                 if !navigationModel.isPresented {
-                    state.rootSelectedModelID = navigationModel.id
+                    state.observed.rootSelectedModelID = navigationModel.id
                 }
 
                 // Remove all indexes that comes after current path
-                state.removeRedundantPaths(at: index)
+                state = Self.removeRedundantPaths(at: index, from: state)
             }
 
-        case let .prepareAndDismiss(navigationModel, animated, completionAction):
-            if let index = state.navigationModels.firstIndex(where: { $0.tab == nil && $0.id == navigationModel.id }) {
-                var model = state.navigationModels[index]
-                model.animate = animated
-                model.dismissCompletionAction = completionAction
-                model.shouldBeDismsised = true
-                state.navigationModels[index] = model
-            }
+        case let .dismiss(dismissTarget, completionAction):
+            switch dismissTarget {
+            case let .currentNavigationModel(animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == state.observed.selectedModelId }) {
+                    if let completionAction {
+                        var model = state.observed.navigationModels[index]
+                        model.animate = animated
+                        model.dismissCompletionAction = completionAction
+                        model.shouldBeDismsised = true
+                        state.observed.navigationModels[index] = model
 
-        case let .dismiss(navigationModel):
-            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
-                state.navigationModels.remove(at: index)
-
-                if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
-                    state.selectedModelId = lastPresentedModel.id
-                } else {
-                    state.selectedModelId = state.rootSelectedModelID
-                }
-            }
-
-        case let .dismissPath(navigationPath):
-            if let index = state.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navigationPath.id) }) {
-                // Close presented model if no more paths are presented
-                if state.navigationModels[index].isPresented, state.navigationModels[index].presentedPaths.count == 1 {
-                    state.navigationModels.remove(at: index)
-
-                    if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
-                        state.selectedModelId = lastPresentedModel.id
                     } else {
-                        state.selectedModelId = state.rootSelectedModelID
+                        state.observed.navigationModels.remove(at: index)
+                        if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                            state.observed.selectedModelId = lastPresentedModel.id
+                        } else {
+                            state.observed.selectedModelId = state.observed.rootSelectedModelID
+                        }
                     }
-                    return state
                 }
 
-                // We cannot remove the root controller of the navigationController
-                guard state.navigationModels[index].presentedPaths.count > 0 else {
-                    return state
+            case let .navigationModel(navigationModel, animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
+                    if let completionAction {
+                        var model = state.observed.navigationModels[index]
+                        model.animate = animated
+                        model.dismissCompletionAction = completionAction
+                        model.shouldBeDismsised = true
+                        state.observed.navigationModels[index] = model
+                    } else {
+                        state.observed.navigationModels.remove(at: index)
+
+                        if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                            state.observed.selectedModelId = lastPresentedModel.id
+                        } else {
+                            state.observed.selectedModelId = state.observed.rootSelectedModelID
+                        }
+                    }
                 }
 
-                if let pathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationPath.id }), pathIndex - 1 >= 0 {
-                    let nextPath = state.navigationModels[index].presentedPaths[pathIndex - 1]
-                    state.navigationModels[index].selectedPath = nextPath
-                    if state.navigationModels[index].animate {
-                        state.navigationModels[index].animate = true
-                    }
-                    state.selectedModelId = state.navigationModels[index].id
+            case let .navigationPath(navigationPath, animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navigationPath.id) }) {
+                    // Close presented model if no more paths are presented
+                    if state.observed.navigationModels[index].isPresented, state.observed.navigationModels[index].presentedPaths.count == 1 {
+                        if let completionAction {
+                            var model = state.observed.navigationModels[index]
+                            model.animate = animated
+                            model.dismissCompletionAction = completionAction
+                            model.shouldBeDismsised = true
+                            state.observed.navigationModels[index] = model
+                        } else {
+                            state.observed.navigationModels.remove(at: index)
 
-                    if !state.navigationModels[index].isPresented {
-                        state.rootSelectedModelID = state.navigationModels[index].id
+                            if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                                state.observed.selectedModelId = lastPresentedModel.id
+                            } else {
+                                state.observed.selectedModelId = state.observed.rootSelectedModelID
+                            }
+                        }
+                        return state
                     }
 
-                    // Remove all indexes that comes after current path
-                    state.removeRedundantPaths(at: index)
+                    // We cannot remove the root controller of the navigationController
+                    guard state.observed.navigationModels[index].presentedPaths.count > 0 else {
+                        return state
+                    }
+
+                    if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationPath.id }), pathIndex - 1 >= 0 {
+                        let nextPath = state.observed.navigationModels[index].presentedPaths[pathIndex - 1]
+                        state.observed.navigationModels[index].selectedPath = nextPath
+                        if state.observed.navigationModels[index].animate {
+                            state.observed.navigationModels[index].animate = true
+                        }
+                        state.observed.selectedModelId = state.observed.navigationModels[index].id
+
+                        if !state.observed.navigationModels[index].isPresented {
+                            state.observed.rootSelectedModelID = state.observed.navigationModels[index].id
+                        }
+
+                        // Remove all indexes that comes after current path
+                        state = Self.removeRedundantPaths(at: index, from: state)
+                    }
                 }
             }
 
         case let .add(path: navigationPath, to: target):
             guard
                 let navigationPath = navigationPath,
-                let url = navigationPath.url, URLMatcher().match(url, from: state.availableRoutes.map { $0.path }) != nil
+                let url = navigationPath.url, URLMatcher().match(url, from: state.observed.availableRoutes.map { $0.path }) != nil
             else {
                 print("⚠️ Cannot add \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "nil") since it not supported by any route")
                 return state
@@ -208,106 +194,111 @@ public extension NavigationState {
             switch target {
             case let .current(animate):
                 guard
-                    let index = state.navigationModels.firstIndex(where: { $0.id == state.selectedModelId })
+                    let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId })
                 else {
                     assertionFailure("Cannot push a view to a navigationSession that does not exist")
                     return state
                 }
-                state.navigationModels[index].animate = animate
+                state.observed.navigationModels[index].animate = animate
 
             case let .navigationModel(navigationModel, animate):
                 guard
-                    let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
+                    let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
                     assertionFailure("Cannot push a view to a navigationSession that does not exist")
                     return state
                 }
-                state.selectedModelId = state.navigationModels[index].id
-                if !state.navigationModels[index].isPresented {
-                    state.rootSelectedModelID = state.navigationModels[index].id
+                state.observed.selectedModelId = state.observed.navigationModels[index].id
+                if !state.observed.navigationModels[index].isPresented {
+                    state.observed.rootSelectedModelID = state.observed.navigationModels[index].id
                 }
-                state.navigationModels[index].animate = animate
+                state.observed.navigationModels[index].animate = animate
 
             case let .new(navigationModelPath, presentationType, animate):
                 if #available(iOS 16.0, *) {
                     let navigationModel = NavigationModel(
                         path: navigationModelPath,
                         selectedPath: NavigationPath(),
+                        parentNavigationModelId: state.observed.selectedModelId,
+                        parentNavigationModelName: state.observed.navigationModels.first(where: { $0.id == state.observed.selectedModelId })?.tab?.name ?? "presented",
                         presentationType: presentationType,
                         selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue,
                         animate: animate
                     )
-                    state.navigationModels.append(navigationModel)
-                    state.selectedModelId = navigationModel.id
+                    state.observed.navigationModels.append(navigationModel)
+                    state.observed.selectedModelId = navigationModel.id
                 } else {
                     let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavigationPath(), presentationType: presentationType, animate: animate)
-                    state.navigationModels.append(navigationModel)
-                    state.selectedModelId = navigationModel.id
+                    state.observed.navigationModels.append(navigationModel)
+                    state.observed.selectedModelId = navigationModel.id
                 }
             }
-            state.setSelectedPath(navigationPath)
+            state = Self.setSelectedPath(navigationPath, in: state)
 
         case let .setNavigationDismsissed(navigationModel):
-            if let index = state.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
-                state.navigationModels.remove(at: index)
+            if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
+                state.observed.navigationModels.remove(at: index)
 
-                if let lastPresentedModel = state.navigationModels.last(where: { $0.isPresented }) {
-                    state.selectedModelId = lastPresentedModel.id
+                if let lastPresentedModel = state.observed.navigationModels.last(where: { $0.isPresented }) {
+                    state.observed.selectedModelId = lastPresentedModel.id
                 } else {
-                    state.selectedModelId = state.rootSelectedModelID
+                    state.observed.selectedModelId = state.observed.rootSelectedModelID
                 }
             }
 
         case let .selectTab(by: navigationModelID):
-            if let navigationModel = state.navigationModels.first(where: { !$0.isPresented && $0.id == navigationModelID }) {
-                state.rootSelectedModelID = navigationModel.id
+            if let navigationModel = state.observed.navigationModels.first(where: { !$0.isPresented && $0.id == navigationModelID }) {
+                state.observed.rootSelectedModelID = navigationModel.id
             }
 
         case let .replace(path: path, with: newPath, in: navigationModel):
-
             guard
-                let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
-                let currentPathIndex = state.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id })
+                let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
+                let currentPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id })
             else {
                 return state
             }
 
-            state.navigationModels[index].presentedPaths[currentPathIndex] = newPath
-            state.navigationModels[index].animate = false
+            state.observed.navigationModels[index].presentedPaths[currentPathIndex] = newPath
+            state.observed.navigationModels[index].animate = false
 
         case let .alert(model):
-            state.alerts.append(model)
+            state.observed.alerts.append(model)
         case let .dismissedAlert(with: model):
-            if let index = state.alerts.firstIndex(where: { $0.id == model.id }) {
-                state.alerts.remove(at: index)
+            if let index = state.observed.alerts.firstIndex(where: { $0.id == model.id }) {
+                state.observed.alerts.remove(at: index)
             }
         case let .selectedDetentChanged(to: identifier, in: navigationModel):
-            guard let index = state.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
-            state.navigationModels[index].selectedDetentIdentifier = identifier
+            guard let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
+            state.observed.navigationModels[index].selectedDetentIdentifier = identifier
         default:
             break
         }
+
         return state
     }
-}
 
-private extension NavigationState {
-    func setSelectedPath(_ path: NavigationPath) {
-        if let index = navigationModels.firstIndex(where: { $0.id == selectedModelId }) {
-            removeRedundantPaths(at: index)
+    static func setSelectedPath(_ path: NavigationPath, in state: Navigation.State) -> Navigation.State {
+        var state = state
+        if let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId }) {
+            state = Self.removeRedundantPaths(at: index, from: state)
 
-            navigationModels[index].selectedPath = path
-            navigationModels[index].presentedPaths.append(path)
-            selectedModelId = navigationModels[index].id
+            state.observed.navigationModels[index].selectedPath = path
+            state.observed.navigationModels[index].presentedPaths.append(path)
+            state.observed.selectedModelId = state.observed.navigationModels[index].id
         }
+        return state
     }
 
-    func removeRedundantPaths(at index: Int) {
+    static func removeRedundantPaths(at index: Int, from state: Navigation.State) -> Navigation.State {
         // Remove all indexes that comes after current path
-        if let presentedPathIndex = navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navigationModels[index].selectedPath.id }) {
-            let presentedPaths = navigationModels[index].presentedPaths
+        var state = state
+        if let presentedPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == state.observed.navigationModels[index].selectedPath.id }) {
+            let presentedPaths = state.observed.navigationModels[index].presentedPaths
 
-            navigationModels[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
+            state.observed.navigationModels[index].presentedPaths = Array(presentedPaths[0 ... presentedPathIndex])
         }
+
+        return state
     }
 }

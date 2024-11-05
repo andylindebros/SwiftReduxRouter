@@ -3,6 +3,12 @@ import Foundation
     import UIKit
 #endif
 
+public enum DismissTarget: Equatable, Codable, CustomLogging, Sendable {
+    case currentNavigationModel(animated: Bool = true)
+    case navigationModel(NavigationModel, animated: Bool = true)
+    case navigationPath(NavigationPath, animated: Bool = true)
+}
+
 public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
@@ -11,9 +17,9 @@ public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
     public var description: String {
         switch self {
         case let .new(path, type, animate):
-            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate)"
-        case .navigationModel:
-            return ".navigationModel"
+            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate))"
+        case let .navigationModel(model, _):
+            return ".navigationModel(\(model)"
         case .current:
             return ".current"
         }
@@ -86,12 +92,14 @@ public enum PresentationType: Equatable, Codable, Sendable {
     }
 }
 
-public struct NavigationRoute: Codable, Sendable {
-    public init(_ path: String) {
+public struct NavigationRoute: Equatable, Codable, Sendable {
+    public init(_ path: String, name: String? = nil) {
         self.path = path
+        self.name = name
     }
 
     public var path: String
+    public var name: String?
 
     public func reverse(params: [String: String] = [:]) -> NavigationPath? {
         let urlMatcher = URLMatcher()
@@ -114,31 +122,37 @@ public struct NavigationRoute: Codable, Sendable {
             str = "/" + str
         }
         guard let url = URL(string: str) else { return nil }
-        return NavigationPath.create(url)
+        return NavigationPath.create(url, name: name)
     }
 }
 
-public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
+public struct NavigationPath: Identifiable, Equatable, Codable, Sendable, CustomLogging {
     public var id: UUID
-    public var url: URL?
+    public let url: URL?
+    public let name: String?
 
-    public init(id: UUID = UUID(), _ url: URL? = nil) {
+    public init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil) {
         self.id = id
         self.url = url
+        self.name = name
     }
 
     public var path: String? {
         url?.path
     }
 
-    public static func create(_ urlString: String) -> NavigationPath? {
+    public static func create(_ urlString: String, name: String? = nil) -> NavigationPath? {
         guard let url = URL(string: urlString) else { return nil }
-        return NavigationPath(url)
+        return NavigationPath(url, name)
     }
 
-    public static func create(_ url: URL?) -> NavigationPath? {
+    public static func create(_ url: URL?, name: String? = nil) -> NavigationPath? {
         guard let url = url else { return nil }
-        return NavigationPath(url)
+        return NavigationPath(url, name)
+    }
+
+    public var description: String {
+        "\(name ?? "")(\(path ?? id.uuidString))"
     }
 }
 
@@ -179,6 +193,7 @@ public extension NavigationTab {
         public let id: String
         public let image: UIImage?
     }
+
     enum Icon: Codable, Sendable {
         case iconImage(id: String)
         case local(name: String)

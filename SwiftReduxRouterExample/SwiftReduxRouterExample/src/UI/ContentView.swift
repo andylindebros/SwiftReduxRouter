@@ -2,19 +2,134 @@ import SwiftReduxRouter
 import SwiftUI
 import SwiftUIRedux
 
-struct ContentView: View {
-    @ObservedObject var navigationState: NavigationState
+struct RouterViewWrapper: View {
+    @ObservedObject var navigationState: Observed<Navigation.State>
+    let navigationControllerRoutes: [RouterView.NavigationControllerRoute]
+    let routes: [RouterView.Route]
+    let tintColor: UIColor
+    let tabBarIconImages: [NavigationTab.IconImage]
+    let dispatch: NavigationDispatcher
 
+    var body: some View {
+        RouterView(navigationState: navigationState.state, navigationControllerRoutes: navigationControllerRoutes, routes: routes, dispatch: dispatch)
+    }
+}
+
+struct ContentView: View {
+    var navigationState: Observed<Navigation.State>
+
+    let routes: [RouterView.Route]
     var dispatch: DispatchFunction
 
-    @MainActor static let navigationRoutes =
+    static let navigationRoutes =
         [
             NavigationRoute("hello/<int:name>"),
             NavigationRoute("hello/awesome/<int:name>"),
         ]
-    let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
+    static let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
 
-    let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
+    static let backgrounds = [Color.red, Color.pink, Color.yellow, Color.green, Color.purple]
+
+    var body: some View {
+        RouterViewWrapper(
+            navigationState: navigationState,
+            navigationControllerRoutes: [
+                RouterView.NavigationControllerRoute(
+                    paths: [NavigationRoute("test/<string:value>")],
+                    render: { _, _ in
+                        MyCustomNavigationController()
+                    }
+                ),
+            ],
+            routes: routes,
+            tintColor: .red,
+            tabBarIconImages: [
+                NavigationTab.IconImage(id: "heart.fill", image: UIImage(systemName: "heart.fill")!),
+            ],
+            dispatch: { navigationAction in
+                Task {
+                    guard let action = navigationAction as? Action else {
+                        return
+                    }
+                    print("Action", action)
+
+                    await dispatch(action)
+                }
+            }
+        )
+        .edgesIgnoringSafeArea(.all)
+        .background(Color.red)
+    }
+
+    static func routes(store: Store<AppState>) -> [RouterView.Route] {
+        [
+            RouterView.Route(
+                paths: [
+                    .init("/custom"),
+                ],
+                render: { _, _, _ in
+                    HiddenNavigationBarViewController(rootView: VStack {
+                        Text("Custom")
+                    })
+                }
+            ),
+
+            RouterView.Route(
+                paths: [
+                    NavigationRoute("/hello"),
+                ],
+                render: { _, _, _ in
+                    RouteViewController(rootView: Text("/hello"))
+                }
+            ),
+            RouterView.Route(
+                paths: [
+                    NavigationRoute("/detents"),
+                ],
+                render: { _, _, _ in
+                    RouteViewController(rootView: VStack {
+                        Text("/detents")
+
+                    })
+                }
+            ),
+            RouterView.Route(
+                paths: navigationRoutes,
+                render: { path, navigationModel, params in
+                    let presentedName = (params?["name"] as? Int) ?? 0
+                    let next = presentedName + 1
+                    return RouteViewController(rootView:
+                        TestRoute(
+                            main: store.state.main,
+                            navigationPath: path,
+                            navigationModel: navigationModel,
+                            name: presentedName,
+                            next: next,
+                            navigationState: store.state.navigation,
+                            dispatch: store.dispatch
+                        )
+                    )
+                }
+            ),
+            RouterView.Route(
+                paths: [NavigationRoute("default")],
+                render: { _, _, _ in
+                    RouteViewController(rootView: Text("Not found"))
+                },
+                defaultRoute: true
+            ),
+        ]
+    }
+}
+
+struct TestRoute: View {
+    @ObservedObject var main: Observed<MainState>
+    let navigationPath: SwiftReduxRouter.NavigationPath
+    let navigationModel: NavigationModel
+    let name: Int
+    let next: Int
+    var navigationState: Observed<Navigation.State>
+    var dispatch: DispatchFunction
 
     func detentedAction() -> Action {
         NavigationAction.add(
@@ -33,300 +148,286 @@ struct ContentView: View {
     }
 
     var body: some View {
-        RouterView(
-            navigationState: navigationState,
-            navigationControllerRoutes: [
-                RouterView.NavigationControllerRoute(
-                    paths: [NavigationRoute("test/<string:value>")],
-                    render: { _, _ in
-                        MyCustomNavigationController()
+        ScrollView {
+            ScrollViewReader { scrollProxy in
+                HStack {
+                    Spacer()
+                    VStack(spacing: 10) {
+                        Spacer()
+
+                        VStack {
+                            firstSection
+                            secondSection
+
+                            thirdSection
+                            fourthSection
+                            fithSection
+                            sixSection
+                        }
                     }
-                ),
-            ],
-            routes: [
-                RouterView.Route(
-                    paths: [
-                        .init("/custom"),
-                    ],
-                    render: { _, _, _ in
-                        HiddenNavigationBarViewController(rootView: VStack {
-                            Text("Custom")
-                        })
-                    }
-                ),
-                RouterView.Route(
-                    paths: [
-                        NavigationRoute("/hello"),
-                    ],
-                    render: { _, _, _ in
-                        RouteViewController(rootView: Text("/hello"))
-                    }
-                ),
-                RouterView.Route(
-                    paths: [
-                        NavigationRoute("/detents"),
-                    ],
-                    render: { _, _, _ in
-                        RouteViewController(rootView: VStack {
-                            Text("/detents")
-
-                        })
-                    }
-                ),
-                RouterView.Route(
-                    paths: Self.navigationRoutes,
-                    render: { path, navigationModel, params in
-                        let presentedName = params?["name"] as? Int ?? 0
-                        let next = presentedName + 1
-                        return RouteViewController(rootView:
-                            ScrollView {
-                                HStack {
-                                    Spacer()
-                                    VStack(spacing: 10) {
-                                        Spacer()
-
-                                        VStack {
-                                            Text("Presenting \(presentedName)")
-                                                .font(.system(size: 50)).bold()
-                                                .foregroundColor(.black)
-                                            HStack {
-                                                Button(action: {
-                                                    if let action = setDetendedAction(for: navigationModel) {
-                                                        dispatch(action)
-                                                    }
-                                                }) {
-                                                    Text("Set Detended \(next) to large")
-                                                }
-                                                Button(action: {
-                                                    dispatch(detentedAction())
-                                                }) {
-                                                    Text("Present Detended \(next) to current session")
-                                                }
-
-                                                Button(action: {
-                                                    dispatch(
-                                                        NavigationAction.add(
-                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                            to: .current()
-                                                        )
-                                                    )
-                                                }) {
-                                                    Text("Push \(next) to current session").foregroundColor(.black)
-                                                }
-                                            }
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.selectTab(by: AppState.tabOne)
-                                                )
-                                                dispatch(
-                                                    NavigationAction.add(
-                                                        path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                        to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabOne })!)
-                                                    )
-                                                )
-                                            }) {
-                                                Text("Push \(next) to Tab 1").foregroundColor(.black)
-                                            }
-
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.selectTab(by: AppState.tabTwo)
-                                                )
-                                                dispatch(
-                                                    NavigationAction.add(
-                                                        path: Self.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                                                        to: .navigationModel(navigationState.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
-                                                    )
-                                                )
-
-                                            }) {
-                                                Text("Push \(next) to Tab 2").foregroundColor(.black)
-                                            }
-
-                                            HStack {
-                                                Button(action: {
-                                                    dispatch(
-                                                        NavigationAction.add(
-                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                            to: .new(type: .fullscreen, animate: false)
-                                                        )
-                                                    )
-                                                }) {
-                                                    Text("Fullscreen \(next)").foregroundColor(.black)
-                                                }
-
-                                                Button(action: {
-                                                    dispatch(
-                                                        NavigationAction.add(
-                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                            to: .new()
-                                                        )
-                                                    )
-                                                }) {
-                                                    Text("Present \(next)").foregroundColor(.black)
-                                                }
-                                            }
-
-                                            HStack {
-                                                Button(action: {
-                                                    dispatch(
-                                                        NavigationAction.alert(
-                                                            .init(
-                                                                type: .actionSheet,
-                                                                buttons: [
-                                                                    .init(
-                                                                        label: "Close and Present view",
-                                                                        type: .destructive,
-                                                                        actions: [
-                                                                            NavigationAction.dismiss(navigationModel),
-                                                                            NavigationAction.add(
-                                                                                path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                                                to: .new()
-                                                                            ),
-                                                                        ]
-                                                                    ),
-                                                                    .init(
-                                                                        label: "Select tab two",
-                                                                        type: .destructive,
-                                                                        actions: [
-                                                                            NavigationAction.dismiss(navigationModel),
-                                                                            NavigationAction.selectTab(by: AppState.tabTwo),
-                                                                        ]
-                                                                    ),
-                                                                    .init(label: "Cancel", type: .cancel),
-                                                                ]
-                                                            ))
-                                                    )
-                                                }) {
-                                                    Text("Present an action sheet").foregroundColor(.black)
-                                                }
-
-                                                Button(action: {
-                                                    dispatch(
-                                                        NavigationAction.alert(
-                                                            .init(
-                                                                title: "Awesome!",
-                                                                message: "It really works!",
-                                                                buttons: [
-                                                                    .init(
-                                                                        label: "Present a view",
-                                                                        type: .default,
-                                                                        action: NavigationAction.add(
-                                                                            path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                                            to: .new()
-                                                                        )
-                                                                    ),
-                                                                    .init(label: "Cancel", type: .cancel),
-                                                                ]
-                                                            ))
-                                                    )
-                                                }) {
-                                                    Text("Present an alert").foregroundColor(.black)
-                                                }
-                                            }
-                                        }
-                                        VStack {
-                                            Button(action: {
-                                                dispatch(NavigationAction.setBadgeValue(
-                                                    to: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) - 1)",
-                                                    withModelID: navigationModel.id,
-                                                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
-                                                ))
-                                            }) {
-                                                Text("Decrease badgeValue")
-                                            }
-                                            Button(action: {
-                                                dispatch(NavigationAction.setBadgeValue(
-                                                    to: "\((Int(navigationState.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) + 1)",
-
-                                                    withModelID: navigationModel.id,
-                                                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
-                                                ))
-                                            }) {
-                                                Text("Increase badgeValue")
-                                            }
-
-                                            Button(action: {
-                                                dispatch(NavigationAction.setBadgeValue(to: nil, withModelID: navigationModel.id, withColor: nil))
-                                            }) {
-                                                Text("Reset badge")
-                                            }
-                                        }
-                                        VStack {
-                                            Button(action: {
-                                                dispatch(
-                                                    NavigationAction.add(
-                                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                        to: .current(animate: false)
-                                                    )
-                                                )
-                                            }) {
-                                                Text("Push to current, no animation")
-                                            }
-
-                                            Button(action: {
-                                                guard let currentNavModel = navigationState.navigationModels.first(where: { $0.id == navigationState.selectedModelId }) else {
-                                                    return
-                                                }
-                                                dispatch(
-                                                    NavigationAction.replace(
-                                                        path: currentNavModel.selectedPath,
-                                                        with: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                                        in: currentNavModel
-                                                    )
-                                                )
-                                            }) {
-                                                Text("Replace current path with new")
-                                            }
-                                        }
-                                    }
-                                    Spacer()
+                    Spacer()
+                }.id("topItem")
+                    .onChange(of: main.state.observed.pathScrollToTop) { selectedPath in
+                        if selectedPath?.id == navigationPath.id {
+                            withAnimation {
+                                scrollProxy.scrollTo("topItem", anchor: .top)
+                                Task {
+                                    await dispatch(MainState.Actions.resetScroll)
                                 }
                             }
-                            .background(backgrounds.randomElement() ?? Color.white)
-
-                            .navigationTitle("\(presentedName)")
-                            .navigationBarItems(
-                                leading: Button(action: {
-                                    dispatch(NavigationAction.prepareAndDismiss(navigationModel, animated: true, completionAction: NavigationAction.add(
-                                        path: Self.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                        to: .new()
-                                    )))
-                                }) { Text("Prepare") },
-
-                                trailing: Button(action: {
-                                    dispatch(
-                                        NavigationAction.dismissPath(path)
-                                    )
-                                }) {
-                                    Text(navigationModel.tab == nil ? "Close" : "")
-                                }
-                            )
-
-                            .background(backgrounds.randomElement() ?? Color.white)
-                        )
+                        }
                     }
-                ),
-                RouterView.Route(
-                    paths: [NavigationRoute("default")],
-                    render: { _, _, _ in
-                        RouteViewController(rootView: Text("Not found"))
-                    },
-                    defaultRoute: true
-                ),
-            ],
-            tintColor: .red,
-            tabBarIconImages: [
-                NavigationTab.IconImage(id: "heart.fill", image: UIImage(systemName: "heart.fill")!)
-            ],
-            dispatch: { navigationAction in
-                guard let action = navigationAction as? Action else {
-                    return
-                }
-                dispatch(action)
+            }
+        }
+        .background(ContentView.backgrounds.randomElement() ?? Color.white)
+        .navigationTitle("\(name)")
+        .navigationBarItems(
+            leading: Button(action: { Task {
+                await dispatch(NavigationAction.dismiss(.navigationModel(navigationModel), withCompletion: NavigationAction.add(
+                    path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                    to: .new()
+                )))
+            }}) { Text("Prepare") },
+
+            trailing: Button(action: { Task {
+                await dispatch(
+                    NavigationAction.dismiss(.navigationPath(navigationPath))
+                )
+            }}) {
+                Text(navigationModel.tab == nil ? "Close" : "")
             }
         )
-        .edgesIgnoringSafeArea(.all)
-        .background(Color.red)
+
+        .background(ContentView.backgrounds.randomElement() ?? Color.white)
+    }
+
+    var firstSection: some View {
+        VStack {
+            Text("Presenting \(name)")
+                .font(.system(size: 50)).bold()
+                .foregroundColor(.black)
+            HStack {
+                Button(action: { Task {
+                    if let action = setDetendedAction(for: navigationModel) {
+                        await dispatch(action)
+                    }
+                }}) {
+                    Text("Set Detended \(next) to large")
+                }
+                Button(action: { Task {
+                    await dispatch(detentedAction())
+                }}) {
+                    Text("Present Detended \(next) to current session")
+                }
+
+                Button(action: { Task {
+                    await dispatch(
+                        NavigationAction.add(
+                            path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                            to: .current()
+                        )
+                    )
+                }}) {
+                    Text("Push \(next) to current session").foregroundColor(.black)
+                }
+            }
+        }
+    }
+
+    var secondSection: some View {
+        VStack {
+            Button(action: { Task {
+                await dispatch(NavigationAction {
+                    NavigationAction.selectTab(by: AppState.tabOne)
+                    NavigationAction.add(
+                        path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                    )
+                })
+            }}) {
+                Text("Push \(next) to Tab 1").foregroundColor(.black)
+            }
+
+            Button(action: { Task {
+                await dispatch(NavigationAction {
+                    NavigationAction.selectTab(by: AppState.tabTwo)
+                    NavigationAction.add(
+                        path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
+                    )
+                })
+
+            }}) {
+                Text("Push \(next) to Tab 2").foregroundColor(.black)
+            }
+
+            HStack {
+                Button(action: { Task {
+                    await dispatch(
+                        NavigationAction.add(
+                            path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                            to: .new(type: .fullscreen, animate: true)
+                        )
+                    )
+                }}) {
+                    Text("Fullscreen \(next)").foregroundColor(.black)
+                }
+
+                Button(action: { Task {
+                    await dispatch(
+                        NavigationAction.add(
+                            path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                            to: .new()
+                        )
+                    )
+                }}) {
+                    Text("Present \(next)").foregroundColor(.black)
+                }
+            }
+        }
+    }
+
+    var thirdSection: some View {
+        HStack {
+            Button(action: { Task {
+                await dispatch(
+                    NavigationAction.alert(
+                        .init(
+                            type: .actionSheet,
+                            buttons: [
+                                .init(
+                                    label: "Close and Present view",
+                                    type: .default,
+                                    actions: [
+                                        NavigationAction.dismiss(.navigationModel(navigationModel)),
+                                        NavigationAction.add(
+                                            path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                            to: .new()
+                                        ),
+                                    ]
+                                ),
+                                .init(
+                                    label: "Select tab two",
+                                    type: .destructive,
+                                    actions: [
+                                        NavigationAction.dismiss(.navigationModel(navigationModel)),
+                                        NavigationAction.selectTab(by: AppState.tabTwo),
+                                    ]
+                                ),
+                                .init(label: "Cancel", type: .cancel),
+                            ]
+                        ))
+                )
+            }}) {
+                Text("Present an action sheet").foregroundColor(.black)
+            }
+
+            Button(action: { Task {
+                await dispatch(
+                    NavigationAction.alert(
+                        .init(
+                            title: "Awesome!",
+                            message: "It really works!",
+                            buttons: [
+                                .init(
+                                    label: "Present a view",
+                                    type: .default,
+                                    action: NavigationAction.add(
+                                        path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                                        to: .new()
+                                    )
+                                ),
+                                .init(label: "Cancel", type: .cancel),
+                            ]
+                        ))
+                )
+            }}) {
+                Text("Present an alert").foregroundColor(.black)
+            }
+        }
+    }
+
+    var fourthSection: some View {
+        VStack {
+            Button(action: { Task {
+                await dispatch(NavigationAction.setBadgeValue(
+                    to: "\((Int(navigationState.state.observed.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) - 1)",
+                    withModelID: navigationModel.id,
+                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
+                ))
+            }}) {
+                Text("Decrease badgeValue")
+            }
+            Button(action: { Task {
+                await dispatch(NavigationAction.setBadgeValue(
+                    to: "\((Int(navigationState.state.observed.navigationModels.first(where: { $0.id == navigationModel.id })?.tab?.badgeValue ?? "unknown") ?? 0) + 1)",
+
+                    withModelID: navigationModel.id,
+                    withColor: [.red, .blue, .yellow, .purple, .green].randomElement()
+                ))
+            }}) {
+                Text("Increase badgeValue")
+            }
+
+            Button(action: { Task {
+                await dispatch(NavigationAction.setBadgeValue(to: nil, withModelID: navigationModel.id, withColor: nil))
+            }}) {
+                Text("Reset badge")
+            }
+        }
+    }
+
+    var fithSection: some View {
+        VStack {
+            Button(action: { Task {
+                await dispatch(
+                    NavigationAction.add(
+                        path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                        to: .current(animate: false)
+                    )
+                )
+            }}) {
+                Text("Push to current, no animation")
+            }
+
+            Button(action: { Task {
+                guard let currentNavModel = navigationState.state.observed.navigationModels.first(where: { $0.id == navigationState.state.observed.selectedModelId }) else {
+                    return
+                }
+                await dispatch(
+                    NavigationAction.replace(
+                        path: currentNavModel.selectedPath,
+                        with: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
+                        in: currentNavModel
+                    )
+                )
+            }}) {
+                Text("Replace current path with new")
+            }
+        }
+    }
+
+    let colors: [Color] = [
+        .red, .green, .blue, .yellow, .purple, .pink, .gray, .brown, .white,
+    ]
+    var sixSection: some View {
+        VStack {
+            ForEach(colors, id: \.self) { color in
+                color.frame(height: 200)
+            }
+
+            Button(action: { Task {
+                await dispatch(NavigationAction {
+                    NavigationAction.selectTab(by: AppState.tabOne)
+
+                    NavigationAction.add(
+                        path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
+                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                    )
+                })
+            }}) {
+                Text("Push \(next) to Tab 1").foregroundColor(.black)
+            }
+        }
     }
 }
