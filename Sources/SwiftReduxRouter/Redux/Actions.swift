@@ -33,41 +33,9 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case deeplink(Deeplink)
     case shouldScrollToTop(NavigationPath)
 
-    public var description: String {
-        let desc = "\(type(of: self))"
-        switch self {
-        case let .multiAction(actions): return "\(desc).multiAction \(actions.map { $0.description })"
-        case .setAvailableRoutes: return "\(desc).setAvailableRoutes"
-        case .setAvailableNavigationModelRoutes: return "\(desc).setAvailableNavigationModelRoutes"
-        case let .dismissedAlert(model):
-            return "\(desc).dismissedAlert(\(model))"
-        case let .alert(model):
-            return "\(desc).alert(\(model))"
-        case let .add(path: path, to: target):
-            return "\(desc).add path: \(path?.description ?? "nil"), to: \(target)"
-        case let .dismiss(model, completion):
-            return "\(desc).dismiss \(model), completion: completion"
-        case let .setSelectedPath(to: path, in: model):
-            return "\(desc).setSelectedPath to: \(path) in: \(model)"
-        case let .setNavigationDismsissed(model):
-            return "\(desc).setNavigationDismsissed \(model)"
-        case let .selectTab(by: id):
-            return "\(desc).selectTab by: \(id)"
-        case let .replace(path: path, with: newPath, in: model):
-            return "\(desc).replace path: \(path) with newPath: \(newPath.path ?? path.id.uuidString) in: \(model)"
-        case let .setIcon(to: value, withModelID: modelID):
-            return "\(desc).setIcon to: \(value) withModelID: \(modelID.uuidString)"
-
-        case let .setBadgeValue(to: value, withModelID: modelID, withColor: _):
-            return "\(desc).setBadgeValue to: \(value ?? "") withModelID: \(modelID.uuidString)"
-
-        case let .deeplink(deeplink):
-            return "\(desc).deeplink with url: \(deeplink.url.path)"
-        case let .selectedDetentChanged(to: identifier, in: navigationModel):
-            return "\(desc).selectedDetentChanged to: \(identifier) in: \(navigationModel.id)"
-        case let .shouldScrollToTop(path):
-            return "\(desc).shouldScrollToTop \(path.path ?? path.id.uuidString)"
-        }
+    // This property allows the loggerMiddleware to print this enum in a nicer.
+    var debugActionName: String {
+        "NavigationAction.\(type(of: self))."
     }
 
     /**

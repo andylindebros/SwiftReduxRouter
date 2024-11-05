@@ -1,7 +1,7 @@
 import Foundation
 
 public enum Navigation {
-    public struct State: Sendable, Codable {
+    public struct State: Sendable, Equatable, Codable {
         public init(observed: Navigation.ObservedState = .init()) {
             self.observed = observed
         }
@@ -38,7 +38,7 @@ public enum Navigation {
 }
 
 public extension Navigation.State {
-    @MainActor static func reducer<Action>(action: Action, state: Navigation.State) -> Navigation.State {
+    static func reducer<Action>(action: Action, state: Navigation.State) -> Navigation.State {
         var state = state
         if action is NavigationAction {
             state.observed.lastModifiedID = UUID()
