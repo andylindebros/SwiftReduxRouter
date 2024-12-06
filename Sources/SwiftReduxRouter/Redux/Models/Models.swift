@@ -3,27 +3,16 @@ import Foundation
     import UIKit
 #endif
 
-public enum DismissTarget: Equatable, Codable, CustomLogging, Sendable {
+public enum DismissTarget: Equatable, Codable, Sendable {
     case currentNavigationModel(animated: Bool = true)
     case navigationModel(NavigationModel, animated: Bool = true)
     case navigationPath(NavigationPath, animated: Bool = true)
 }
 
-public enum NavigationTarget: Equatable, Codable, CustomLogging, Sendable {
+public enum NavigationTarget: Equatable, Codable, Sendable {
     case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
-
-    public var description: String {
-        switch self {
-        case let .new(path, type, animate):
-            return ".new(\(path?.path ?? "")\(type != .regular() ? " \(type)" : ""), animate: \(animate))"
-        case let .navigationModel(model, _):
-            return ".navigationModel(\(model)"
-        case .current:
-            return ".current"
-        }
-    }
 }
 
 public extension PresentationType {
@@ -126,7 +115,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
     }
 }
 
-public struct NavigationPath: Identifiable, Equatable, Codable, Sendable, CustomLogging {
+public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
     public var id: UUID
     public let url: URL?
     public let name: String?
@@ -149,10 +138,6 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable, Custom
     public static func create(_ url: URL?, name: String? = nil) -> NavigationPath? {
         guard let url = url else { return nil }
         return NavigationPath(url, name)
-    }
-
-    public var description: String {
-        "\(name ?? "")(\(path ?? id.uuidString))"
     }
 }
 

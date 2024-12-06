@@ -6,7 +6,7 @@ import SwiftUI
     import AppKit
 #endif
 
-public protocol NavigationActionProvider: Codable, CustomLogging, Sendable {}
+public protocol NavigationActionProvider: Codable, Sendable {}
 
 
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
@@ -33,11 +33,6 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case deeplink(Deeplink)
     case shouldScrollToTop(NavigationPath)
 
-    // This property allows the loggerMiddleware to print this enum in a nicer.
-    var debugActionName: String {
-        "NavigationAction.\(type(of: self))."
-    }
-
     /**
      Provides actions for a URL depending on the NavigationState
      - parameter url: The url to change the state with
@@ -49,10 +44,6 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         }
 
         let url: URL
-
-        public var description: String {
-            "\(type(of: self))(url: \(url.path)) ? \(url.query != nil ? "?\(url.query ?? "")" : "")"
-        }
 
         private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
             var urlComponents = URLComponents(string: url.absoluteString)
