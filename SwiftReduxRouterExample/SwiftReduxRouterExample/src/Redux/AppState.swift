@@ -18,7 +18,7 @@ struct MainState: Sendable, Codable, SubState {
 
     struct Observed: Sendable, Equatable, Codable {
         public init() {}
-        var pathScrollToTop: NavigationPath?
+        var pathScrollToTop: NavPath?
     }
 
     var observed: MainState.Observed

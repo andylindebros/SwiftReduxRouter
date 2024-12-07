@@ -12,12 +12,12 @@ public protocol NavigationActionProvider: Codable, Sendable {}
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
 public indirect enum NavigationAction: Equatable, NavigationActionProvider {
-    case add(path: NavigationPath?, to: NavigationTarget)
+    case open(path: NavPath?, in: NavigationTarget)
     case dismiss(DismissTarget, withCompletion: NavigationAction? = nil)
-    case setSelectedPath(to: NavigationPath, in: NavigationModel)
+    case setSelectedPath(to: NavPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
     case selectTab(by: UUID)
-    case replace(path: NavigationPath, with: NavigationPath, in: NavigationModel)
+    case replace(path: NavPath, with: NavPath, in: NavigationModel)
     case setIcon(to: String, withModelID: UUID)
     case alert(AlertModel)
     case dismissedAlert(with: AlertModel)
@@ -31,7 +31,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         case setBadgeValue(to: String?, withModelID: UUID, withColor: String? = nil)
     #endif
     case deeplink(Deeplink)
-    case shouldScrollToTop(NavigationPath)
+    case shouldScrollToTop(NavPath)
 
     /**
      Provides actions for a URL depending on the NavigationState
@@ -66,20 +66,20 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                     }
 
                     // Present new path to found model
-                    return NavigationAction.add(path: NavigationPath(newURL), to: .navigationModel(model, animate: true))
+                    return NavigationAction.open(path: NavPath(newURL), in: .navigationModel(model, animate: true))
                 }
             } else {
                 // Push new path to known navigationModel (found in navigation routes)
                 if
                     let pattern = URLMatcher().match(url.path, from: state.observed.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
-                    //let newPath = NavigationPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
-                    let newPath = NavigationPath.create(createNewURL(from: url, removeFromPath: pattern.path))
+                    //let newPath = NavPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
+                    let newPath = NavPath.create(createNewURL(from: url, removeFromPath: pattern.path))
                 {
-                    return NavigationAction.add(path: newPath, to: .new(withModelPath: NavigationPath(URL(string: pattern.path)), type: .regular()))
+                    return NavigationAction.open(path: newPath, in: .new(withModelPath: NavPath(URL(string: pattern.path)), type: .regular()))
 
                     // push to new navigationModel
-                } else if let newPath = NavigationPath.create(createNewURL(from: url, removeFromPath: "")) {
-                    return NavigationAction.add(path: newPath, to: .new())
+                } else if let newPath = NavPath.create(createNewURL(from: url, removeFromPath: "")) {
+                    return NavigationAction.open(path: newPath, in: .new())
                 }
                 return nil
             }

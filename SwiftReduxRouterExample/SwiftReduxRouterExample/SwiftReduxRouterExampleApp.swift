@@ -13,7 +13,7 @@ struct SwiftReduxRouterExampleApp: App {
                 navigationModels: [
                     NavigationModel.createInitModel(
                         id: AppState.tabOne,
-                        path: NavigationPath(URL(string: "/tab1")),
+                        path: .init(URL(string: "/tab1")),
                         selectedPath: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(1)"])!,
                         tab: NavigationTab(
                             name: "First Tab",
@@ -22,7 +22,7 @@ struct SwiftReduxRouterExampleApp: App {
                     ),
                     NavigationModel.createInitModel(
                         id: AppState.tabTwo,
-                        path: NavigationPath(URL(string: "/tab2")),
+                        path: .init(URL(string: "/tab2")),
                         selectedPath: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(1)"])!,
                         tab: NavigationTab(
                             name: "Second Tab",

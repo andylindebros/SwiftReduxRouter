@@ -15,7 +15,7 @@ import SwiftUI
             delegate = self
         }
 
-        public var onTabAlreadySelected: ((NavigationPath) -> Void)?
+        public var onTabAlreadySelected: ((NavPath) -> Void)?
         public func tabBarController(_ tabBarController: UITabBarController, shouldSelect controller: UIViewController) -> Bool {
             if
                 let selected = (tabBarController.selectedViewController as? NavigationController)?.navigationModel,
@@ -31,7 +31,7 @@ import SwiftUI
     @available(iOS 13, *)
     open class NavigationController: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
         var navigationModel: NavigationModel?
-        var willShow: ((_ navigationModel: NavigationModel, _ navigationPath: NavigationPath) -> Void)?
+        var willShow: ((_ navigationModel: NavigationModel, _ NavPath: NavPath) -> Void)?
         var onDismiss: ((_ navigationModel: NavigationModel) -> Void)?
         var selectedDetentDidChange: ((String, NavigationModel) -> Void)?
         var isDismissing: Bool = false
@@ -81,14 +81,14 @@ import SwiftUI
     @MainActor
     public protocol UIRouteViewController: UIViewController {
         var navigationModel: NavigationModel? { get set }
-        var navigationPath: NavigationPath? { get set }
+        var navigationPath: NavPath? { get set }
     }
 
     public final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
         public init(
             rootView: Content,
             navigationModel: NavigationModel? = nil,
-            navigationPath: NavigationPath? = nil
+            navigationPath: NavPath? = nil
         ) {
             self.navigationModel = navigationModel
             self.navigationPath = navigationPath
@@ -101,6 +101,6 @@ import SwiftUI
         }
 
         public var navigationModel: NavigationModel?
-        public var navigationPath: NavigationPath?
+        public var navigationPath: NavPath?
     }
 #endif

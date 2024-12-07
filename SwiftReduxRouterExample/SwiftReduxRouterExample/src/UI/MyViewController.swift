@@ -14,7 +14,7 @@ class MyCustomNavigationController: NavigationController {
 
 class HiddenNavigationBarViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
     var navigationModel: SwiftReduxRouter.NavigationModel?
-    var navigationPath: SwiftReduxRouter.NavigationPath?
+    var navigationPath: NavPath?
 
     override init(rootView: Content) {
         super.init(rootView: rootView)

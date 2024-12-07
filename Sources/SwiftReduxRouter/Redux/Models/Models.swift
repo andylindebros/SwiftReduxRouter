@@ -6,11 +6,11 @@ import Foundation
 public enum DismissTarget: Equatable, Codable, Sendable {
     case currentNavigationModel(animated: Bool = true)
     case navigationModel(NavigationModel, animated: Bool = true)
-    case navigationPath(NavigationPath, animated: Bool = true)
+    case navigationPath(NavPath, animated: Bool = true)
 }
 
 public enum NavigationTarget: Equatable, Codable, Sendable {
-    case new(withModelPath: NavigationPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
+    case new(withModelPath: NavPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 }
@@ -81,7 +81,7 @@ public enum PresentationType: Equatable, Codable, Sendable {
     }
 }
 
-public struct NavigationRoute: Equatable, Codable, Sendable {
+public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvertible {
     public init(_ path: String, name: String? = nil) {
         self.path = path
         self.name = name
@@ -90,7 +90,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
     public var path: String
     public var name: String?
 
-    public func reverse(params: [String: String] = [:]) -> NavigationPath? {
+    public func reverse(params: [String: String] = [:]) -> NavPath? {
         let urlMatcher = URLMatcher()
         let components = urlMatcher.pathComponents(from: path)
         var parameters: [String] = []
@@ -111,11 +111,15 @@ public struct NavigationRoute: Equatable, Codable, Sendable {
             str = "/" + str
         }
         guard let url = URL(string: str) else { return nil }
-        return NavigationPath.create(url, name: name)
+        return .create(url, name: name)
+    }
+
+    public var description: String {
+        "\(type(of: self))(\(path))"
     }
 }
 
-public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
+public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringConvertible {
     public var id: UUID
     public let url: URL?
     public let name: String?
@@ -130,18 +134,22 @@ public struct NavigationPath: Identifiable, Equatable, Codable, Sendable {
         url?.path
     }
 
-    public static func create(_ urlString: String, name: String? = nil) -> NavigationPath? {
+    public static func create(_ urlString: String, name: String? = nil) -> NavPath? {
         guard let url = URL(string: urlString) else { return nil }
-        return NavigationPath(url, name)
+        return .init(url, name)
     }
 
-    public static func create(_ url: URL?, name: String? = nil) -> NavigationPath? {
+    public static func create(_ url: URL?, name: String? = nil) -> NavPath? {
         guard let url = url else { return nil }
-        return NavigationPath(url, name)
+        return .init(url, name)
+    }
+
+    public var description: String {
+        "\(type(of: self))(\(url?.path ?? "unknown"))"
     }
 }
 
-public struct NavigationTab: Codable, Sendable {
+public struct NavigationTab: Codable, Sendable, CustomStringConvertible {
     public var name: String
     public var icon: Icon
     public var selectedIcon: Icon?
@@ -166,6 +174,10 @@ public struct NavigationTab: Codable, Sendable {
             self.badgeValue = badgeValue
         }
     #endif
+
+    public var description: String {
+        "\(type(of: self))(\(name))"
+    }
 }
 
 public extension NavigationTab {

@@ -95,8 +95,11 @@ struct ContentView: View {
             ),
             RouterView.Route(
                 paths: navigationRoutes,
-                render: { path, navigationModel, params in
-                    let presentedName = (params?["name"] as? Int) ?? 0
+                render: {
+                    path,
+                    navigationModel,
+                    params in
+                    let presentedName: Int = params?["name"]?.value() ?? 0
                     let next = presentedName + 1
                     return RouteViewController(rootView:
                         TestRoute(
@@ -124,7 +127,7 @@ struct ContentView: View {
 
 struct TestRoute: View {
     @ObservedObject var main: Observed<MainState>
-    let navigationPath: SwiftReduxRouter.NavigationPath
+    let navigationPath: NavPath
     let navigationModel: NavigationModel
     let name: Int
     let next: Int
@@ -132,9 +135,9 @@ struct TestRoute: View {
     var dispatch: DispatchFunction
 
     func detentedAction() -> Action {
-        NavigationAction.add(
-            path: NavigationPath.create("/hello/100")!,
-            to: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large],
+        NavigationAction.open(
+            path: .create("/hello/100")!,
+            in: .new(type: .detents([.custom(identifier: "100", height: 200), .medium, .large],
                                     selected: .medium, largestUndimmedDetentIdentifier: PresentationType.Detent.medium, preventDismissal: true, prefersGrabberVisible: true))
         )
     }
@@ -158,7 +161,6 @@ struct TestRoute: View {
                         VStack {
                             firstSection
                             secondSection
-
                             thirdSection
                             fourthSection
                             fithSection
@@ -183,9 +185,9 @@ struct TestRoute: View {
         .navigationTitle("\(name)")
         .navigationBarItems(
             leading: Button(action: { Task {
-                await dispatch(NavigationAction.dismiss(.navigationModel(navigationModel), withCompletion: NavigationAction.add(
+                await dispatch(NavigationAction.dismiss(.navigationModel(navigationModel), withCompletion: NavigationAction.open(
                     path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                    to: .new()
+                    in: .new()
                 )))
             }}) { Text("Prepare") },
 
@@ -222,9 +224,9 @@ struct TestRoute: View {
 
                 Button(action: { Task {
                     await dispatch(
-                        NavigationAction.add(
+                        NavigationAction.open(
                             path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                            to: .current()
+                            in: .current()
                         )
                     )
                 }}) {
@@ -239,9 +241,9 @@ struct TestRoute: View {
             Button(action: { Task {
                 await dispatch(NavigationAction {
                     NavigationAction.selectTab(by: AppState.tabOne)
-                    NavigationAction.add(
+                    NavigationAction.open(
                         path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                        in: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
                     )
                 })
             }}) {
@@ -251,9 +253,9 @@ struct TestRoute: View {
             Button(action: { Task {
                 await dispatch(NavigationAction {
                     NavigationAction.selectTab(by: AppState.tabTwo)
-                    NavigationAction.add(
+                    NavigationAction.open(
                         path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
+                        in: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
                     )
                 })
 
@@ -264,9 +266,9 @@ struct TestRoute: View {
             HStack {
                 Button(action: { Task {
                     await dispatch(
-                        NavigationAction.add(
+                        NavigationAction.open(
                             path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                            to: .new(type: .fullscreen, animate: true)
+                            in: .new(type: .fullscreen, animate: true)
                         )
                     )
                 }}) {
@@ -275,9 +277,9 @@ struct TestRoute: View {
 
                 Button(action: { Task {
                     await dispatch(
-                        NavigationAction.add(
+                        NavigationAction.open(
                             path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                            to: .new()
+                            in: .new()
                         )
                     )
                 }}) {
@@ -300,9 +302,9 @@ struct TestRoute: View {
                                     type: .default,
                                     actions: [
                                         NavigationAction.dismiss(.navigationModel(navigationModel)),
-                                        NavigationAction.add(
+                                        NavigationAction.open(
                                             path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                            to: .new()
+                                            in: .new()
                                         ),
                                     ]
                                 ),
@@ -332,9 +334,9 @@ struct TestRoute: View {
                                 .init(
                                     label: "Present a view",
                                     type: .default,
-                                    action: NavigationAction.add(
+                                    action: NavigationAction.open(
                                         path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                                        to: .new()
+                                        in: .new()
                                     )
                                 ),
                                 .init(label: "Cancel", type: .cancel),
@@ -381,9 +383,9 @@ struct TestRoute: View {
         VStack {
             Button(action: { Task {
                 await dispatch(
-                    NavigationAction.add(
+                    NavigationAction.open(
                         path: ContentView.navigationRoutes.first!.reverse(params: ["name": "\(next)"])!,
-                        to: .current(animate: false)
+                        in: .current(animate: false)
                     )
                 )
             }}) {
@@ -420,9 +422,9 @@ struct TestRoute: View {
                 await dispatch(NavigationAction {
                     NavigationAction.selectTab(by: AppState.tabOne)
 
-                    NavigationAction.add(
+                    NavigationAction.open(
                         path: ContentView.navigationRoutes.last!.reverse(params: ["name": "\(next)"])!,
-                        to: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
+                        in: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabOne })!)
                     )
                 })
             }}) {

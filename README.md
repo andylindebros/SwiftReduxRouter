@@ -85,7 +85,7 @@ If you set the tab property of the NavigationModel in the init state, the Router
 ## Presenting views.
 A view gets presented by setting the navigationTarget to NavigationTarget.new(). 
 ```Swift
-dispatch(NavigationAction.add(path: NavigationPath("some path to a route"), to: .new()))
+dispatch(NavigationAction.add(path: NavPath("some path to a route"), to: .new()))
 ```
 To dismiss it, you simply use the Dismiss action:
 ``` Swift

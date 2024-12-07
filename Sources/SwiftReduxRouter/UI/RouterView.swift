@@ -48,7 +48,7 @@ import SwiftUI
         private let navigationControllerRoutes: [NavigationControllerRoute]
 
         /// setSelectedPath is invoked by the UIViewController when it is in screen
-        private let setSelectedPath: (NavigationModel, NavigationPath) -> Void
+        private let setSelectedPath: (NavigationModel, NavPath) -> Void
 
         /// onDismiss is invoked when the UIViewController will be dismissed
         private let onDismiss: (NavigationModel) -> Void
@@ -329,9 +329,9 @@ import SwiftUI
             }
         }
 
-        // MARK: NavigationPath methods
+        // MARK: NavPath methods
 
-        static func view(for navigationPath: NavigationPath, in navigationModel: NavigationModel, andInRoutes routes: [Route]) -> UIRouteViewController? {
+        static func view(for navigationPath: NavPath, in navigationModel: NavigationModel, andInRoutes routes: [Route]) -> UIRouteViewController? {
             guard
                 let (route, urlMatchResult) = Self.route(for: navigationPath, in: routes),
                 let route = route
@@ -344,13 +344,10 @@ import SwiftUI
             viewController.navigationModel = navigationModel
             viewController.navigationPath = navigationPath
 
-            DispatchQueue.main.async {
-                route.onDidAppear?(navigationPath, navigationModel, urlMatchResult?.values)
-            }
             return viewController
         }
 
-        private static func route(for navigationPath: NavigationPath, in routes: [Route]) -> (Route?, URLMatchResult?)? {
+        private static func route(for navigationPath: NavPath, in routes: [Route]) -> (Route?, URLMatchResult?)? {
             let patterns = routes.flatMap { $0.paths.map { $0.path } }
 
             guard
@@ -372,7 +369,7 @@ import SwiftUI
         private static func viewController(
             of route: Route,
             with urlMatchResult: URLMatchResult?,
-            for navigationPath: NavigationPath,
+            for navigationPath: NavPath,
             in navigationModel: NavigationModel
         ) -> UIRouteViewController {
             if let view = route.render?(navigationPath, navigationModel, urlMatchResult?.values) {
@@ -409,32 +406,32 @@ import SwiftUI
         struct Route {
             public init(
                 paths: [NavigationRoute],
-                onDidAppear: ((NavigationPath, NavigationModel, [String: Any]?) -> Void)? = nil,
-                render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)? = nil,
+                render: ((NavPath, NavigationModel, [String: URLPathMatchValue]?) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.paths = paths
-                self.onDidAppear = onDidAppear
                 self.render = render
                 self.defaultRoute = defaultRoute
             }
 
             public let paths: [NavigationRoute]
-            public let onDidAppear: ((NavigationPath, NavigationModel, [String: Any]?) -> Void)?
-            public let render: ((NavigationPath, NavigationModel, [String: Any]?) -> UIRouteViewController?)?
+            public let render: ((NavPath, NavigationModel, [String: URLPathMatchValue]?) -> UIRouteViewController?)?
             public let defaultRoute: Bool
         }
     }
 
     public extension RouterView {
         struct NavigationControllerRoute {
-            public init(paths: [NavigationRoute], render: @escaping (NavigationModel, [String: Any]?) -> NavigationController) {
+            public init(paths: [NavigationRoute], render: @escaping (NavigationModel, [String: URLPathMatchValue]?) -> NavigationController) {
                 self.paths = paths
                 self.render = render
             }
 
             public let paths: [NavigationRoute]
-            public let render: (NavigationModel, [String: Any]?) -> NavigationController
+            public let render: (
+                NavigationModel,
+                [String: URLPathMatchValue]?
+            ) -> NavigationController
         }
     }
 

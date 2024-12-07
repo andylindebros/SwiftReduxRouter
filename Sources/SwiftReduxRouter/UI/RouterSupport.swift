@@ -68,27 +68,34 @@ extension URL: URLConvertible {
 /// URLMatcher extracts the pattern and the values from the URL if possible.
 struct URLMatcher {
     typealias URLPattern = String
-    typealias URLValueConverter = (_ pathComponents: [String], _ index: Int) -> Any?
+    typealias URLValueConverter = (_ pathComponents: [String], _ index: Int) -> URLPathMatchValue?
 
-    static let defaultURLValueConverters: [String: URLValueConverter] = [
+    let valueConverters: [String: URLValueConverter] = [
         "string": { pathComponents, index in
-            pathComponents[index]
+            URLPathMatchValue.string(pathComponents[index])
         },
         "int": { pathComponents, index in
-            Int(pathComponents[index])
+            if let value = Int(pathComponents[index]) {
+                return URLPathMatchValue.int(value)
+            }
+            return nil
         },
         "float": { pathComponents, index in
-            Float(pathComponents[index])
+            if let value = Float(pathComponents[index]) {
+                return URLPathMatchValue.float(value)
+            }
+            return nil
         },
         "uuid": { pathComponents, index in
-            UUID(uuidString: pathComponents[index])
+            if let value = UUID(uuidString: pathComponents[index]) {
+                return URLPathMatchValue.uuid(value)
+            }
+            return nil
         },
         "path": { pathComponents, index in
-            pathComponents[index ..< pathComponents.count].joined(separator: "/")
+            URLPathMatchValue.path(pathComponents[index ..< pathComponents.count].joined(separator: "/"))
         },
     ]
-
-    var valueConverters: [String: URLValueConverter] = URLMatcher.defaultURLValueConverters
 
     init() {}
 
@@ -134,7 +141,7 @@ struct URLMatcher {
             return nil
         }
 
-        var urlValues: [String: Any] = [:]
+        var urlValues: [String: URLPathMatchValue] = [:]
 
         let pairCount = min(stringPathComponents.count, candidatePathComponents.count)
         for index in 0 ..< pairCount {
@@ -223,7 +230,7 @@ struct URLMatcher {
 
         case let .placeholder(type, key):
             guard let type = type, let converter = valueConverters[type] else {
-                return .matches((key, stringPathComponent))
+                return .matches((key, .string(stringPathComponent)))
             }
             if let value = converter(stringPathComponents, index) {
                 return .matches((key, value))
@@ -241,19 +248,44 @@ struct URLMatcher {
     }
 }
 
+public enum URLPathMatchValue: Equatable, Sendable {
+    case string(String)
+    case int(Int)
+    case float(Float)
+    case uuid(UUID)
+    case path(String)
+
+    public func value<T>() -> T? {
+        switch self {
+        case let .string(value):
+            return value as? T
+        case let .int(value):
+            return value as? T
+        case let .float(value):
+            return value as? T
+        case let .uuid(value):
+            return value as? T
+        case let .path(value):
+            return value as? T
+        @unknown default:
+            return nil
+        }
+    }
+}
+
 /// Represents an URL match result.
 struct URLMatchResult {
     /// The url pattern that was matched.
     let pattern: String
 
     /// The values extracted from the URL placeholder.
-    let values: [String: Any]
+    let values: [String: URLPathMatchValue]
 
     let path: String
 }
 
 enum URLPathComponentMatchResult {
-    case matches((key: String, value: Any)?)
+    case matches((key: String, value: URLPathMatchValue)?)
     case notMatches
 }
 
