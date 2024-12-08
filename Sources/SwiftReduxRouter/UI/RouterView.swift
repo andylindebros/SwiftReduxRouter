@@ -14,12 +14,14 @@ import SwiftUI
         public init(
             navigationState: Navigation.State,
             navigationControllerRoutes: [NavigationControllerRoute] = [],
+            tabBarController: TabController? = nil,
             routes: [Route],
             tintColor: UIColor? = nil,
             tabBarIconImages: [NavigationTab.IconImage]? = nil,
             dispatch: @escaping NavigationDispatcher
         ) {
             self.navigationState = navigationState
+            self.tabBarController = tabBarController
             self.routes = routes
             self.tabBarIconImages = tabBarIconImages
             self.navigationControllerRoutes = navigationControllerRoutes
@@ -37,6 +39,8 @@ import SwiftUI
                 dispatch(NavigationAction.selectedDetentChanged(to: identifier, in: navigationModel))
             }
         }
+
+        private let tabBarController: TabController?
 
         /// The navigationState
         private var navigationState: Navigation.State
@@ -74,7 +78,7 @@ import SwiftUI
 
         private func asTabBarController(_ controller: UIViewController?) -> UITabBarController {
             guard let crlr = controller as? TabController else {
-                let tc = TabController()
+                let tc = tabBarController ?? TabController()
                 tc.onTabAlreadySelected = { navPath in
                     dispatch(NavigationAction.shouldScrollToTop(navPath))
                 }
@@ -438,7 +442,7 @@ import SwiftUI
     private extension RouterView {
         static func navigationController(for navigationModel: NavigationModel, in routes: [NavigationControllerRoute]) -> NavigationController {
             guard
-                let (route, urlMatchResult) = Self.navigationControllerRoute(for: navigationModel, in: routes),
+                let (route, urlMatchResult) = navigationControllerRoute(for: navigationModel, in: routes),
                 let route = route
             else {
                 return NavigationController()
