@@ -12,9 +12,11 @@ class MyCustomNavigationController: NavigationController {
     }
 }
 
-class HiddenNavigationBarViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
+class HiddenNavigationBarViewController<Content: View>: UIHostingController<Content>, UIRouteViewController, UIGestureRecognizerDelegate {
+
     var navigationModel: SwiftReduxRouter.NavigationModel?
     var navigationPath: NavPath?
+    var hideNavigationBar: Bool = false
 
     override init(rootView: Content) {
         super.init(rootView: rootView)
@@ -29,17 +31,6 @@ class HiddenNavigationBarViewController<Content: View>: UIHostingController<Cont
         super.viewDidLoad()
 
         view.backgroundColor = .blue
-
         title = "Awesome"
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationController?.setNavigationBarHidden(true, animated: false)
-    }
-
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        navigationController?.setNavigationBarHidden(false, animated: false)
     }
 }

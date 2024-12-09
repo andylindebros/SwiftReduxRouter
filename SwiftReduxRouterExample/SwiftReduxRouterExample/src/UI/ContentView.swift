@@ -250,6 +250,15 @@ struct TestRoute: View {
                 Text("Push \(next) to Tab 1").foregroundColor(.black)
             }
 
+            Button(action: {
+                Task {
+                    await dispatch(NavigationAction.open(path: .create("/custom")!, in: .current()))
+                    }
+                }
+            ) {
+                   Text("Open custom")
+            }
+
             Button(action: { Task {
                 await dispatch(NavigationAction {
                     NavigationAction.selectTab(by: AppState.tabTwo)

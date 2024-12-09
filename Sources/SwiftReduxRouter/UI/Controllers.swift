@@ -4,18 +4,19 @@ import SwiftUI
     import UIKit
 #endif
 #if canImport(UIKit)
-public protocol TabControllerProvider: UIViewController {
-    var onTabAlreadySelected: ((NavPath) -> Void)? { get set }
+    public protocol TabControllerProvider: UIViewController {
+        var onTabAlreadySelected: ((NavPath) -> Void)? { get set }
 
-    var tabBar: UITabBar { get }
+        var tabBar: UITabBar { get }
 
-    var selectedIndex: Int { get set }
+        var selectedIndex: Int { get set }
 
-    var viewControllers: [UIViewController]? { get }
-    func setViewControllers(_ viewControllers: [UIViewController]?, animated: Bool)
-}
+        var viewControllers: [UIViewController]? { get }
+        func setViewControllers(_ viewControllers: [UIViewController]?, animated: Bool)
+    }
+
     @available(iOS 13, *)
-public class TabController: UITabBarController, TabControllerProvider, UITabBarControllerDelegate {
+    public class TabController: UITabBarController, TabControllerProvider, UITabBarControllerDelegate {
         override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
             super.dismiss(animated: flag, completion: completion)
         }
@@ -63,8 +64,17 @@ public class TabController: UITabBarController, TabControllerProvider, UITabBarC
             }
         }
 
-        public func navigationController(_: UINavigationController, willShow viewController: UIViewController, animated _: Bool) {
+        public func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
             if let willShow = willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.navigationModel, let navPath = vc.navigationPath {
+                navigationController.setNavigationBarHidden(
+                    vc.hideNavigationBar,
+                    animated: animated
+                )
+
+                vc.navigationItem.backButtonDisplayMode = .minimal
+                vc.navigationItem.largeTitleDisplayMode = .never
+                vc.extendedLayoutIncludesOpaqueBars = true
+
                 if let coordinator = viewController.transitionCoordinator, coordinator.isInteractive {
                     coordinator.notifyWhenInteractionChanges { context in
                         if !context.isCancelled {
@@ -92,6 +102,7 @@ public class TabController: UITabBarController, TabControllerProvider, UITabBarC
     public protocol UIRouteViewController: UIViewController {
         var navigationModel: NavigationModel? { get set }
         var navigationPath: NavPath? { get set }
+        var hideNavigationBar: Bool { get set }
     }
 
     public final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
@@ -112,5 +123,22 @@ public class TabController: UITabBarController, TabControllerProvider, UITabBarC
 
         public var navigationModel: NavigationModel?
         public var navigationPath: NavPath?
+        public var hideNavigationBar: Bool = false
+
+        override public func viewDidLayoutSubviews() {
+            super.viewDidLayoutSubviews()
+        }
     }
 #endif
+
+// See this discussion regarding backswipe https://stackoverflow.com/questions/59921239/hide-navigation-bar-without-losing-swipe-back-gesture-in-swiftui
+extension UINavigationController: @retroactive UIGestureRecognizerDelegate {
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        interactivePopGestureRecognizer?.delegate = self
+    }
+
+    public func gestureRecognizerShouldBegin(_: UIGestureRecognizer) -> Bool {
+        return viewControllers.count > 1
+    }
+}
