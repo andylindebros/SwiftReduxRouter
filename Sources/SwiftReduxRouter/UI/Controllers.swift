@@ -4,8 +4,18 @@ import SwiftUI
     import UIKit
 #endif
 #if canImport(UIKit)
+public protocol TabControllerProvider: UIViewController {
+    var onTabAlreadySelected: ((NavPath) -> Void)? { get set }
+
+    var tabBar: UITabBar { get }
+
+    var selectedIndex: Int { get set }
+
+    var viewControllers: [UIViewController]? { get }
+    func setViewControllers(_ viewControllers: [UIViewController]?, animated: Bool)
+}
     @available(iOS 13, *)
-    public class TabController: UITabBarController, UITabBarControllerDelegate {
+public class TabController: UITabBarController, TabControllerProvider, UITabBarControllerDelegate {
         override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
             super.dismiss(animated: flag, completion: completion)
         }

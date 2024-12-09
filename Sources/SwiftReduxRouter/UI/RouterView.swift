@@ -14,7 +14,7 @@ import SwiftUI
         public init(
             navigationState: Navigation.State,
             navigationControllerRoutes: [NavigationControllerRoute] = [],
-            tabBarController: TabController? = nil,
+            tabBarController: TabControllerProvider? = nil,
             routes: [Route],
             tintColor: UIColor? = nil,
             tabBarIconImages: [NavigationTab.IconImage]? = nil,
@@ -40,7 +40,7 @@ import SwiftUI
             }
         }
 
-        private let tabBarController: TabController?
+        private let tabBarController: TabControllerProvider?
 
         /// The navigationState
         private var navigationState: Navigation.State
@@ -76,8 +76,8 @@ import SwiftUI
 
         // MARK: Router methods
 
-        private func asTabBarController(_ controller: UIViewController?) -> UITabBarController {
-            guard let crlr = controller as? TabController else {
+        private func asTabBarController(_ controller: UIViewController?) -> TabControllerProvider {
+            guard let crlr = controller as? TabControllerProvider else {
                 let tc = tabBarController ?? TabController()
                 tc.onTabAlreadySelected = { navPath in
                     dispatch(NavigationAction.shouldScrollToTop(navPath))
