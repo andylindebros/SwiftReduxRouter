@@ -13,7 +13,7 @@ class MyCustomNavigationController: NavigationController {
 }
 
 class HiddenNavigationBarViewController<Content: View>: UIHostingController<Content>, UIRouteViewController, UIGestureRecognizerDelegate {
-
+    var viewModel: SwiftReduxRouter.RouteViewModel?
     var navigationModel: SwiftReduxRouter.NavigationModel?
     var navigationPath: NavPath?
     var hideNavigationBar: Bool = false

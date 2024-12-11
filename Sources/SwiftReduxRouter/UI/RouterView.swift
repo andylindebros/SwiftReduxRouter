@@ -215,7 +215,16 @@ import SwiftUI
             nc.selectedDetentDidChange = selectedDetentDidChange
 
             let vcs = navigationModel.presentedPaths.compactMap { path in
-                nc.viewControllers.compactMap { $0 as? UIRouteViewController }.first(where: { $0.navigationPath?.id == path.id }) ?? Self.view(for: path, in: navigationModel, andInRoutes: routes)
+                if let vc = nc.viewControllers.compactMap({ $0 as? UIRouteViewController }).first(where: { $0.viewModel?.path.id == path.id }) {
+                    if vc.viewModel?.path.url != path.url {
+                        Task {
+                            await vc.viewModel?.setPath(to: path)
+                        }
+                    }
+                    return vc
+                }
+
+                return Self.view(for: path, in: navigationModel, andInRoutes: routes)
             }
 
             nc.setViewControllers(vcs, animated: navigationModel.animate && nc.presentedViewController == nil)
@@ -343,12 +352,7 @@ import SwiftUI
                 return nil
             }
 
-            let viewController = viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
-
-            viewController.navigationModel = navigationModel
-            viewController.navigationPath = navigationPath
-
-            return viewController
+            return viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
         }
 
         private static func route(for navigationPath: NavPath, in routes: [Route]) -> (Route?, URLMatchResult?)? {
@@ -363,6 +367,9 @@ import SwiftUI
                 return (Self.defaultRoute(in: routes), nil)
             }
 
+            guard route.validate(urlMatchResult) else {
+                return nil
+            }
             return (route, urlMatchResult)
         }
 
@@ -372,14 +379,21 @@ import SwiftUI
 
         private static func viewController(
             of route: Route,
-            with urlMatchResult: URLMatchResult?,
+            with _: URLMatchResult?,
             for navigationPath: NavPath,
             in navigationModel: NavigationModel
         ) -> UIRouteViewController {
-            if let view = route.render?(navigationPath, navigationModel, urlMatchResult?.values) {
+            let viewModel = RouteViewModel(
+                path: navigationPath,
+                navigationModel: navigationModel
+            )
+            if let view = route.render?(viewModel) {
+                view.viewModel = viewModel
                 return view
             } else {
-                return RouteViewController(rootView: EmptyView())
+                let fallback = RouteViewController(rootView: EmptyView())
+                fallback.viewModel = viewModel
+                return fallback
             }
         }
     }
@@ -410,7 +424,7 @@ import SwiftUI
         struct Route {
             public init(
                 paths: [NavigationRoute],
-                render: ((NavPath, NavigationModel, [String: URLPathMatchValue]?) -> UIRouteViewController?)? = nil,
+                render: ((RouteViewModel) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.paths = paths
@@ -419,8 +433,18 @@ import SwiftUI
             }
 
             public let paths: [NavigationRoute]
-            public let render: ((NavPath, NavigationModel, [String: URLPathMatchValue]?) -> UIRouteViewController?)?
+            public let render: ((RouteViewModel) -> UIRouteViewController?)?
             public let defaultRoute: Bool
+
+            func validate(_ result: URLMatchResult) -> Bool {
+                guard
+                    let path = paths.first(where: { $0.path == result.pattern })
+                else {
+                    return false
+                }
+
+                return path.validate(result: result)
+            }
         }
     }
 
@@ -465,4 +489,5 @@ import SwiftUI
             return (route, urlMatchResult)
         }
     }
+
 #endif

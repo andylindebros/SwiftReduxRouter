@@ -57,6 +57,7 @@ public extension Navigation.State {
 
         case let .setAvailableRoutes(routes):
             state.observed.availableRoutes = routes
+
         case let .setAvailableNavigationModelRoutes(routes):
             state.observed.availableNavigationModelRoutes = routes
 
@@ -82,9 +83,9 @@ public extension Navigation.State {
             }
             state.observed.navigationModels[navigationModelIndex].tab?.icon = .system(name: iconName)
 
-        case let .setSelectedPath(to: NavPath, in: navigationModel):
+        case let .setSelectedPath(to: navPath, in: navigationModel):
             if let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
-                state.observed.navigationModels[index].selectedPath = NavPath
+                state.observed.navigationModels[index].selectedPath = navPath
                 if state.observed.navigationModels[index].animate {
                     state.observed.navigationModels[index].animate = true
                 }
@@ -138,8 +139,8 @@ public extension Navigation.State {
                     }
                 }
 
-            case let .navigationPath(NavPath, animated):
-                if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(NavPath.id) }) {
+            case let .navigationPath(navPath, animated):
+                if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navPath.id) }) {
                     // Close presented model if no more paths are presented
                     if state.observed.navigationModels[index].isPresented, state.observed.navigationModels[index].presentedPaths.count == 1 {
                         if let completionAction {
@@ -165,7 +166,7 @@ public extension Navigation.State {
                         return state
                     }
 
-                    if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == NavPath.id }), pathIndex - 1 >= 0 {
+                    if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navPath.id }), pathIndex - 1 >= 0 {
                         let nextPath = state.observed.navigationModels[index].presentedPaths[pathIndex - 1]
                         state.observed.navigationModels[index].selectedPath = nextPath
                         if state.observed.navigationModels[index].animate {
@@ -183,20 +184,43 @@ public extension Navigation.State {
                 }
             }
 
-        case let .open(path: navigationPath, in: target):
+        case let .update(path, withURL: url, in: navigationModel):
             guard
-                let navigationPath = navigationPath,
-                let url = navigationPath.url, URLMatcher().match(url, from: state.observed.availableRoutes.map { $0.path }) != nil
+                let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
+                let currentPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id }),
+                let currentPath = state.observed.navigationModels[index].presentedPaths.first(where: { $0.id == path.id }),
+                let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
+                let route = Self.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
+                let matchResult = URLMatcher().match(url?.path ?? "uknown", from: [route.path]),
+                route.validate(result: matchResult)
             else {
-                print("⚠️ Cannot add \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "nil") since it not supported by any route")
+                print(
+                    "⚠️ Cannot update path \(path) since it does not support \(url?.absoluteString ?? "unknown")"
+                )
                 return state
             }
+
+            let path = NavPath(
+                id: currentPath.id,
+                url,
+                path.name,
+                matchResult
+            )
+
+            state.observed.navigationModels[index].presentedPaths[currentPathIndex] = path
+            state.observed.navigationModels[index].animate = false
+
+        case let .open(path: navigationPath, in: target):
+            guard let navigationPath = Self.validate(path: navigationPath, in: state) else {
+                return state
+            }
+
             switch target {
             case let .current(animate):
                 guard
                     let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId })
                 else {
-                    assertionFailure("Cannot push a view to a navigationSession that does not exist")
+                    assertionFailure("Cannot push a view to a navigationModel that does not exist")
                     return state
                 }
                 state.observed.navigationModels[index].animate = animate
@@ -205,7 +229,7 @@ public extension Navigation.State {
                 guard
                     let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
-                    assertionFailure("Cannot push a view to a navigationSession that does not exist")
+                    assertionFailure("Cannot push a view to a navigationModel that does not exist")
                     return state
                 }
                 state.observed.selectedModelId = state.observed.navigationModels[index].id
@@ -253,6 +277,7 @@ public extension Navigation.State {
 
         case let .replace(path: path, with: newPath, in: navigationModel):
             guard
+                let newPath = Self.validate(path: newPath, in: state),
                 let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
                 let currentPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id })
             else {
@@ -264,13 +289,16 @@ public extension Navigation.State {
 
         case let .alert(model):
             state.observed.alerts.append(model)
+
         case let .dismissedAlert(with: model):
             if let index = state.observed.alerts.firstIndex(where: { $0.id == model.id }) {
                 state.observed.alerts.remove(at: index)
             }
+
         case let .selectedDetentChanged(to: identifier, in: navigationModel):
             guard let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
             state.observed.navigationModels[index].selectedDetentIdentifier = identifier
+
         default:
             break
         }
@@ -300,5 +328,47 @@ public extension Navigation.State {
         }
 
         return state
+    }
+}
+
+extension Navigation.State {
+    static func route(by urlMatchResult: URLMatchResult, in availableRoutes: [NavigationRoute]) -> NavigationRoute? {
+        guard
+            let route = availableRoutes.first(where: { $0.path == urlMatchResult.pattern })
+        else {
+            return nil
+        }
+
+        return route
+    }
+
+    static func validate(path navigationPath: NavPath?, in state: Navigation.State) -> NavPath? {
+        guard
+            let navigationPath,
+            let urlMatchResult = navigationPath.urlMatchResult(of: state.observed.availableRoutes)
+        else {
+            print(
+                "⚠️ Cannot open \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "unknown") since it not supported by any route"
+            )
+            return nil
+        }
+
+        if let route = Self.route(by: urlMatchResult, in: state.observed.availableRoutes) {
+            guard
+                route.validate(result: urlMatchResult)
+            else {
+                print(
+                    "⚠️ Cannot open \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route"
+                )
+                return nil
+            }
+        }
+
+        return NavPath(
+            id: navigationPath.id,
+            navigationPath.url,
+            navigationPath.name,
+            urlMatchResult
+        )
     }
 }

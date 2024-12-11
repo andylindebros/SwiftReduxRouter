@@ -78,7 +78,7 @@ final class DeeplinkTests: XCTestCase {
         let deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/navigationModel2/route/2")))
 
         let reaction = try XCTUnwrap(deeplinkAction.action(for: state) as? NavigationAction)
-        
+
         guard
             case let NavigationAction.setSelectedPath(to: path, in: navigationModel) = reaction
         else {
@@ -105,7 +105,7 @@ final class DeeplinkTests: XCTestCase {
         else {
             return XCTFail("NavigationAction \(reaction) was not expected")
         }
-        
+
         XCTAssertEqual(path.path, "/route")
 
         // Test can handle no url
@@ -122,7 +122,8 @@ final class DeeplinkTests: XCTestCase {
 
         guard
             case let NavigationAction.open(path: path, in: navigationTarget) = pushAction,
-            case let NavigationTarget.new(navigationModelPath, type: type, _) = navigationTarget else {
+            case let NavigationTarget.new(navigationModelPath, type: type, _) = navigationTarget
+        else {
             return XCTFail("NavigationAction \(pushAction) was not expected")
         }
         XCTAssertEqual(try XCTUnwrap(navigationModelPath).path, "/navigation2")

@@ -8,7 +8,6 @@ import SwiftUI
 
 public protocol NavigationActionProvider: Codable, Sendable {}
 
-
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
 public indirect enum NavigationAction: Equatable, NavigationActionProvider {
@@ -18,6 +17,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case setNavigationDismsissed(NavigationModel)
     case selectTab(by: UUID)
     case replace(path: NavPath, with: NavPath, in: NavigationModel)
+    case update(path: NavPath, withURL: URL?, in: NavigationModel)
     case setIcon(to: String, withModelID: UUID)
     case alert(AlertModel)
     case dismissedAlert(with: AlertModel)
@@ -51,6 +51,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
 
             return urlComponents?.url
         }
+
         public func action(for state: Navigation.State) -> NavigationActionProvider? {
             if let model = findNavigationModel(in: state) {
                 let newURL = createNewURL(from: url, removeFromPath: model.path?.url?.absoluteString ?? "")
@@ -61,7 +62,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
 
                 if let newURL = newURL {
                     // Found and select already mathing path in model
-                    if let foundPath = model.presentedPaths.first(where: { $0.path == newURL.absoluteString }) {
+                    if let foundPath = model.presentedPaths.first(where: { $0.path == newURL.path }) {
                         return NavigationAction.setSelectedPath(to: foundPath, in: model)
                     }
 
@@ -72,13 +73,20 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 // Push new path to known navigationModel (found in navigation routes)
                 if
                     let pattern = URLMatcher().match(url.path, from: state.observed.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
-                    //let newPath = NavPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
+                    // let newPath = NavPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
                     let newPath = NavPath.create(createNewURL(from: url, removeFromPath: pattern.path))
                 {
                     return NavigationAction.open(path: newPath, in: .new(withModelPath: NavPath(URL(string: pattern.path)), type: .regular()))
 
                     // push to new navigationModel
-                } else if let newPath = NavPath.create(createNewURL(from: url, removeFromPath: "")) {
+                } else if URLMatcher().match(
+                    url.path,
+                    from: state.observed.availableRoutes.compactMap { $0.path
+                    },
+                    ensureComponentsCount: true
+                ) != nil,
+                    let newPath = NavPath.create(createNewURL(from: url, removeFromPath: ""))
+                {
                     return NavigationAction.open(path: newPath, in: .new())
                 }
                 return nil

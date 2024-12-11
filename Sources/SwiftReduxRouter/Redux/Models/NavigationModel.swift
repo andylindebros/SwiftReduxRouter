@@ -1,7 +1,7 @@
 import Foundation
 
 public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvertible {
-    public init(id: UUID = UUID(), path: NavPath? = nil, selectedPath: NavPath, parentNavigationModelId: UUID = UUID(), parentNavigationModelName: String? = nil, tab: NavigationTab? = nil, presentedPaths: [NavPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
+    init(id: UUID = UUID(), path: NavPath? = nil, selectedPath: NavPath, parentNavigationModelId: UUID = UUID(), parentNavigationModelName: String? = nil, tab: NavigationTab? = nil, presentedPaths: [NavPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
         self.id = id
         self.path = path
         self.isPresented = isPresented

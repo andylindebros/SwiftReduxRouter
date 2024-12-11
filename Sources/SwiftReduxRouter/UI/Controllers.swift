@@ -65,7 +65,7 @@ import SwiftUI
         }
 
         public func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-            if let willShow = willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.navigationModel, let navPath = vc.navigationPath {
+            if let willShow = willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.viewModel?.navigationModel, let navPath = vc.viewModel?.path {
                 navigationController.setNavigationBarHidden(
                     vc.hideNavigationBar,
                     animated: animated
@@ -100,19 +100,18 @@ import SwiftUI
     @available(iOS 13, *)
     @MainActor
     public protocol UIRouteViewController: UIViewController {
-        var navigationModel: NavigationModel? { get set }
-        var navigationPath: NavPath? { get set }
-        var hideNavigationBar: Bool { get set }
+        var hideNavigationBar: Bool { get }
+        var viewModel: RouteViewModel? { get set }
     }
 
     public final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
         public init(
             rootView: Content,
-            navigationModel: NavigationModel? = nil,
-            navigationPath: NavPath? = nil
+            viewModel: RouteViewModel? = nil,
+            hideNavigationBar: Bool = false
         ) {
-            self.navigationModel = navigationModel
-            self.navigationPath = navigationPath
+            self.viewModel = viewModel
+            self.hideNavigationBar = hideNavigationBar
             super.init(rootView: rootView)
         }
 
@@ -121,9 +120,8 @@ import SwiftUI
             fatalError("init(coder:) has not been implemented")
         }
 
-        public var navigationModel: NavigationModel?
-        public var navigationPath: NavPath?
-        public var hideNavigationBar: Bool = false
+        public var viewModel: RouteViewModel?
+        public let hideNavigationBar: Bool
 
         override public func viewDidLayoutSubviews() {
             super.viewDidLayoutSubviews()

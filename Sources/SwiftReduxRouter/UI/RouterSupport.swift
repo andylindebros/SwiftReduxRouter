@@ -137,6 +137,10 @@ struct URLMatcher {
         let normalizedCandidate = normalizeURL(candidate).urlStringValue
         let candidatePathComponents = pathComponents(from: normalizedCandidate)
 
+        if stringPathComponents.count < candidatePathComponents.count {
+            return nil
+        }
+
         if ensureComponentsCount, !ensurePathComponentsCount(stringPathComponents, candidatePathComponents) {
             return nil
         }
@@ -248,7 +252,7 @@ struct URLMatcher {
     }
 }
 
-public enum URLPathMatchValue: Equatable, Sendable {
+public enum URLPathMatchValue: Equatable, Codable, Sendable {
     case string(String)
     case int(Int)
     case float(Float)
@@ -271,10 +275,25 @@ public enum URLPathMatchValue: Equatable, Sendable {
             return nil
         }
     }
+
+    public var asString: String? {
+        switch self {
+        case let .string(value):
+            value
+        case let .int(value):
+            "\(value)"
+        case let .float(value):
+            "\(value)"
+        case let .path(value):
+            "\(value)"
+        case let .uuid(value):
+            value.uuidString
+        }
+    }
 }
 
 /// Represents an URL match result.
-struct URLMatchResult {
+public struct URLMatchResult: Equatable, Codable, Sendable {
     /// The url pattern that was matched.
     let pattern: String
 

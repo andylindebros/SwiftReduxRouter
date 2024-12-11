@@ -81,16 +81,32 @@ public enum PresentationType: Equatable, Codable, Sendable {
     }
 }
 
+public enum NavigationRule: Equatable, Codable, Sendable {
+    case exact(URLPathMatchValue)
+    case oneOf([URLPathMatchValue])
+
+    func match(value: URLPathMatchValue) -> Bool {
+        switch self {
+        case let .exact(pattern):
+            pattern == value
+        case let .oneOf(values):
+            values.contains(value)
+        }
+    }
+}
+
 public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvertible {
-    public init(_ path: String, name: String? = nil) {
+    public init(_ path: String, name: String? = nil, rules: [String: NavigationRule] = [:]) {
         self.path = path
         self.name = name
+        self.rules = rules
     }
 
-    public var path: String
-    public var name: String?
+    public let path: String
+    public let name: String?
+    public let rules: [String: NavigationRule]
 
-    public func reverse(params: [String: String] = [:]) -> NavPath? {
+    public func reverse(params: [String: URLPathMatchValue] = [:]) -> NavPath? {
         let urlMatcher = URLMatcher()
         let components = urlMatcher.pathComponents(from: path)
         var parameters: [String] = []
@@ -99,10 +115,15 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
             case .plain:
                 parameters.append(component.value)
             case .placeholder:
-                guard let value = params[component.value] else {
+                guard let value = params[component.value], let strValue = value.asString else {
                     return nil
                 }
-                parameters.append(value)
+
+                if let rule = rules[component.value], !rule.match(value: value) {
+                    return nil
+                }
+
+                parameters.append(strValue)
             }
         }
         var str = parameters.joined(separator: "/")
@@ -111,7 +132,22 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
             str = "/" + str
         }
         guard let url = URL(string: str) else { return nil }
-        return .create(url, name: name)
+        return .init(url, name)
+    }
+
+    func validate(result: URLMatchResult) -> Bool {
+        guard result.pattern == path else {
+            return false
+        }
+        for rule in rules {
+            guard
+                let value = result.values[rule.key],
+                rule.value.match(value: value)
+            else {
+                return false
+            }
+        }
+        return true
     }
 
     public var description: String {
@@ -121,13 +157,19 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
 
 public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringConvertible {
     public var id: UUID
-    public let url: URL?
-    public let name: String?
+    public var url: URL?
+    public var matchResult: URLMatchResult?
+    public var name: String?
 
-    public init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil) {
+    init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil, _ matchResult: URLMatchResult? = nil) {
         self.id = id
         self.url = url
         self.name = name
+        self.matchResult = matchResult
+    }
+
+    public var params: [String: URLPathMatchValue]? {
+        matchResult?.values
     }
 
     public var path: String? {
@@ -146,6 +188,14 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
 
     public var description: String {
         "\(type(of: self))(\(url?.path ?? "unknown"))"
+    }
+
+    func urlMatchResult(of availableRoutes: [NavigationRoute]) -> URLMatchResult? {
+        if let url = url {
+            URLMatcher().match(url, from: availableRoutes.map { $0.path })
+        } else {
+            nil
+        }
     }
 }
 
