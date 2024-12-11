@@ -10,7 +10,7 @@ public enum DismissTarget: Equatable, Codable, Sendable {
 }
 
 public enum NavigationTarget: Equatable, Codable, Sendable {
-    case new(withModelPath: NavPath? = nil, type: PresentationType = .regular(), animate: Bool = true)
+    case new(routes: [NavigationRoute]? = nil, type: PresentationType = .regular(), animate: Bool = true)
     case navigationModel(NavigationModel, animate: Bool = true)
     case current(animate: Bool = true)
 }
@@ -139,6 +139,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
         guard result.pattern == path else {
             return false
         }
+
         for rule in rules {
             guard
                 let value = result.values[rule.key],

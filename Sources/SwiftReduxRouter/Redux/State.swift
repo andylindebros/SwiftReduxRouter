@@ -10,8 +10,7 @@ public enum Navigation {
     }
 
     public struct ObservedState: Sendable, Equatable, Codable {
-        public init(navigationModels: [NavigationModel] = [NavigationModel](), alerts: [AlertModel] = [], availableNavigationModelRoutes: [NavigationRoute] = [], availableRoutes: [NavigationRoute] = []) {
-            self.availableNavigationModelRoutes = availableNavigationModelRoutes
+        public init(navigationModels: [NavigationModel] = [NavigationModel](), alerts: [AlertModel] = [], availableRoutes: [NavigationRoute] = []) {
             self.availableRoutes = availableRoutes
             self.alerts = alerts
 
@@ -31,7 +30,6 @@ public enum Navigation {
         public var rootSelectedModelID: UUID
         public var navigationModels = [NavigationModel]()
         public var alerts: [AlertModel] = []
-        public var availableNavigationModelRoutes: [NavigationRoute]
         public var availableRoutes: [NavigationRoute] = []
         public var lastModifiedID: UUID = .init()
     }
@@ -57,9 +55,6 @@ public extension Navigation.State {
 
         case let .setAvailableRoutes(routes):
             state.observed.availableRoutes = routes
-
-        case let .setAvailableNavigationModelRoutes(routes):
-            state.observed.availableNavigationModelRoutes = routes
 
         case let .setBadgeValue(to: badgeValue, withModelID: navigationModelID, withColor: color):
             guard
@@ -238,10 +233,10 @@ public extension Navigation.State {
                 }
                 state.observed.navigationModels[index].animate = animate
 
-            case let .new(navigationModelPath, presentationType, animate):
+            case let .new(routes, presentationType, animate):
                 if #available(iOS 16.0, *) {
                     let navigationModel = NavigationModel(
-                        path: navigationModelPath,
+                        routes: routes,
                         selectedPath: NavPath(),
                         parentNavigationModelId: state.observed.selectedModelId,
                         parentNavigationModelName: state.observed.navigationModels.first(where: { $0.id == state.observed.selectedModelId })?.tab?.name ?? "presented",
@@ -252,7 +247,7 @@ public extension Navigation.State {
                     state.observed.navigationModels.append(navigationModel)
                     state.observed.selectedModelId = navigationModel.id
                 } else {
-                    let navigationModel = NavigationModel(path: navigationModelPath, selectedPath: NavPath(), presentationType: presentationType, animate: animate)
+                    let navigationModel = NavigationModel(routes: routes, selectedPath: NavPath(), presentationType: presentationType, animate: animate)
                     state.observed.navigationModels.append(navigationModel)
                     state.observed.selectedModelId = navigationModel.id
                 }

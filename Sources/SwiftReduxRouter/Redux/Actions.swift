@@ -23,7 +23,6 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
     case dismissedAlert(with: AlertModel)
     case selectedDetentChanged(to: String, in: NavigationModel)
     case setAvailableRoutes(to: [NavigationRoute])
-    case setAvailableNavigationModelRoutes(to: [NavigationRoute])
     case multiAction([NavigationAction])
     #if canImport(UIKit)
         case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
@@ -47,39 +46,54 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
 
         private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
             var urlComponents = URLComponents(string: url.absoluteString)
-            urlComponents?.path = url.path.replaceFirstExpression(of: removeFromPath, with: "")
+            let newPath = url.path.replaceFirstExpression(of: removeFromPath, with: "")
+            guard newPath != "" else {
+                return url
+            }
 
+            urlComponents?.path = newPath
             return urlComponents?.url
         }
 
         public func action(for state: Navigation.State) -> NavigationActionProvider? {
-            if let model = findNavigationModel(in: state) {
-                let newURL = createNewURL(from: url, removeFromPath: model.path?.url?.absoluteString ?? "")
-                // Select: URL has a excat match
-                if newURL == model.selectedPath.url || url.path == model.path?.url?.absoluteString {
+            if let (model, matchResult) = findNavigationModel(in: state) {
+                let newURL = createNewURL(from: url, removeFromPath: matchResult.path)
+
+                // Exact: 100% match
+                if
+                    let newURL = newURL,
+                    let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
+                    let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == matchResult.pattern }),
+                    currentPath.path == newURL.path
+                {
+                    return NavigationAction.setSelectedPath(to: currentPath, in: model)
+                }
+
+                // Similar: URL has an similar match
+                if
+                    let newURL = newURL,
+                    let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
+                    let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == matchResult.pattern }),
+                    let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
+                    let route = Navigation.State.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
+                    !route.rules.isEmpty,
+                    route.validate(result: matchResult)
+                {
+                    return NavigationAction {
+                        NavigationAction.update(path: currentPath, withURL: newURL, in: model)
+                        NavigationAction.setSelectedPath(to: currentPath, in: model)
+                    }
+                }
+
+                // Present new path to found model
+                guard let navPath = Navigation.State.validate(path: NavPath.create(newURL), in: state) else {
                     return NavigationAction.setSelectedPath(to: model.selectedPath, in: model)
                 }
+                return NavigationAction.open(path: navPath, in: .navigationModel(model, animate: true))
 
-                if let newURL = newURL {
-                    // Found and select already mathing path in model
-                    if let foundPath = model.presentedPaths.first(where: { $0.path == newURL.path }) {
-                        return NavigationAction.setSelectedPath(to: foundPath, in: model)
-                    }
-
-                    // Present new path to found model
-                    return NavigationAction.open(path: NavPath(newURL), in: .navigationModel(model, animate: true))
-                }
             } else {
                 // Push new path to known navigationModel (found in navigation routes)
-                if
-                    let pattern = URLMatcher().match(url.path, from: state.observed.availableNavigationModelRoutes.compactMap { $0.path }, ensureComponentsCount: false),
-                    // let newPath = NavPath.create(URL(string: url.path.replacingOccurrences(of: pattern.path, with: "")))
-                    let newPath = NavPath.create(createNewURL(from: url, removeFromPath: pattern.path))
-                {
-                    return NavigationAction.open(path: newPath, in: .new(withModelPath: NavPath(URL(string: pattern.path)), type: .regular()))
-
-                    // push to new navigationModel
-                } else if URLMatcher().match(
+                if URLMatcher().match(
                     url.path,
                     from: state.observed.availableRoutes.compactMap { $0.path
                     },
@@ -91,17 +105,16 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 }
                 return nil
             }
-            return nil
         }
 
-        private func findNavigationModel(in state: Navigation.State) -> NavigationModel? {
+        private func findNavigationModel(in state: Navigation.State) -> (NavigationModel, URLMatchResult)? {
             guard
-                let pattern = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.path?.url?.absoluteString }, ensureComponentsCount: false)?.pattern,
-                let navigationModel = state.observed.navigationModels.first(where: { $0.path?.url?.absoluteString == pattern })
+                let matchResult = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.routes }.flatMap { $0 }.compactMap { $0.path }, ensureComponentsCount: false),
+                let navigationModel = state.observed.navigationModels.first(where: { ($0.routes ?? []).compactMap { $0.path }.contains(matchResult.pattern) })
             else {
                 return nil
             }
-            return navigationModel
+            return (navigationModel, matchResult)
         }
     }
 }

@@ -1,9 +1,9 @@
 import Foundation
 
 public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvertible {
-    init(id: UUID = UUID(), path: NavPath? = nil, selectedPath: NavPath, parentNavigationModelId: UUID = UUID(), parentNavigationModelName: String? = nil, tab: NavigationTab? = nil, presentedPaths: [NavPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
+    init(id: UUID = UUID(), routes: [NavigationRoute]? = nil, selectedPath: NavPath, parentNavigationModelId: UUID = UUID(), parentNavigationModelName: String? = nil, tab: NavigationTab? = nil, presentedPaths: [NavPath] = [], isPresented: Bool = true, presentationType: PresentationType = .regular(), selectedDetentIdentifier: String? = nil, animate: Bool = true) {
         self.id = id
-        self.path = path
+        self.routes = routes
         self.isPresented = isPresented
         self.presentationType = presentationType
         self.selectedPath = selectedPath
@@ -16,7 +16,7 @@ public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvert
     }
 
     public var description: String {
-        "\(type(of: self))(\(path?.name ?? path?.path ?? id.uuidString))"
+        "\(type(of: self))(\(routes?.map { $0.description }.joined(separator: ", ") ?? id.uuidString ))"
     }
 
     public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {
@@ -26,7 +26,7 @@ public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvert
     public let id: UUID
     public let parentNavigationModelId: UUID
     public let parentNavigationModelName: String?
-    public let path: NavPath?
+    public let routes: [NavigationRoute]?
     public var selectedPath: NavPath
 
     public var tab: NavigationTab?
@@ -38,7 +38,7 @@ public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvert
     public var dismissCompletionAction: NavigationAction?
     var animate: Bool
 
-    public static func createInitModel(id: UUID = UUID(), path: NavPath?, selectedPath: NavPath, tab: NavigationTab? = nil, parentNavigationModelId: UUID = .init(), parentNavigationModelName: String? = nil) -> NavigationModel {
-        NavigationModel(id: id, path: path, selectedPath: selectedPath, parentNavigationModelId: parentNavigationModelId, parentNavigationModelName: parentNavigationModelName ?? tab?.name, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+    public static func createInitModel(id: UUID = UUID(), routes: [NavigationRoute]? = nil, selectedPath: NavPath, tab: NavigationTab? = nil, parentNavigationModelId: UUID = .init(), parentNavigationModelName: String? = nil) -> NavigationModel {
+        NavigationModel(id: id, routes: routes, selectedPath: selectedPath, parentNavigationModelId: parentNavigationModelId, parentNavigationModelName: parentNavigationModelName ?? tab?.name, tab: tab, presentedPaths: [selectedPath], isPresented: false)
     }
 }

@@ -4,14 +4,13 @@ import SwiftUIRedux
 
 struct RouterViewWrapper: View {
     @ObservedObject var navigationState: Observed<Navigation.State>
-    let navigationControllerRoutes: [RouterView.NavigationControllerRoute]
     let routes: [RouterView.Route]
     let tintColor: UIColor
     let tabBarIconImages: [NavigationTab.IconImage]
     let dispatch: NavigationDispatcher
 
     var body: some View {
-        RouterView(navigationState: navigationState.state, navigationControllerRoutes: navigationControllerRoutes, routes: routes, dispatch: dispatch)
+        RouterView(navigationState: navigationState.state, routes: routes, dispatch: dispatch)
     }
 }
 
@@ -33,14 +32,6 @@ struct ContentView: View {
     var body: some View {
         RouterViewWrapper(
             navigationState: navigationState,
-            navigationControllerRoutes: [
-                RouterView.NavigationControllerRoute(
-                    paths: [NavigationRoute("test/<string:value>")],
-                    render: { _, _ in
-                        MyCustomNavigationController()
-                    }
-                ),
-            ],
             routes: routes,
             tintColor: .red,
             tabBarIconImages: [

@@ -13,7 +13,6 @@ import SwiftUI
         /// Public init
         public init(
             navigationState: Navigation.State,
-            navigationControllerRoutes: [NavigationControllerRoute] = [],
             tabBarController: TabControllerProvider? = nil,
             routes: [Route],
             tintColor: UIColor? = nil,
@@ -24,7 +23,6 @@ import SwiftUI
             self.tabBarController = tabBarController
             self.routes = routes
             self.tabBarIconImages = tabBarIconImages
-            self.navigationControllerRoutes = navigationControllerRoutes
             self.tintColor = tintColor
             self.dispatch = dispatch
 
@@ -47,9 +45,6 @@ import SwiftUI
 
         /// Available routes
         private let routes: [Route]
-
-        /// Available navigationControllerRoutes
-        private let navigationControllerRoutes: [NavigationControllerRoute]
 
         /// setSelectedPath is invoked by the UIViewController when it is in screen
         private let setSelectedPath: (NavigationModel, NavPath) -> Void
@@ -106,8 +101,7 @@ import SwiftUI
                 var presentedControllers = [NavigationController]()
                 for navigationModel in navigationState.observed.navigationModels {
                     let nc: NavigationController = tc.viewControllers?.compactMap { $0 as? NavigationController }.first(where: { $0.navigationModel?.id == navigationModel.id }) ??
-                        findPresented(navigationModel: navigationModel, in: tc) ??
-                        Self.navigationController(for: navigationModel, in: navigationControllerRoutes)
+                        findPresented(navigationModel: navigationModel, in: tc) ?? NavigationController()
 
                     recreateNavigation(nc: nc, navigationModel: navigationModel)
 
@@ -460,33 +454,6 @@ import SwiftUI
                 NavigationModel,
                 [String: URLPathMatchValue]?
             ) -> NavigationController
-        }
-    }
-
-    private extension RouterView {
-        static func navigationController(for navigationModel: NavigationModel, in routes: [NavigationControllerRoute]) -> NavigationController {
-            guard
-                let (route, urlMatchResult) = navigationControllerRoute(for: navigationModel, in: routes),
-                let route = route
-            else {
-                return NavigationController()
-            }
-
-            return route.render(navigationModel, urlMatchResult?.values)
-        }
-
-        static func navigationControllerRoute(for navigationModel: NavigationModel, in routes: [NavigationControllerRoute]) -> (NavigationControllerRoute?, URLMatchResult?)? {
-            let patterns = routes.flatMap { $0.paths.map { $0.path } }
-
-            guard
-                let path = navigationModel.path?.path,
-                let urlMatchResult = URLMatcher().match(path, from: patterns),
-                let route = routes.filter({ $0.paths.first { $0.path == urlMatchResult.pattern } != nil }).first
-            else {
-                return nil
-            }
-
-            return (route, urlMatchResult)
         }
     }
 
