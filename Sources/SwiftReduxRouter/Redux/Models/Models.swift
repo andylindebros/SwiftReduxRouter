@@ -192,7 +192,7 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
 
     func urlMatchResult(of availableRoutes: [NavigationRoute]) -> URLMatchResult? {
         if let url = url {
-            URLMatcher().match(url, from: availableRoutes.map { $0.path })
+            URLMatcher().match(url.path, from: availableRoutes.map { $0.path })
         } else {
             nil
         }
