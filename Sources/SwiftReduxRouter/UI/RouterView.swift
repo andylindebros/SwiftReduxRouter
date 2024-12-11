@@ -379,12 +379,12 @@ import SwiftUI
 
         private static func viewController(
             of route: Route,
-            with _: URLMatchResult?,
+            with matchResult: URLMatchResult?,
             for navigationPath: NavPath,
             in navigationModel: NavigationModel
         ) -> UIRouteViewController {
             let viewModel = RouteViewModel(
-                path: navigationPath,
+                path: navigationPath.setMatchResultIfNeeded(to: matchResult),
                 navigationModel: navigationModel
             )
             if let view = route.render?(viewModel) {

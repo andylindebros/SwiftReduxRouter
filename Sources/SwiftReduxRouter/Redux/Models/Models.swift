@@ -197,6 +197,13 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
             nil
         }
     }
+
+    func setMatchResultIfNeeded(to newValue: URLMatchResult?) -> Self {
+        guard matchResult == nil, let newValue else {
+            return self
+        }
+        return Self.init(id: id, url, name, matchResult)
+    }
 }
 
 public struct NavigationTab: Codable, Sendable, CustomStringConvertible {
