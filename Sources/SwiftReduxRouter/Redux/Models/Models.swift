@@ -202,7 +202,7 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
         guard matchResult == nil, let newValue else {
             return self
         }
-        return Self.init(id: id, url, name, matchResult)
+        return Self.init(id: id, url, name, newValue)
     }
 }
 
