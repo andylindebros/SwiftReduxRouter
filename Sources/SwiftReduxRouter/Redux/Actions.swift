@@ -11,7 +11,7 @@ public protocol NavigationActionProvider: Codable, Sendable {}
 public typealias NavigationDispatcher = (NavigationActionProvider) -> Void
 
 public indirect enum NavigationAction: Equatable, NavigationActionProvider {
-    case open(path: NavPath?, in: NavigationTarget)
+    case open(path: NavPath?, in: NavigationTarget = .current())
     case dismiss(DismissTarget, withCompletion: NavigationAction? = nil)
     case setSelectedPath(to: NavPath, in: NavigationModel)
     case setNavigationDismsissed(NavigationModel)
