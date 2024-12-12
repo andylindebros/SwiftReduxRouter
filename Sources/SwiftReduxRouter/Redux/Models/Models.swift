@@ -82,13 +82,13 @@ public enum PresentationType: Equatable, Codable, Sendable {
 }
 
 public enum NavigationRule: Equatable, Codable, Sendable {
-    case exact(URLPathMatchValue)
+    case any
     case oneOf([URLPathMatchValue])
 
     func match(value: URLPathMatchValue) -> Bool {
         switch self {
-        case let .exact(pattern):
-            pattern == value
+        case .any:
+            true
         case let .oneOf(values):
             values.contains(value)
         }

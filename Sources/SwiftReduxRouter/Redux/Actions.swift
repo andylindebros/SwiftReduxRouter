@@ -110,7 +110,11 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         private func findNavigationModel(in state: Navigation.State) -> (NavigationModel, URLMatchResult)? {
             guard
                 let matchResult = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.routes }.flatMap { $0 }.compactMap { $0.path }, ensureComponentsCount: false),
-                let navigationModel = state.observed.navigationModels.first(where: { ($0.routes ?? []).compactMap { $0.path }.contains(matchResult.pattern) })
+                let navigationModel = state.observed.navigationModels.first(where: { navigationModel in
+                    return (navigationModel.routes ?? []).filter { route in
+                        return route.validate(result: matchResult)
+                    }.count > 0
+                })
             else {
                 return nil
             }

@@ -57,7 +57,7 @@ final class DeeplinkTests: XCTestCase {
             observed: .init(
                 navigationModels: [navigationModel1],
                 availableRoutes: [
-                    .init("/<string:awesome>"),
+                    .init("/<string:awesome>", rules: ["awesome": .any]),
                 ]
             )
         )
@@ -178,9 +178,10 @@ final class DeeplinkTests: XCTestCase {
     }
 
     func testSelectTab() throws {
+        let testPath = NavPath(URL(string: "/route"))
         let navigationModel1 = NavigationModel.createInitModel(
             routes: [NavigationRoute("/navigationModel1")],
-            selectedPath: NavPath(URL(string: "/route"))
+            selectedPath: testPath
         )
 
         let state = Navigation.State(observed: .init(
@@ -198,10 +199,85 @@ final class DeeplinkTests: XCTestCase {
             return XCTFail("NavigationAction \(reaction) was not expected")
         }
 
-        XCTAssertEqual(path.path, "/route")
+        XCTAssertEqual(path.path, testPath.path)
 
         // Test can handle no url
         deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com")))
         XCTAssertNil(deeplinkAction.action(for: state))
+    }
+
+    func testCanHandleSimilarNavigationModelRoutes() async throws {
+        let navigationModel1 = NavigationModel.createInitModel(
+            routes: [NavigationRoute("/<string:param>", rules: ["param": .oneOf([.string("foo"), .string("bar")])])],
+            selectedPath: NavPath(URL(string: "/test"))
+        )
+
+        let navigationModel2 = NavigationModel.createInitModel(
+            routes: [NavigationRoute("/test")],
+            selectedPath: NavPath(URL(string: "/foo"))
+        )
+
+        let state = Navigation.State(
+            observed: .init(
+                navigationModels: [navigationModel1, navigationModel2],
+                availableRoutes: [NavigationRoute("/<string:param>", rules: ["param": .oneOf([.string("foo"), .string("bar")])]), NavigationRoute("/test"), NavigationRoute("/present")]
+            )
+        )
+
+        var deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/present")))
+
+        var action = try XCTUnwrap(deeplinkAction.action(for: state) as? NavigationAction)
+        guard
+            case let NavigationAction.open(path: path, in: navigationTarget) = action,
+            case NavigationTarget.new = navigationTarget
+        else {
+            return XCTFail("NavigationAction \(action) was not expected")
+        }
+        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/present")
+
+        // Opens in first navigationModel since foo matches the navigationModel and /test allows multiple instances.
+        deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/foo")))
+
+        action = try XCTUnwrap(deeplinkAction.action(for: state) as? NavigationAction)
+        guard
+            case let NavigationAction.open(path: path, in: navigationTarget) = action,
+            case let NavigationTarget.navigationModel(model, _) = navigationTarget
+        else {
+            return XCTFail("NavigationAction \(action) was not expected")
+        }
+        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/foo")
+        XCTAssertEqual(navigationModel1.id, model.id)
+
+        // Opens in second navigationModel
+        deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/test/present")))
+
+        action = try XCTUnwrap(deeplinkAction.action(for: state) as? NavigationAction)
+        guard
+            case let NavigationAction.open(path: path, in: navigationTarget) = action,
+            case let NavigationTarget.navigationModel(model, _) = navigationTarget
+        else {
+            return XCTFail("NavigationAction \(action) was not expected")
+        }
+        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/present")
+        XCTAssertEqual(navigationModel2.id, model.id)
+
+        // Updates the second navigationModels selected path
+        deeplinkAction = try XCTUnwrap(NavigationAction.Deeplink(with: URL(string: "swiftreduxrouter://www.example.com/test/bar")))
+
+        action = try XCTUnwrap(deeplinkAction.action(for: state) as? NavigationAction)
+        guard
+            case let NavigationAction.multiAction(actions) = action,
+            let updateAction = actions.first,
+            case let NavigationAction.update(path: updatePath, withURL: url, in: model) = updateAction,
+            let selectAction = actions.last,
+            case let NavigationAction.setSelectedPath(to: selectedPath, in: selectedNavigationModel) = selectAction
+        else {
+            return XCTFail("NavigationAction \(action) was not expected")
+        }
+        XCTAssertEqual(try XCTUnwrap(updatePath.url?.path), "/foo")
+        XCTAssertEqual(selectedPath.id, updatePath.id)
+        XCTAssertEqual(try XCTUnwrap(url?.path), "/bar")
+        XCTAssertEqual(navigationModel2.id, model.id)
+        XCTAssertEqual(navigationModel2.id, selectedNavigationModel.id)
     }
 }
