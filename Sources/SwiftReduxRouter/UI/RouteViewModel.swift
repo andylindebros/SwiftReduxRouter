@@ -1,7 +1,7 @@
 import SwiftUI
 
 @MainActor public final class RouteViewModel: ObservableObject, Sendable {
-    init(path: NavPath, navigationModel: NavigationModel) {
+    public init(path: NavPath, navigationModel: NavigationModel) {
         self.path = path
         self.navigationModel = navigationModel
     }
