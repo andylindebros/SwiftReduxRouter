@@ -96,15 +96,17 @@ public enum NavigationRule: Equatable, Codable, Sendable {
 }
 
 public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvertible {
-    public init(_ path: String, name: String? = nil, rules: [String: NavigationRule] = [:]) {
+    public init(_ path: String, name: String? = nil, rules: [String: NavigationRule] = [:], accessLevel: RouteAccessLevel) {
         self.path = path
         self.name = name
         self.rules = rules
+        self.accessLevel = accessLevel
     }
 
     public let path: String
     public let name: String?
     public let rules: [String: NavigationRule]
+    public let accessLevel: RouteAccessLevel
 
     public func reverse(params: [String: URLPathMatchValue] = [:]) -> NavPath? {
         let urlMatcher = URLMatcher()
@@ -135,8 +137,11 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
         return .init(url, name)
     }
 
-    func validate(result: URLMatchResult) -> Bool {
-        guard result.pattern == path else {
+    func validate(result: URLMatchResult, forAccessLevel candidate: RouteAccessLevel) -> Bool {
+        guard
+            result.pattern == path,
+            accessLevel.grantAccess(for: candidate)
+        else {
             return false
         }
 
@@ -153,6 +158,23 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
 
     public var description: String {
         "\(type(of: self))(\(path))"
+    }
+}
+
+public enum RouteAccessLevel: Equatable, Codable, Sendable {
+    case `private`
+    case `internal`
+    case `public`
+
+    func grantAccess(for candidate: RouteAccessLevel) -> Bool {
+        switch candidate {
+        case .private:
+            true
+        case .internal:
+            self == .public || self == .internal
+        case .public:
+            self == .public
+        }
     }
 }
 

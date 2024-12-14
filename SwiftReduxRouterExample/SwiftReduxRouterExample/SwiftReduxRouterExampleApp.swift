@@ -47,7 +47,7 @@ struct SwiftReduxRouterExampleApp: App {
             ContentView(navigationState: store.state.navigation, routes: routes, dispatch: store.dispatch)
                 .onOpenURL { incomingURL in
                     Task {
-                        guard let deepLinkAction = NavigationAction.Deeplink(with: incomingURL) else { return }
+                        guard let deepLinkAction = NavigationAction.Deeplink(with: incomingURL, accessLevel: .public) else { return }
                         await store.dispatch(NavigationAction.deeplink(deepLinkAction))
                     }
                 }

@@ -22,8 +22,8 @@ struct ContentView: View {
 
     static let navigationRoutes =
         [
-            NavigationRoute("hello/<int:name>"),
-            NavigationRoute("hello/awesome/<int:name>"),
+            NavigationRoute("hello/<int:name>", accessLevel: .internal),
+            NavigationRoute("hello/awesome/<int:name>", accessLevel: .internal),
         ]
     static let names = ["Cars", "Houses", "Bikes", "Toys", "Tools", "Furniture", "Jobs"]
 
@@ -56,7 +56,11 @@ struct ContentView: View {
         [
             RouterView.Route(
                 paths: [
-                    .init("/custom/<string:value>", rules: ["value": .oneOf([.string("hello"), .string("awesome")])]),
+                    .init(
+                        "/custom/<string:value>",
+                        rules: ["value": .oneOf([.string("hello"), .string("awesome")])],
+                        accessLevel: .internal
+                    ),
                 ],
                 render: { viewModel in
                     HiddenNavigationBarViewController(
@@ -71,7 +75,7 @@ struct ContentView: View {
 
             RouterView.Route(
                 paths: [
-                    NavigationRoute("/hello"),
+                    NavigationRoute("/hello", accessLevel: .internal),
                 ],
                 render: { _ in
                     RouteViewController(rootView: Text("/hello"))
@@ -79,7 +83,7 @@ struct ContentView: View {
             ),
             RouterView.Route(
                 paths: [
-                    NavigationRoute("/detents"),
+                    NavigationRoute("/detents", accessLevel: .internal),
                 ],
                 render: { _ in
                     RouteViewController(rootView: VStack {
@@ -107,7 +111,7 @@ struct ContentView: View {
                 }
             ),
             RouterView.Route(
-                paths: [NavigationRoute("default")],
+                paths: [NavigationRoute("default", accessLevel: .public)],
                 render: { _ in
                     RouteViewController(rootView: Text("Not found"))
                 },

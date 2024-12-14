@@ -187,7 +187,7 @@ public extension Navigation.State {
                 let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
                 let route = Self.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
                 let matchResult = URLMatcher().match(url?.path ?? "uknown", from: [route.path]),
-                route.validate(result: matchResult)
+                route.validate(result: matchResult, forAccessLevel: .private)
             else {
                 print(
                     "⚠️ Cannot update path \(path) since it does not support \(url?.absoluteString ?? "unknown")"
@@ -350,7 +350,7 @@ extension Navigation.State {
 
         if let route = Self.route(by: urlMatchResult, in: state.observed.availableRoutes) {
             guard
-                route.validate(result: urlMatchResult)
+                route.validate(result: urlMatchResult, forAccessLevel: .private)
             else {
                 print(
                     "⚠️ Cannot open \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route"

@@ -37,12 +37,14 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
      - parameter url: The url to change the state with
      */
     public struct Deeplink: Equatable, NavigationActionProvider {
-        public init?(with url: URL?) {
+        public init?(with url: URL?, accessLevel: RouteAccessLevel) {
             guard let url = url else { return nil }
             self.url = url
+            self.accessLevel = accessLevel
         }
 
         let url: URL
+        let accessLevel: RouteAccessLevel
 
         private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
             var urlComponents = URLComponents(string: url.absoluteString)
@@ -64,7 +66,9 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                     let newURL = newURL,
                     let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
                     let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == matchResult.pattern }),
-                    currentPath.path == newURL.path
+                    currentPath.path == newURL.path,
+                    let route = Navigation.State.route(by: matchResult, in: state.observed.availableRoutes),
+                    route.accessLevel.grantAccess(for: accessLevel)
                 {
                     return NavigationAction.setSelectedPath(to: currentPath, in: model)
                 }
@@ -77,7 +81,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                     let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
                     let route = Navigation.State.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
                     !route.rules.isEmpty,
-                    route.validate(result: matchResult)
+                    route.validate(result: matchResult, forAccessLevel: accessLevel)
                 {
                     return NavigationAction {
                         NavigationAction.update(path: currentPath, withURL: newURL, in: model)
@@ -112,7 +116,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 let matchResult = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.routes }.flatMap { $0 }.compactMap { $0.path }, ensureComponentsCount: false),
                 let navigationModel = state.observed.navigationModels.first(where: { navigationModel in
                     return (navigationModel.routes ?? []).filter { route in
-                        return route.validate(result: matchResult)
+                        return route.validate(result: matchResult, forAccessLevel: accessLevel)
                     }.count > 0
                 })
             else {

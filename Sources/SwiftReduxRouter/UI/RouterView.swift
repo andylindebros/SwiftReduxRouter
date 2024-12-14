@@ -437,7 +437,7 @@ import SwiftUI
                     return false
                 }
 
-                return path.validate(result: result)
+                return path.validate(result: result, forAccessLevel: .private)
             }
         }
     }
