@@ -9,26 +9,25 @@ public extension URL {
         queryItems?.first(where: { $0.name == name })
     }
 
-    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) -> URL? {
+    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) -> URL {
         let encoder = JSONEncoder()
         if
             var components = URLComponents(url: self, resolvingAgainstBaseURL: true),
             let modelData = try? encoder.encode(value),
             let value = String(data: modelData, encoding: .utf8)
         {
-            components.queryItems?
-                .append(URLQueryItem(name: key, value: value))
-            return components.url
+            components.queryItems?.append(URLQueryItem(name: key, value: value))
+            return components.url ?? self
         }
         return self
     }
 
-    func addQueryItem(key: String, value: String) -> URL? {
+    func addQueryItem(key: String, value: String) -> URL {
         if
             var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
         {
             components.queryItems?.append(URLQueryItem(name: key, value: value))
-            return components.url
+            return components.url ?? self
         }
         return self
     }
