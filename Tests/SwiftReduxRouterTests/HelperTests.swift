@@ -21,10 +21,10 @@ final class HelperTests: XCTestCase {
             someNested: [.init(label: "label")]
         )
 
-        let path = NavPath.create("https://test.com/page?filter=cool")
-        let newPath = path?.addJSONQueryItem(key: "model", value: model)
+        let path = URL(string: "https://test.com/page?filter=cool")!
+        let newURL = path.addJSONQueryItem(key: "model", value: model)
 
-        let decodedModel: MyModel? = newPath?.url?.queryItem(named: "model")?.decodeJsonAsModel()
+        let decodedModel: MyModel? = newURL?.queryItem(named: "model")?.decodeJsonAsModel()
         XCTAssertEqual(try XCTUnwrap(decodedModel), model)
 
     }

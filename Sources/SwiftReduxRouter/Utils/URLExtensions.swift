@@ -8,6 +8,20 @@ public extension URL {
     func queryItem(named name: String) -> URLQueryItem? {
         queryItems?.first(where: { $0.name == name })
     }
+
+    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) -> URL? {
+        let encoder = JSONEncoder()
+        if
+            var components = URLComponents(url: self, resolvingAgainstBaseURL: true),
+            let modelData = try? encoder.encode(value),
+            let value = String(data: modelData, encoding: .utf8)
+        {
+            components.queryItems?
+                .append(URLQueryItem(name: key, value: value))
+            return components.url
+        }
+        return self
+    }
 }
 
 public extension URLQueryItem {
