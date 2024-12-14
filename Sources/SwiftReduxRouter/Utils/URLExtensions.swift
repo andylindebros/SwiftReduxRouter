@@ -22,6 +22,16 @@ public extension URL {
         }
         return self
     }
+
+    func addQueryItem(key: String, value: String) -> URL? {
+        if
+            var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
+        {
+            components.queryItems?.append(URLQueryItem(name: key, value: value))
+            return components.url
+        }
+        return self
+    }
 }
 
 public extension URLQueryItem {
