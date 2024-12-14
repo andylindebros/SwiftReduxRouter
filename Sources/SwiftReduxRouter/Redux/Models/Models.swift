@@ -206,6 +206,22 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
         return Self.init(id: id, url, name, newValue)
     }
 }
+public extension NavPath {
+    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) -> NavPath? {
+        let encoder = JSONEncoder()
+        if
+            let url,
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: true),
+            let modelData = try? encoder.encode(value),
+            let value = String(data: modelData, encoding: .utf8)
+        {
+            components.queryItems?
+                .append(URLQueryItem(name: key, value: value))
+            return NavPath(id: id, components.url, name, matchResult)
+        }
+        return nil
+    }
+}
 
 public struct NavigationTab: Codable, Sendable, CustomStringConvertible {
     public var name: String
