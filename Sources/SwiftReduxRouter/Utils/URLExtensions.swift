@@ -15,6 +15,7 @@ public extension URL {
 
             let item = URLQueryItem.createJSONQueryItem(key: key, value: value)
         {
+            components.queryItems =  components.queryItems ?? []
             components.queryItems?.append(item)
             return components.url ?? self
         }
@@ -25,6 +26,7 @@ public extension URL {
         if
             var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
         {
+            components.queryItems =  components.queryItems ?? []
             components.queryItems?.append(URLQueryItem(name: key, value: value))
             return components.url ?? self
         }
