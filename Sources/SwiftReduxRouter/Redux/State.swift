@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 
 public enum Navigation {
     public struct State: Sendable, Equatable, Codable {
@@ -81,6 +82,11 @@ public extension Navigation.State {
         case let .setSelectedPath(to: navPath, in: navigationModel):
             if let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
                 state.observed.navigationModels[index].selectedPath = navPath
+
+                if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navPath.id }) {
+                    state.observed.navigationModels[index].presentedPaths[pathIndex].hasBeenShown = true
+                }
+
                 if state.observed.navigationModels[index].animate {
                     state.observed.navigationModels[index].animate = true
                 }

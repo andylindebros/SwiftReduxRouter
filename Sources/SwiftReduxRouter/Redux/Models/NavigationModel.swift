@@ -16,7 +16,7 @@ public struct NavigationModel: Codable, Equatable, Sendable, CustomStringConvert
     }
 
     public var description: String {
-        "\(type(of: self))(\(routes?.map { $0.description }.joined(separator: ", ") ?? id.uuidString ))"
+        "\(type(of: self))(\( tab?.name ?? id.uuidString ))"
     }
 
     public static func == (lhs: NavigationModel, rhs: NavigationModel) -> Bool {

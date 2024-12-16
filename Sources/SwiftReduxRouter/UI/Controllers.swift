@@ -65,7 +65,7 @@ import SwiftUI
         }
 
         public func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
-            if let willShow = willShow, let vc = viewController as? UIRouteViewController, let navigationModel = vc.viewModel?.navigationModel, let navPath = vc.viewModel?.path {
+            if let willShow = willShow, let vc = viewController as? UIRouteViewController, let navigationModel = self.navigationModel, let navPath = vc.viewModel?.path {
                 navigationController.setNavigationBarHidden(
                     vc.hideNavigationBar,
                     animated: animated
@@ -82,7 +82,13 @@ import SwiftUI
                         }
                     }
                 } else {
-                    willShow(navigationModel, navPath)
+                    if navigationModel.presentedPaths.last != navPath {
+                        if vc.viewModel?.hasBeenShown == true {
+                            willShow(navigationModel, navPath)
+                        }
+                    } else {
+                        willShow(navigationModel, navPath)
+                    }
                 }
             }
         }

@@ -210,6 +210,7 @@ import SwiftUI
 
             let vcs = navigationModel.presentedPaths.compactMap { path in
                 if let vc = nc.viewControllers.compactMap({ $0 as? UIRouteViewController }).first(where: { $0.viewModel?.path.id == path.id }) {
+                    vc.viewModel?.setHasBeenShown(to: path.hasBeenShown)
                     if vc.viewModel?.path.url != path.url {
                         Task {
                             await vc.viewModel?.setPath(to: path)
@@ -346,7 +347,7 @@ import SwiftUI
                 return nil
             }
 
-            let vc =  viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
+            let vc = viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
 
             if let vc {
                 return vc
@@ -423,7 +424,7 @@ import SwiftUI
         struct Route {
             public init(
                 paths: [NavigationRoute],
-                render:  (@MainActor(RouteViewModel) -> UIRouteViewController?)? = nil,
+                render: (@MainActor (RouteViewModel) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.paths = paths
@@ -432,7 +433,7 @@ import SwiftUI
             }
 
             public let paths: [NavigationRoute]
-            public let render: (@MainActor(RouteViewModel) -> UIRouteViewController?)?
+            public let render: (@MainActor (RouteViewModel) -> UIRouteViewController?)?
             public let defaultRoute: Bool
 
             func validate(_ result: URLMatchResult) -> Bool {

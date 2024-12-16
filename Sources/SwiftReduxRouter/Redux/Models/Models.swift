@@ -165,7 +165,7 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
     public func append(_ child: NavigationRoute) -> NavigationRoute {
         let path = path + child.path
         var rules = rules
-        rules.merge(child.rules) { (current, new) in new }
+        rules.merge(child.rules) { _, new in new }
         var nestedPaths = nestedPaths
         nestedPaths.append(child.path)
         return NavigationRoute(path, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths)
@@ -205,12 +205,14 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
     public var url: URL?
     public var matchResult: URLMatchResult?
     public var name: String?
+    var hasBeenShown: Bool = false
 
-    init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil, _ matchResult: URLMatchResult? = nil) {
+    init(id: UUID = UUID(), _ url: URL? = nil, _ name: String? = nil, _ matchResult: URLMatchResult? = nil, hasBeenShown: Bool = false) {
         self.id = id
         self.url = url
         self.name = name
         self.matchResult = matchResult
+        self.hasBeenShown = hasBeenShown
     }
 
     public var params: [String: URLPathMatchValue]? {
@@ -247,7 +249,7 @@ public struct NavPath: Identifiable, Equatable, Codable, Sendable, CustomStringC
         guard matchResult == nil, let newValue else {
             return self
         }
-        return Self.init(id: id, url, name, newValue)
+        return Self(id: id, url, name, newValue, hasBeenShown: hasBeenShown)
     }
 }
 

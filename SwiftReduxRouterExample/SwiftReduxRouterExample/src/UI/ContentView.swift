@@ -42,8 +42,6 @@ struct ContentView: View {
                     guard let action = navigationAction as? Action else {
                         return
                     }
-                    print("Action", action)
-
                     await dispatch(action)
                 }
             }
@@ -256,13 +254,11 @@ struct TestRoute: View {
             }
 
             Button(action: { Task {
-                await dispatch(NavigationAction {
-                    NavigationAction.selectTab(by: AppState.tabTwo)
-                    NavigationAction.open(
+                await dispatch(NavigationAction.open(
                         path: ContentView.navigationRoutes.last!.reverse(params: ["name": .int(next)])!,
                         in: .navigationModel(navigationState.state.observed.navigationModels.first(where: { $0.id == AppState.tabTwo })!)
                     )
-                })
+                )
 
             }}) {
                 Text("Push \(next) to Tab 2").foregroundColor(.black)
