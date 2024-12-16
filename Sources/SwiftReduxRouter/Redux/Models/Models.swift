@@ -171,6 +171,10 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
         return NavigationRoute(path, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths)
     }
 
+    public func with(access: RouteAccessLevel) -> NavigationRoute {
+        NavigationRoute(path, name: name, rules: rules, accessLevel: access, nestedPaths: nestedPaths)
+    }
+
     var parentPath: String {
         if nestedPaths.count - 1 > 0 {
             return nestedPaths.prefix(nestedPaths.count - 1).joined()
