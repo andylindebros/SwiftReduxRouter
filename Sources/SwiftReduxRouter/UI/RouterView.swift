@@ -418,7 +418,7 @@ import SwiftUI
         struct Route {
             public init(
                 paths: [NavigationRoute],
-                render: ((RouteViewModel) -> UIRouteViewController?)? = nil,
+                render:  (@MainActor(RouteViewModel) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.paths = paths
@@ -427,7 +427,7 @@ import SwiftUI
             }
 
             public let paths: [NavigationRoute]
-            public let render: ((RouteViewModel) -> UIRouteViewController?)?
+            public let render: (@MainActor(RouteViewModel) -> UIRouteViewController?)?
             public let defaultRoute: Bool
 
             func validate(_ result: URLMatchResult) -> Bool {
