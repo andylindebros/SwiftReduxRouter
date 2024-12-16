@@ -346,7 +346,15 @@ import SwiftUI
                 return nil
             }
 
-            return viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
+            let vc =  viewController(of: route, with: urlMatchResult, for: navigationPath, in: navigationModel)
+
+            if let vc {
+                return vc
+            } else if let defaultRoute = Self.defaultRoute(in: routes), let defaultVc = viewController(of: defaultRoute, with: urlMatchResult, for: navigationPath, in: navigationModel) {
+                return defaultVc
+            } else {
+                return RouteViewController(rootView: EmptyView())
+            }
         }
 
         private static func route(for navigationPath: NavPath, in routes: [Route]) -> (Route?, URLMatchResult?)? {
@@ -376,7 +384,7 @@ import SwiftUI
             with matchResult: URLMatchResult?,
             for navigationPath: NavPath,
             in navigationModel: NavigationModel
-        ) -> UIRouteViewController {
+        ) -> UIRouteViewController? {
             let viewModel = RouteViewModel(
                 path: navigationPath.setMatchResultIfNeeded(to: matchResult),
                 navigationModel: navigationModel
@@ -384,11 +392,8 @@ import SwiftUI
             if let view = route.render?(viewModel) {
                 view.viewModel = viewModel
                 return view
-            } else {
-                let fallback = RouteViewController(rootView: EmptyView())
-                fallback.viewModel = viewModel
-                return fallback
             }
+            return nil
         }
     }
 
