@@ -58,8 +58,8 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
         }
 
         public func action(for state: Navigation.State) -> NavigationActionProvider? {
-            if let (model, matchResult) = findNavigationModel(in: state) {
-                let newURL = createNewURL(from: url, removeFromPath: matchResult.path)
+            if let (model, route) = findNavigationModel(in: state) {
+                let newURL = createNewURL(from: url, removeFromPath: route.parentPath)
 
                 // Exact: 100% match
                 if
@@ -68,7 +68,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                     let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == matchResult.pattern }),
                     currentPath.path == newURL.path,
                     let route = Navigation.State.route(by: matchResult, in: state.observed.availableRoutes),
-                    route.accessLevel.grantAccess(for: accessLevel)
+                    route.accessLevel.grantAccess(for: .private)
                 {
                     return NavigationAction.setSelectedPath(to: currentPath, in: model)
                 }
@@ -76,12 +76,10 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 // Similar: URL has an similar match
                 if
                     let newURL = newURL,
-                    let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
-                    let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == matchResult.pattern }),
-                    let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
-                    let route = Navigation.State.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
-                    !route.rules.isEmpty,
-                    route.validate(result: matchResult, forAccessLevel: accessLevel)
+                    let newMatchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
+                    let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == newMatchResult.pattern }),
+                    let route = Navigation.State.route(by: newMatchResult, in: state.observed.availableRoutes),
+                    route.validate(result: newMatchResult, forAccessLevel: .private)
                 {
                     return NavigationAction {
                         NavigationAction.update(path: currentPath, withURL: newURL, in: model)
@@ -111,18 +109,19 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
             }
         }
 
-        private func findNavigationModel(in state: Navigation.State) -> (NavigationModel, URLMatchResult)? {
+        private func findNavigationModel(in state: Navigation.State) -> (NavigationModel, NavigationRoute)? {
             guard
-                let matchResult = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.routes }.flatMap { $0 }.compactMap { $0.path }, ensureComponentsCount: false),
+                let matchResult = URLMatcher().match(url.path, from: state.observed.navigationModels.compactMap { $0.routes }.flatMap { $0 }.compactMap { $0.path }),
                 let navigationModel = state.observed.navigationModels.first(where: { navigationModel in
                     return (navigationModel.routes ?? []).filter { route in
                         return route.validate(result: matchResult, forAccessLevel: accessLevel)
                     }.count > 0
-                })
+                }),
+                let route = navigationModel.routes?.first(where: { $0.path == matchResult.pattern })
             else {
                 return nil
             }
-            return (navigationModel, matchResult)
+            return (navigationModel, route)
         }
     }
 }

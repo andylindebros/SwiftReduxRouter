@@ -96,17 +96,19 @@ public enum NavigationRule: Equatable, Codable, Sendable {
 }
 
 public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvertible {
-    public init(_ path: String, name: String? = nil, rules: [String: NavigationRule] = [:], accessLevel: RouteAccessLevel) {
+    public init(_ path: String, name: String? = nil, rules: [String: NavigationRule] = [:], accessLevel: RouteAccessLevel = .private, nestedPaths: [String] = []) {
         self.path = path
         self.name = name
         self.rules = rules
         self.accessLevel = accessLevel
+        self.nestedPaths = nestedPaths.count > 0 ? nestedPaths : [path]
     }
 
     public let path: String
     public let name: String?
     public let rules: [String: NavigationRule]
     public let accessLevel: RouteAccessLevel
+    public let nestedPaths: [String]
 
     public func reverse(params: [String: URLPathMatchValue] = [:]) -> NavPath? {
         let urlMatcher = URLMatcher()
@@ -164,7 +166,16 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
         let path = path + child.path
         var rules = rules
         rules.merge(child.rules) { (current, new) in new }
-        return NavigationRoute(path, name: name, rules: rules, accessLevel: accessLevel)
+        var nestedPaths = nestedPaths
+        nestedPaths.append(child.path)
+        return NavigationRoute(path, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths)
+    }
+
+    var parentPath: String {
+        if nestedPaths.count - 1 > 0 {
+            return nestedPaths.prefix(nestedPaths.count - 1).joined()
+        }
+        return ""
     }
 }
 
