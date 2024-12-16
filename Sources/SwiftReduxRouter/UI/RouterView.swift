@@ -415,7 +415,7 @@ import SwiftUI
 
     @available(iOS 13, *)
     public extension RouterView {
-        struct Route {
+        @MainActor struct Route {
             public init(
                 paths: [NavigationRoute],
                 render: ((RouteViewModel) -> UIRouteViewController?)? = nil,
