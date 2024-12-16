@@ -159,6 +159,13 @@ public struct NavigationRoute: Equatable, Codable, Sendable, CustomStringConvert
     public var description: String {
         "\(type(of: self))(\(path))"
     }
+
+    public func append(_ child: NavigationRoute) -> NavigationRoute {
+        let path = path + child.path
+        var rules = rules
+        rules.merge(child.rules) { (current, new) in new }
+        return NavigationRoute(path, name: name, rules: rules, accessLevel: accessLevel)
+    }
 }
 
 public enum RouteAccessLevel: Equatable, Codable, Sendable {

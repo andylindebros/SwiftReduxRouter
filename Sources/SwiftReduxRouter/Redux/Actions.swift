@@ -99,7 +99,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                 // Push new path to known navigationModel (found in navigation routes)
                 if URLMatcher().match(
                     url.path,
-                    from: state.observed.availableRoutes.compactMap { $0.path
+                    from: state.observed.availableRoutes.filter{ $0.accessLevel.grantAccess(for: accessLevel) }.compactMap { $0.path
                     },
                     ensureComponentsCount: true
                 ) != nil,
