@@ -219,7 +219,7 @@ final class DeeplinkTests: XCTestCase {
         let availableRoute1 = NavigationRoute("/<string:param>", rules: ["param": .oneOf([.string("foo"), .string("bar")])], accessLevel: .private)
         let availableRoute2 = NavigationRoute("/test", accessLevel: .private)
         let availableRoute3 = NavigationRoute("/present", accessLevel: .public)
-        let availableRoute4 = NavigationRoute("/awesome/<string:param>", accessLevel: .private)
+        let availableRoute4 = NavigationRoute("/awesome/<string:param>", rules: ["param": .oneOf([.string("awesome"), .string("Hello")])], accessLevel: .private)
 
         let navigationModel1 = NavigationModel.createInitModel(
             routes: [

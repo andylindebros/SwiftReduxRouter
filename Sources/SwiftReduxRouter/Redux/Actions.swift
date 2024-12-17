@@ -79,6 +79,7 @@ public indirect enum NavigationAction: Equatable, NavigationActionProvider {
                     let newMatchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.path }),
                     let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == newMatchResult.pattern }),
                     let route = Navigation.State.route(by: newMatchResult, in: state.observed.availableRoutes),
+                    !route.rules.isEmpty,
                     route.validate(result: newMatchResult, forAccessLevel: .private)
                 {
                     return NavigationAction {
