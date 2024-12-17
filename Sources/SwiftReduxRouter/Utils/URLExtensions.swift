@@ -60,6 +60,7 @@ public extension URL {
 public extension URLQueryItem {
     func decodeJsonAsModel<Model: Decodable>() throws -> Model {
         let decoder = JSONDecoder()
+        decoder.nonConformingFloatDecodingStrategy = .convertFromString(positiveInfinity: "inf", negativeInfinity: "-inf", nan: "null")
         guard
             let value = value?.data(using: .utf8)
         else {
@@ -70,6 +71,7 @@ public extension URLQueryItem {
 
     static func createJSONQueryItem<Model: Encodable>(key: String, value: Model) throws -> URLQueryItem {
         let encoder = JSONEncoder()
+        encoder.nonConformingFloatEncodingStrategy = .convertToString(positiveInfinity: "inf", negativeInfinity: "-inf", nan: "null")
         let modelData = try encoder.encode(value)
         guard let value = String(data: modelData, encoding: .utf8) else {
             throw URLQueryItemError.noData
