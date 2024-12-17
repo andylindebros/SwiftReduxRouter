@@ -205,7 +205,8 @@ public extension Navigation.State {
                 id: currentPath.id,
                 url,
                 path.name,
-                matchResult
+                matchResult,
+                hasBeenShown: currentPath.hasBeenShown
             )
 
             state.observed.navigationModels[index].presentedPaths[currentPathIndex] = path
