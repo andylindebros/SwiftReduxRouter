@@ -9,60 +9,76 @@ public extension URL {
         queryItems?.first(where: { $0.name == name })
     }
 
-    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) -> URL {
-        if
-            var components = URLComponents(url: self, resolvingAgainstBaseURL: true),
-
-            let item = URLQueryItem.createJSONQueryItem(key: key, value: value)
-        {
-            components.queryItems =  components.queryItems ?? []
-            components.queryItems?.append(item)
-            return components.url ?? self
+    func addJSONQueryItem<Model: Encodable>(key: String, value: Model) throws -> URL {
+        guard
+            var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
+        else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
         }
-        return self
+        let item = try URLQueryItem.createJSONQueryItem(key: key, value: value)
+
+        components.queryItems = components.queryItems ?? []
+        components.queryItems?.append(item)
+
+        guard let url = components.url else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
+        }
+        return url
     }
 
-    func addQueryItem(key: String, value: String) -> URL {
-        if
+    func addQueryItem(key: String, value: String) throws -> URL {
+        guard
             var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
-        {
-            components.queryItems =  components.queryItems ?? []
-            components.queryItems?.append(URLQueryItem(name: key, value: value))
-            return components.url ?? self
+        else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
         }
-        return self
+        components.queryItems = components.queryItems ?? []
+        components.queryItems?.append(URLQueryItem(name: key, value: value))
+
+        guard let url = components.url else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
+        }
+        return url
     }
 
-    func setQueryItems(to newValue: [URLQueryItem]) -> URL {
-        if
+    func setQueryItems(to newValue: [URLQueryItem]) throws -> URL {
+        guard
             var components = URLComponents(url: self, resolvingAgainstBaseURL: true)
-        {
-            components.queryItems = newValue
-            return components.url ?? self
+        else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
         }
-        return self
+
+        components.queryItems = newValue
+
+        guard let url = components.url else {
+            throw URLQueryItem.URLQueryItemError.invalidURL
+        }
+        return url
     }
 }
 
 public extension URLQueryItem {
-    func decodeJsonAsModel<Model: Decodable>() -> Model? {
+    func decodeJsonAsModel<Model: Decodable>() throws -> Model {
         let decoder = JSONDecoder()
-        if
+        guard
             let value = value?.data(using: .utf8)
-        {
-            return try? decoder.decode(Model.self, from: value)
+        else {
+            throw URLQueryItemError.noData
         }
-        return nil
+        return try decoder.decode(Model.self, from: value)
     }
 
-    static func createJSONQueryItem<Model: Encodable>(key: String, value: Model) -> URLQueryItem? {
+    static func createJSONQueryItem<Model: Encodable>(key: String, value: Model) throws -> URLQueryItem {
         let encoder = JSONEncoder()
-        if
-            let modelData = try? encoder.encode(value),
-            let value = String(data: modelData, encoding: .utf8)
-        {
-           return URLQueryItem(name: key, value: value)
+        let modelData = try encoder.encode(value)
+        guard let value = String(data: modelData, encoding: .utf8) else {
+            throw URLQueryItemError.noData
         }
-        return nil
+        return URLQueryItem(name: key, value: value)
+    }
+
+    enum URLQueryItemError: Error {
+        case noData
+        case invalidURL
     }
 }
