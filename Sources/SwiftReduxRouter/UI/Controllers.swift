@@ -82,7 +82,7 @@ import SwiftUI
                         }
                     }
                 } else {
-                    if navigationModel.presentedPaths.last != navPath {
+                    if navigationModel.presentedPaths.last?.id != navPath.id {
                         if vc.viewModel?.hasBeenShown == true {
                             willShow(navigationModel, navPath)
                         }
