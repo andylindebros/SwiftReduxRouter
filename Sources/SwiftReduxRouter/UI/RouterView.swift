@@ -423,15 +423,17 @@ import SwiftUI
     public extension RouterView {
         struct Route {
             public init(
+                name: String? = nil,
                 paths: [NavigationRoute],
                 render: (@MainActor (RouteViewModel) -> UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
+                self.name = name
                 self.paths = paths
                 self.render = render
                 self.defaultRoute = defaultRoute
             }
-
+            public let name: String?
             public let paths: [NavigationRoute]
             public let render: (@MainActor (RouteViewModel) -> UIRouteViewController?)?
             public let defaultRoute: Bool
