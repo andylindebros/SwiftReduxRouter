@@ -1,6 +1,5 @@
 import Foundation
 import SwiftUI
-import UIKit
 
 public extension Navigation {
     protocol ActionProvider: Codable, Sendable {}
@@ -79,6 +78,7 @@ public extension Navigation {
          */
         case setAvailableRoutes(to: [Route])
 
+
         /**
          Updates the badge value to the tab
 
@@ -86,7 +86,7 @@ public extension Navigation {
          - parameter modelID: The uuid of the model that represents the tab
          - parameter color: The color to use when presenting the badge
          */
-        case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
+        case setBadgeValue(to: String?, withModelID: UUID, withColor: Color? = nil)
 
         /**
          Internal use for the navigationController to tell the state that it has completed the dismissal.

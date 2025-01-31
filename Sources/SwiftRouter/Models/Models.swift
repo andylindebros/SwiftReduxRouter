@@ -1,5 +1,8 @@
 import Foundation
-import UIKit
+#if os(iOS)
+    import UIKit
+#endif
+import SwiftUICore
 
 public extension Navigation {
     /**
@@ -80,18 +83,20 @@ public extension Navigation {
         case crossDissolve
         case partialCurl
 
-        var transistionStyle: UIModalTransitionStyle {
-            switch self {
-            case .coverVertical:
-                return .coverVertical
-            case .flipHorizontal:
-                return .flipHorizontal
-            case .crossDissolve:
-                return .crossDissolve
-            case .partialCurl:
-                return .partialCurl
+        #if os(iOS)
+            var transistionStyle: UIModalTransitionStyle {
+                switch self {
+                case .coverVertical:
+                    return .coverVertical
+                case .flipHorizontal:
+                    return .flipHorizontal
+                case .crossDissolve:
+                    return .crossDissolve
+                case .partialCurl:
+                    return .partialCurl
+                }
             }
-        }
+        #endif
     }
 }
 
@@ -134,7 +139,7 @@ public extension Navigation {
          - parameter options: Modal options
          */
         case formSheet(options: TransitionOptions = .init())
-
+        #if os(iOS)
         var style: UIModalPresentationStyle {
             switch self {
             case .pageSheet, .detents:
@@ -147,6 +152,7 @@ public extension Navigation {
                 .formSheet
             }
         }
+        #endif
 
         var options: TransitionOptions {
             switch self {
@@ -253,7 +259,7 @@ public extension Navigation.PresentationType {
                 return identifier
             }
         }
-
+        #if os(iOS)
         @MainActor public var detent: UISheetPresentationController.Detent {
             switch self {
             case .medium:
@@ -267,6 +273,7 @@ public extension Navigation.PresentationType {
                 }
             }
         }
+        #endif
     }
 }
 
@@ -537,11 +544,11 @@ public extension Navigation {
         public var icon: Icon
         public var selectedIcon: Icon?
 
-        public var badgeColor: UIColor?
+        public var badgeColor: Color?
         public var badgeValue: String?
         public var tipIdentifier: String?
 
-        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil, tipIdentifier: String? = nil) {
+        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: Color? = nil, tipIdentifier: String? = nil) {
             self.name = name
             self.icon = icon
             self.selectedIcon = selectedIcon
@@ -557,6 +564,7 @@ public extension Navigation {
 }
 
 public extension Navigation.Tab {
+    #if os(iOS)
     struct IconImage: Identifiable, Sendable {
         public init(id: String, image: UIImage) {
             self.id = id
@@ -566,6 +574,7 @@ public extension Navigation.Tab {
         public let id: String
         public let image: UIImage?
     }
+    #endif
 
     enum Icon: Codable, Sendable {
         case iconImage(id: String)
@@ -575,8 +584,24 @@ public extension Navigation.Tab {
 }
 
 public extension Navigation {
+    enum AlertStyle: Codable, Equatable, Sendable {
+        case actionSheet
+        case alert
+
+        #if os(iOS)
+        var uiAlertControllerStyle: UIAlertController.Style {
+            switch self {
+            case .actionSheet:
+                .actionSheet
+            case .alert:
+                .alert
+            }
+        }
+        #endif
+    }
+
     struct AlertModel: Identifiable, Codable, Equatable, Sendable {
-        public init(id: UUID = UUID(), type: UIAlertController.Style = .alert, title: String? = nil, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
+        public init(id: UUID = UUID(), type: AlertStyle = .alert, title: String? = nil, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
             self.id = id
             self.type = type
             self.title = title
@@ -585,7 +610,7 @@ public extension Navigation {
         }
 
         public let id: UUID
-        public let type: UIAlertController.Style
+        public let type: AlertStyle
         public let title: String?
         public var message: String?
         public let buttons: [AlertButtonModel]?
@@ -596,7 +621,26 @@ public extension Navigation {
             lhs.id == rhs.id
         }
 
-        public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, action: (@Sendable () -> Void)? = nil) {
+        public enum AlertActionStyle: Equatable, Codable, Sendable {
+            case `default`
+            case cancel
+            case destructive
+
+            #if os(iOS)
+            public var uiAlertActionStyle: UIAlertAction.Style {
+                switch self {
+                case .default:
+                    return .default
+                case .cancel:
+                    return .cancel
+                case .destructive:
+                    return .destructive
+                }
+            }
+            #endif
+        }
+
+        public init(id: UUID = UUID(), label: String, type: AlertActionStyle = .default, action: (@Sendable () -> Void)? = nil) {
             self.id = id
             self.label = label
             self.type = type
@@ -608,13 +652,13 @@ public extension Navigation {
 
             id = try values.decode(UUID.self, forKey: .id)
             label = try values.decode(String.self, forKey: .label)
-            type = try values.decode(UIAlertAction.Style.self, forKey: .type)
+            type = try values.decode(AlertActionStyle.self, forKey: .type)
             action = nil
         }
 
         public var id: UUID
         let label: String
-        let type: UIAlertAction.Style
+        let type: AlertActionStyle
         let action: (@Sendable () -> Void)?
 
         enum CodingKeys: CodingKey {
@@ -647,6 +691,3 @@ public extension Navigation {
         }
     }
 }
-
-extension UIAlertAction.Style: Codable {}
-extension UIAlertController.Style: Codable {}

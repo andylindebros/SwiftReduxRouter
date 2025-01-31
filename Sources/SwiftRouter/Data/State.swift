@@ -1,6 +1,8 @@
 import Foundation
 import OSLog
+#if os(iOS)
 import UIKit
+#endif
 
 public extension Navigation {
     struct State: Sendable, Equatable, Codable {
@@ -452,8 +454,10 @@ extension Navigation.State {
     }
 
     private static func impactOccured() {
+        #if os(iOS)
         Task {
             await UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
+        #endif
     }
 }
