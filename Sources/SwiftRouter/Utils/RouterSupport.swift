@@ -29,7 +29,6 @@ extension URLConvertible {
         return parameters
     }
 
-    @available(iOS 8, *)
     var queryItems: [URLQueryItem]? {
         return URLComponents(string: urlStringValue)?.queryItems
     }
@@ -184,7 +183,7 @@ struct URLMatcher {
 
     func replaceRegex(_ pattern: String, _ repl: String, _ string: String) -> String {
         guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else { return string }
-        let range = NSMakeRange(0, string.count)
+        let range = NSRange(location: 0, length: string.count)
         return regex.stringByReplacingMatches(in: string, options: [], range: range, withTemplate: repl)
     }
 

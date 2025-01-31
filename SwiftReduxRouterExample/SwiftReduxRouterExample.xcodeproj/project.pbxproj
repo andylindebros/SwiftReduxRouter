@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		1E49E79A2A5C4EF700AB9644 /* ReactiveMiddleware.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E49E7992A5C4EF700AB9644 /* ReactiveMiddleware.swift */; };
 		1EA8D95529D64C61008949D9 /* Logger in Frameworks */ = {isa = PBXBuildFile; productRef = 1EA8D95429D64C61008949D9 /* Logger */; };
+		DCFD13FD2D4AE4A60077AA7B /* SwiftRouter in Frameworks */ = {isa = PBXBuildFile; productRef = DCFD13FC2D4AE4A60077AA7B /* SwiftRouter */; };
 		E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD2925C046A3000CF73B /* SwiftReduxRouterExampleApp.swift */; };
 		E625CD2E25C046A5000CF73B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E625CD2D25C046A5000CF73B /* Assets.xcassets */; };
 		E625CD3125C046A5000CF73B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E625CD3025C046A5000CF73B /* Preview Assets.xcassets */; };
@@ -17,8 +18,6 @@
 		E625CD6925C0477C000CF73B /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6225C0477C000CF73B /* AppState.swift */; };
 		E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E625CD6625C0477C000CF73B /* ContentView.swift */; };
 		E6314209299A4CD6000D50C0 /* SwiftUIRedux in Frameworks */ = {isa = PBXBuildFile; productRef = E6314208299A4CD6000D50C0 /* SwiftUIRedux */; };
-		E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E6769F9D26E020AD00E493F1 /* MyViewController.swift */; };
-		E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */ = {isa = PBXBuildFile; productRef = E6A067ED26F3675E00DD524B /* SwiftReduxRouter */; };
 		E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */ = {isa = PBXBuildFile; productRef = E6BF068D26EAC1D20037C811 /* ReduxMonitor */; };
 /* End PBXBuildFile section */
 
@@ -54,7 +53,6 @@
 		E625CD4825C046A6000CF73B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E625CD6225C0477C000CF73B /* AppState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		E625CD6625C0477C000CF73B /* ContentView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		E6769F9D26E020AD00E493F1 /* MyViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -62,8 +60,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E6A067EE26F3675E00DD524B /* SwiftReduxRouter in Frameworks */,
 				E6314209299A4CD6000D50C0 /* SwiftUIRedux in Frameworks */,
+				DCFD13FD2D4AE4A60077AA7B /* SwiftRouter in Frameworks */,
 				1EA8D95529D64C61008949D9 /* Logger in Frameworks */,
 				E6BF068E26EAC1D20037C811 /* ReduxMonitor in Frameworks */,
 			);
@@ -175,7 +173,6 @@
 			isa = PBXGroup;
 			children = (
 				E625CD6625C0477C000CF73B /* ContentView.swift */,
-				E6769F9D26E020AD00E493F1 /* MyViewController.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
@@ -208,6 +205,7 @@
 				E6A067ED26F3675E00DD524B /* SwiftReduxRouter */,
 				E6314208299A4CD6000D50C0 /* SwiftUIRedux */,
 				1EA8D95429D64C61008949D9 /* Logger */,
+				DCFD13FC2D4AE4A60077AA7B /* SwiftRouter */,
 			);
 			productName = SwiftReduxRouterExample;
 			productReference = E625CD2625C046A3000CF73B /* SwiftReduxRouterExample.app */;
@@ -329,7 +327,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				E625CD6925C0477C000CF73B /* AppState.swift in Sources */,
-				E6769F9E26E020AD00E493F1 /* MyViewController.swift in Sources */,
 				E625CD6C25C0477C000CF73B /* ContentView.swift in Sources */,
 				1E49E79A2A5C4EF700AB9644 /* ReactiveMiddleware.swift in Sources */,
 				E625CD2A25C046A3000CF73B /* SwiftReduxRouterExampleApp.swift in Sources */,
@@ -501,7 +498,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftReduxRouterExample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -526,7 +523,7 @@
 				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = SwiftReduxRouterExample/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -693,6 +690,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 1EA8D95329D64C61008949D9 /* XCRemoteSwiftPackageReference "Logger" */;
 			productName = Logger;
+		};
+		DCFD13FC2D4AE4A60077AA7B /* SwiftRouter */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SwiftRouter;
 		};
 		E6314208299A4CD6000D50C0 /* SwiftUIRedux */ = {
 			isa = XCSwiftPackageProductDependency;

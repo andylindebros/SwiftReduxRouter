@@ -1,10 +1,10 @@
 import Foundation
 import ReduxMonitor
-import SwiftReduxRouter
+import SwiftRouter
 import SwiftUIRedux
 
-extension NavigationAction: @retroactive DebugInfo {}
-extension NavigationAction: @retroactive Action {}
+extension Navigation.Action: @retroactive DebugInfo {}
+extension Navigation.Action: @retroactive Action {}
 extension Navigation.State: @retroactive SubState {}
 
 struct MainState: Sendable, Codable, SubState {
@@ -18,16 +18,16 @@ struct MainState: Sendable, Codable, SubState {
 
     struct Observed: Sendable, Equatable, Codable {
         public init() {}
-        var pathScrollToTop: NavPath?
+        var pathScrollToTop: Navigation.Path?
     }
 
     var observed: MainState.Observed
 
     static func reducer<Action>(action: Action, state: MainState) -> MainState {
         var state = state
-        switch action as? NavigationAction {
-        case let .shouldScrollToTop(path):
-            state.observed.pathScrollToTop = path
+        switch action as? Navigation.Action {
+//        case let .shouldScrollToTop(path):
+//            state.observed.pathScrollToTop = path
         default:
             break
         }

@@ -1,6 +1,6 @@
-# SwiftReduxRouter
+# SwiftRouter
 
-SwiftReduxRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
+SwiftRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
 
 ![Demo](https://github.com/andylindebros/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 

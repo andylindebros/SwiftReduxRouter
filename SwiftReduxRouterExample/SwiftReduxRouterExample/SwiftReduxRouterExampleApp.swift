@@ -1,32 +1,32 @@
-import SwiftReduxRouter
+import SwiftRouter
 import SwiftUI
 import SwiftUIRedux
 
 @main
 struct SwiftReduxRouterExampleApp: App {
     let store: Store<AppState>
-    let routes: [RouterView.Route]
+    let routes: [Navigation.RouterView.Config]
     init() {
         let store = AppState.createStore(initState: AppState(
             main: MainState(),
             navigation: Navigation.State(observed: .init(
                 navigationModels: [
-                    NavigationModel.createInitModel(
+                    Navigation.Model.create(
                         id: AppState.tabOne,
                         selectedPath: ContentView.navigationRoutes.first!
                             .reverse(params: ["name": .int(1)])!,
-                        tab: NavigationTab(
+                        tab: Navigation.Tab(
                             name: "First Tab",
-                            icon: NavigationTab.Icon.system(name: "star.fill")
+                            icon: Navigation.Tab.Icon.system(name: "star.fill")
                         )
                     ),
-                    NavigationModel.createInitModel(
+                    Navigation.Model.create(
                         id: AppState.tabTwo,
                         selectedPath: ContentView.navigationRoutes.last!
                             .reverse(params: ["name": .int(1)])!,
-                        tab: NavigationTab(
+                        tab: Navigation.Tab(
                             name: "Second Tab",
-                            icon: NavigationTab.Icon.iconImage(id: "heart.fill"),
+                            icon: Navigation.Tab.Icon.iconImage(id: "heart.fill"),
                             badgeColor: .red
                         )
                     ),
@@ -36,7 +36,7 @@ struct SwiftReduxRouterExampleApp: App {
 
         let routes = ContentView.routes(store: store)
         Task {
-            await store.dispatch(NavigationAction.setAvailableRoutes(to: routes.map { $0.paths }.flatMap { $0 }))
+            await store.dispatch(Navigation.Action.setAvailableRoutes(to: routes.map { $0.routes }.flatMap { $0 }))
         }
         self.routes = routes
         self.store = store
@@ -47,8 +47,8 @@ struct SwiftReduxRouterExampleApp: App {
             ContentView(navigationState: store.state.navigation, routes: routes, dispatch: store.dispatch)
                 .onOpenURL { incomingURL in
                     Task {
-                        guard let deepLinkAction = NavigationAction.Deeplink(with: incomingURL, accessLevel: .public) else { return }
-                        await store.dispatch(NavigationAction.deeplink(deepLinkAction))
+                        guard let deepLinkAction = Navigation.Action.Deeplink(with: incomingURL, accessLevel: .public)?.action(for: store.state.navigation.state) as? Navigation.Action else { return }
+                        await store.dispatch(deepLinkAction)
                     }
                 }
         }

@@ -1,8 +1,9 @@
 import Foundation
 import OSLog
+import UIKit
 
-public enum Navigation {
-    public struct State: Sendable, Equatable, Codable {
+public extension Navigation {
+    struct State: Sendable, Equatable, Codable {
         public init(observed: Navigation.ObservedState = .init()) {
             self.observed = observed
         }
@@ -10,8 +11,8 @@ public enum Navigation {
         public var observed: ObservedState
     }
 
-    public struct ObservedState: Sendable, Equatable, Codable {
-        public init(navigationModels: [NavigationModel] = [NavigationModel](), alerts: [AlertModel] = [], availableRoutes: [NavigationRoute] = []) {
+    struct ObservedState: Sendable, Equatable, Codable {
+        public init(navigationModels: [Model] = [Model](), alerts: [AlertModel] = [], availableRoutes: [Route] = []) {
             self.availableRoutes = availableRoutes
             self.alerts = alerts
 
@@ -29,29 +30,37 @@ public enum Navigation {
         /// Active navigationModel. It can only be one sessin at the time
         public var selectedModelId: UUID
         public var rootSelectedModelID: UUID
-        public var navigationModels = [NavigationModel]()
+        public var navigationModels = [Model]()
         public var alerts: [AlertModel] = []
-        public var availableRoutes: [NavigationRoute] = []
+        public var availableRoutes: [Route] = []
         public var lastModifiedID: UUID = .init()
+        public var tipIdentifier: String?
+        public var tipNavigationModelID: UUID?
+        public var removeUntrackedViews: Bool = false
+        public var dismissAllCompletion: CodableClosure?
     }
 }
 
 public extension Navigation.State {
+    // swiftlint:disable cyclomatic_complexity function_body_length
+
+    /**
+     The reducer changes the input state and returns a new state based on the action
+
+     - parameter action: The type of action to perform in order to modify the state.
+     - parameter state: The state to modify
+     - returns: A new modified state
+     */
     static func reducer<Action>(action: Action, state: Navigation.State) -> Navigation.State {
         var state = state
-        if action is NavigationAction {
-            state.observed.lastModifiedID = UUID()
-        }
+        guard let action = action as? Navigation.Action else { return state }
 
-        switch action as? NavigationAction {
+        state.observed.lastModifiedID = UUID()
+
+        switch action {
         case let .multiAction(actions):
             for action in actions {
-                switch action {
-                case .multiAction:
-                    continue
-                default:
-                    state = reducer(action: action, state: state)
-                }
+                state = reducer(action: action, state: state)
             }
 
         case let .setAvailableRoutes(routes):
@@ -65,19 +74,12 @@ public extension Navigation.State {
                 return state
             }
             tab.badgeValue = badgeValue
-            #if canImport(UIKit)
-                if let color = color {
-                    tab.badgeColor = color
-                }
-            #endif
-            state.observed.navigationModels[navigationModelIndex].tab = tab
 
-        case let .setIcon(to: iconName, withModelID: navigationModelID):
-            guard let navigationModelIndex = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModelID })
-            else {
-                return state
+            if let color = color {
+                tab.badgeColor = color
             }
-            state.observed.navigationModels[navigationModelIndex].tab?.icon = .system(name: iconName)
+
+            state.observed.navigationModels[navigationModelIndex].tab = tab
 
         case let .setSelectedPath(to: navPath, in: navigationModel):
             if let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) {
@@ -87,7 +89,7 @@ public extension Navigation.State {
                     state.observed.navigationModels[index].presentedPaths[pathIndex].hasBeenShown = true
                 }
 
-                if state.observed.navigationModels[index].animate {
+                if !state.observed.navigationModels[index].animate {
                     state.observed.navigationModels[index].animate = true
                 }
                 state.observed.selectedModelId = state.observed.navigationModels[index].id
@@ -100,14 +102,14 @@ public extension Navigation.State {
                 state = Self.removeRedundantPaths(at: index, from: state)
             }
 
-        case let .dismiss(dismissTarget, completionAction):
+        case let .dismiss(dismissTarget):
             switch dismissTarget {
-            case let .currentNavigationModel(animated):
+            case let .currentModel(animated, completion):
                 if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == state.observed.selectedModelId }) {
-                    if let completionAction {
+                    if let completion {
                         var model = state.observed.navigationModels[index]
                         model.animate = animated
-                        model.dismissCompletionAction = completionAction
+                        model.dismissCompletionAction = completion
                         model.shouldBeDismsised = true
                         state.observed.navigationModels[index] = model
 
@@ -121,12 +123,12 @@ public extension Navigation.State {
                     }
                 }
 
-            case let .navigationModel(navigationModel, animated):
+            case let .model(navigationModel, animated, completion):
                 if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
-                    if let completionAction {
+                    if let completion {
                         var model = state.observed.navigationModels[index]
                         model.animate = animated
-                        model.dismissCompletionAction = completionAction
+                        model.dismissCompletionAction = completion
                         model.shouldBeDismsised = true
                         state.observed.navigationModels[index] = model
                     } else {
@@ -140,14 +142,14 @@ public extension Navigation.State {
                     }
                 }
 
-            case let .navigationPath(navPath, animated):
+            case let .path(navPath, animated, completion):
                 if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navPath.id) }) {
                     // Close presented model if no more paths are presented
                     if state.observed.navigationModels[index].isPresented, state.observed.navigationModels[index].presentedPaths.count == 1 {
-                        if let completionAction {
+                        if let completion {
                             var model = state.observed.navigationModels[index]
                             model.animate = animated
-                            model.dismissCompletionAction = completionAction
+                            model.dismissCompletionAction = completion
                             model.shouldBeDismsised = true
                             state.observed.navigationModels[index] = model
                         } else {
@@ -170,7 +172,7 @@ public extension Navigation.State {
                     if let pathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == navPath.id }), pathIndex - 1 >= 0 {
                         let nextPath = state.observed.navigationModels[index].presentedPaths[pathIndex - 1]
                         state.observed.navigationModels[index].selectedPath = nextPath
-                        if state.observed.navigationModels[index].animate {
+                        if !state.observed.navigationModels[index].animate {
                             state.observed.navigationModels[index].animate = true
                         }
                         state.observed.selectedModelId = state.observed.navigationModels[index].id
@@ -183,7 +185,19 @@ public extension Navigation.State {
                         state = Self.removeRedundantPaths(at: index, from: state)
                     }
                 }
+
+            case let .allPresented(includingUntracked, completionAction):
+                state.observed.navigationModels = state.observed.navigationModels.filter { !$0.isPresented }
+                state.observed.selectedModelId = state.observed.rootSelectedModelID
+                state.observed.removeUntrackedViews = includingUntracked
+                state.observed.alerts = []
+                state.observed.dismissAllCompletion = completionAction
             }
+
+        case .untrackedViewsRemoved:
+            state.observed.removeUntrackedViews = false
+            state.observed.dismissAllCompletion?.completion?()
+            state.observed.dismissAllCompletion = nil
 
         case let .update(path, withURL: url, in: navigationModel):
             guard
@@ -192,7 +206,7 @@ public extension Navigation.State {
                 let currentPath = state.observed.navigationModels[index].presentedPaths.first(where: { $0.id == path.id }),
                 let currentPathURLMatchResult = currentPath.urlMatchResult(of: state.observed.availableRoutes),
                 let route = Self.route(by: currentPathURLMatchResult, in: state.observed.availableRoutes),
-                let matchResult = URLMatcher().match(url?.path ?? "uknown", from: [route.path]),
+                let matchResult = URLMatcher().match(url?.path ?? "uknown", from: [route.pattern]),
                 route.validate(result: matchResult, forAccessLevel: .private)
             else {
                 print(
@@ -201,7 +215,7 @@ public extension Navigation.State {
                 return state
             }
 
-            let path = NavPath(
+            let path = Navigation.Path(
                 id: currentPath.id,
                 url,
                 path.name,
@@ -211,6 +225,9 @@ public extension Navigation.State {
 
             state.observed.navigationModels[index].presentedPaths[currentPathIndex] = path
             state.observed.navigationModels[index].animate = false
+            state = Self.reducer(action: Navigation.Action.setSelectedPath(to: path, in: state.observed.navigationModels[index]), state: state)
+
+            impactOccured()
 
         case let .open(path: navigationPath, in: target):
             guard let navigationPath = Self.validate(path: navigationPath, in: state) else {
@@ -227,7 +244,9 @@ public extension Navigation.State {
                 }
                 state.observed.navigationModels[index].animate = animate
 
-            case let .navigationModel(navigationModel, animate):
+                state = Self.updateOrOpen(navigationPath, with: state.observed.navigationModels[index], in: state)
+
+            case let .model(navigationModel, animate):
                 guard
                     let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
@@ -240,26 +259,22 @@ public extension Navigation.State {
                 }
                 state.observed.navigationModels[index].animate = animate
 
-            case let .new(routes, presentationType, animate):
-                if #available(iOS 16.0, *) {
-                    let navigationModel = NavigationModel(
-                        routes: routes,
-                        selectedPath: NavPath(),
-                        parentNavigationModelId: state.observed.selectedModelId,
-                        parentNavigationModelName: state.observed.navigationModels.first(where: { $0.id == state.observed.selectedModelId })?.tab?.name ?? "presented",
-                        presentationType: presentationType,
-                        selectedDetentIdentifier: presentationType.selectedDetent?.detent.identifier.rawValue ?? presentationType.detentItems?.first?.detent.identifier.rawValue,
-                        animate: animate
-                    )
-                    state.observed.navigationModels.append(navigationModel)
-                    state.observed.selectedModelId = navigationModel.id
-                } else {
-                    let navigationModel = NavigationModel(routes: routes, selectedPath: NavPath(), presentationType: presentationType, animate: animate)
-                    state.observed.navigationModels.append(navigationModel)
-                    state.observed.selectedModelId = navigationModel.id
-                }
+                state = Self.updateOrOpen(navigationPath, with: navigationModel, in: state)
+
+            case let .new(routes, presentationType):
+                let navigationModel = Navigation.Model(
+                    routes: routes,
+                    selectedPath: Navigation.Path(),
+                    presentationType: presentationType,
+                    selectedDetentIdentifier: presentationType.selectedDetent?.identifier ?? presentationType.detentItems?.first?.identifier,
+                    animate: presentationType.options.animated
+                )
+                state.observed.navigationModels.append(navigationModel)
+                state.observed.selectedModelId = navigationModel.id
+
+                state = Self.setSelectedPath(navigationPath, in: state)
             }
-            state = Self.setSelectedPath(navigationPath, in: state)
+            impactOccured()
 
         case let .setNavigationDismsissed(navigationModel):
             if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
@@ -274,6 +289,7 @@ public extension Navigation.State {
 
         case let .selectTab(by: navigationModelID):
             if let navigationModel = state.observed.navigationModels.first(where: { !$0.isPresented && $0.id == navigationModelID }) {
+                state.observed.selectedModelId = navigationModel.id
                 state.observed.rootSelectedModelID = navigationModel.id
             }
 
@@ -297,18 +313,44 @@ public extension Navigation.State {
                 state.observed.alerts.remove(at: index)
             }
 
-        case let .selectedDetentChanged(to: identifier, in: navigationModel):
+        case let .selectedDetentIdentifierChanged(to: identifier, in: navigationModel):
             guard let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
             state.observed.navigationModels[index].selectedDetentIdentifier = identifier
 
-        default:
-            break
+        case let .setNewDetents(detents, selected, in: navigationModel):
+            guard
+                let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id && $0.isPresented }),
+                detents.contains(selected),
+                detents.count > 0,
+                let model = state.observed.navigationModels.first(where: { $0.id == navigationModel.id }),
+                case Navigation.PresentationType.detents(var detentsModel, let options) = model.presentationType
+            else {
+                print("⚠️ Failed to set new detents to \(navigationModel). Desired navigationModel was not found or is not presented or the newDetents are invalid. Amount of detents needs to be at least one")
+                return state
+            }
+
+            detentsModel.detents = detents
+            detentsModel.selected = selected
+
+            state.observed.navigationModels[index].presentationType = .detents(detentsModel, options: options)
+            state.observed.navigationModels[index].selectedDetentIdentifier = selected.identifier
+
+        case let .setTabTipIdentifier(identifier, byNavigationModel: navigationModel):
+            guard
+                state.observed.navigationModels.map({ $0.id }).contains(navigationModel.id)
+            else {
+                return state
+            }
+            state.observed.tipIdentifier = identifier
+            state.observed.tipNavigationModelID = identifier != nil ? navigationModel.id : nil
         }
 
         return state
     }
 
-    static func setSelectedPath(_ path: NavPath, in state: Navigation.State) -> Navigation.State {
+    // swiftlint:enable cyclomatic_complexity function_body_length
+
+    static func setSelectedPath(_ path: Navigation.Path, in state: Navigation.State) -> Navigation.State {
         var state = state
         if let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId }) {
             state = Self.removeRedundantPaths(at: index, from: state)
@@ -331,12 +373,19 @@ public extension Navigation.State {
 
         return state
     }
+
+    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "Router")
+
+    private static func debug(_ items: Any...) {
+        let message = items.map { "\($0)" }.joined(separator: " ")
+        Self.logger.debug("\(message)")
+    }
 }
 
 extension Navigation.State {
-    static func route(by urlMatchResult: URLMatchResult, in availableRoutes: [NavigationRoute]) -> NavigationRoute? {
+    static func route(by urlMatchResult: URLMatchResult, in availableRoutes: [Navigation.Route]) -> Navigation.Route? {
         guard
-            let route = availableRoutes.first(where: { $0.path == urlMatchResult.pattern })
+            let route = availableRoutes.first(where: { $0.pattern == urlMatchResult.pattern })
         else {
             return nil
         }
@@ -344,12 +393,12 @@ extension Navigation.State {
         return route
     }
 
-    static func validate(path navigationPath: NavPath?, in state: Navigation.State) -> NavPath? {
+    static func validate(path navigationPath: Navigation.Path?, in state: Navigation.State) -> Navigation.Path? {
         guard
             let navigationPath,
             let urlMatchResult = navigationPath.urlMatchResult(of: state.observed.availableRoutes)
         else {
-            print(
+            debug(
                 "⚠️ Cannot open \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "unknown") since it not supported by any route"
             )
             return nil
@@ -359,18 +408,52 @@ extension Navigation.State {
             guard
                 route.validate(result: urlMatchResult, forAccessLevel: .private)
             else {
-                print(
+                debug(
                     "⚠️ Cannot open \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route"
                 )
                 return nil
             }
         }
 
-        return NavPath(
+        return Navigation.Path(
             id: navigationPath.id,
             navigationPath.url,
             navigationPath.name,
             urlMatchResult
         )
+    }
+
+    static func updateOrOpen(_ navigationPath: Navigation.Path, with model: Navigation.Model, in state: Navigation.State) -> Navigation.State {
+        // Exact: 100% match in a tab
+        if
+            let newURL = navigationPath.url,
+            let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.pattern }),
+            let currentPath = model.presentedPaths.first(where: { $0.path == newURL.path }),
+            currentPath.path == newURL.path,
+            let route = Navigation.State.route(by: matchResult, in: state.observed.availableRoutes),
+            route.accessLevel.grantAccess(for: .private)
+        {
+            return reducer(action: Navigation.Action.setSelectedPath(to: currentPath, in: model), state: state)
+        }
+
+        // Similar: URL has an similar match in a tab
+        if
+            let newURL = navigationPath.url,
+            let newMatchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.pattern }),
+            let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == newMatchResult.pattern }),
+            let route = Navigation.State.route(by: newMatchResult, in: state.observed.availableRoutes),
+            !route.rules.isEmpty,
+            route.validate(result: newMatchResult, forAccessLevel: .private)
+        {
+            return Self.reducer(action: Navigation.Action.update(path: currentPath, withURL: newURL, in: model), state: state)
+        }
+
+        return Self.setSelectedPath(navigationPath, in: state)
+    }
+
+    private static func impactOccured() {
+        Task {
+            await UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
     }
 }
