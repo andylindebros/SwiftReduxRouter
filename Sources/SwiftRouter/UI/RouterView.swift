@@ -87,7 +87,7 @@ import SwiftUI
                 guard
                     navigationState.observed.navigationModels.contains(where: { $0.tab != nil })
                 else {
-                    fatalError("At least one tab must be implemented")
+                    return UINavigationController()
                 }
 
                 // Appear as a tabbar. Initial state has more than one navigationModel
