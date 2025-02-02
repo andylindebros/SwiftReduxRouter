@@ -345,6 +345,9 @@ public extension Navigation.State {
             }
             state.observed.tipIdentifier = identifier
             state.observed.tipNavigationModelID = identifier != nil ? navigationModel.id : nil
+
+        case let .setLoadedState(to: newValue):
+            state = newValue
         }
 
         return state

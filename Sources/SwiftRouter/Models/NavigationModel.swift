@@ -45,8 +45,8 @@ public extension Navigation {
         var animate: Bool
         public var tipIdentifier: String?
 
-        public static func create(id: UUID = UUID(), routes: [Route]? = nil, selectedPath: Path, tab: Tab? = nil) -> Model {
-            Model(id: id, routes: routes, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+        public static func create(id: UUID = UUID(), routes: [Route]? = nil, selectedPath: Path, tab: Tab? = nil, isPresented: Bool = false) -> Model {
+            Model(id: id, routes: routes, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: isPresented)
         }
     }
 }

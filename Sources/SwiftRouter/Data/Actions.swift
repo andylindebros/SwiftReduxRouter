@@ -78,7 +78,6 @@ public extension Navigation {
          */
         case setAvailableRoutes(to: [Route])
 
-
         /**
          Updates the badge value to the tab
 
@@ -130,6 +129,13 @@ public extension Navigation {
          - parameter model: The model that presents the path
          */
         case update(path: Path, withURL: URL?, in: Model)
+
+        /**
+         Sets the  entire state.
+         Note: In general, Use other actions to modify the state. This action might have unexpected behaviour.
+         - parameter state: The new State
+         */
+        case setLoadedState(to: Navigation.State)
 
         /**
          Remove all untracked views such as action sheets, alerts, other presenting windows
