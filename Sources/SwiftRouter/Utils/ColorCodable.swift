@@ -24,6 +24,22 @@ extension Color: Codable {
     }
 }
 
+#if os(iOS)
+    extension Color {
+        func colorComponents() throws -> (red: CGFloat, green: CGFloat, blue: CGFloat, alpha: CGFloat) {
+            var r: CGFloat = 0
+            var g: CGFloat = 0
+            var b: CGFloat = 0
+            var a: CGFloat = 0
+            guard UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a) else {
+                // Pay attention that the color should be convertible into RGB format
+                // Colors using hue, saturation and brightness won't work
+                throw NSError(domain: "Not a valid RGB color", code: 1)
+            }
+            return (r, g, b, a)
+        }
+    }
+#endif
 extension Color {
     #if os(macOS)
         typealias SystemColor = NSColor
