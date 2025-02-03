@@ -29,15 +29,20 @@ import SwiftUI
 
 extension Color: Codable {
     public func encode(to encoder: any Encoder) throws {
+        guard
+            let cgColor
+        else {
+            throw CodableColor.CodingError.wrongColor
+        }
         var container = encoder.singleValueContainer()
-        let (r, g, b, a) = try colorComponents()
-        try container.encode([r, g, b, a])
+
+        try container.encode(CodableColor(cgColor: cgColor))
     }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        let components = try container.decode([CGFloat].self)
-        self = Color(red: components[0], green: components[1], blue: components[2], opacity: components[3])
+        let codableColor = try container.decode(CodableColor.self)
+        self = Color(cgColor: codableColor.cgColor)
     }
 }
 
@@ -66,5 +71,56 @@ extension Color {
         #endif
 
         return (r, g, b, a)
+    }
+}
+
+public struct CodableColor: Codable {
+    let cgColor: CGColor
+
+    enum CodingKeys: String, CodingKey {
+        case colorSpace
+        case components
+    }
+
+    public init(cgColor: CGColor) {
+        self.cgColor = cgColor
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder
+            .container(keyedBy: CodingKeys.self)
+        let colorSpace = try container
+            .decode(String.self, forKey: .colorSpace)
+        let components = try container
+            .decode([CGFloat].self, forKey: .components)
+
+        guard
+            let cgColorSpace = CGColorSpace(name: colorSpace as CFString),
+            let cgColor = CGColor(
+                colorSpace: cgColorSpace, components: components
+            )
+        else {
+            throw CodingError.wrongData
+        }
+
+        self.cgColor = cgColor
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        guard
+            let colorSpace = cgColor.colorSpace?.name,
+            let components = cgColor.components
+        else {
+            throw CodingError.wrongData
+        }
+
+        try container.encode(colorSpace as String, forKey: .colorSpace)
+        try container.encode(components, forKey: .components)
+    }
+
+    enum CodingError: Error {
+        case wrongColor
+        case wrongData
     }
 }
