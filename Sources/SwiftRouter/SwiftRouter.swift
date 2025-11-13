@@ -1,1 +1,1 @@
-public enum Navigation {}
+public enum SwiftRouter {}

@@ -1,13 +1,15 @@
 import Foundation
 import SwiftUI
+import UIKit
 
-public extension Navigation {
+public extension SwiftRouter {
     protocol ActionProvider: Codable, Sendable {}
 
     typealias NavigationDispatcher = (ActionProvider) -> Void
 }
 
-public extension Navigation {
+// swiftlint:disable opening_brace
+public extension SwiftRouter {
     /**
      The type of action to perform in order to modify the navigation state.
      */
@@ -20,8 +22,8 @@ public extension Navigation {
         case alert(AlertModel)
 
         /**
-         Dismissess an alert
-         - parameter alertModel: The alert model to dimsiss
+         Dismisses an alert
+         - parameter alertModel: The alert model to dismiss
          */
         case dismissedAlert(with: AlertModel)
 
@@ -45,8 +47,9 @@ public extension Navigation {
 
          - parameter path: The path to add to the stack
          - parameter target: The target to use
+         - parameter withHapticFeedback: Indicates whether haptic feedback should be triggered for this action.
          */
-        case open(path: Path?, in: Target = .current())
+        case open(path: Path?, in: Model.Target = .current(), withHapticFeedback: Bool = false)
 
         /**
          Replaces an existing path with a new without any animations
@@ -85,7 +88,7 @@ public extension Navigation {
          - parameter modelID: The uuid of the model that represents the tab
          - parameter color: The color to use when presenting the badge
          */
-        case setBadgeValue(to: String?, withModelID: UUID, withColor: Color? = nil)
+        case setBadgeValue(to: String?, withModelID: UUID, withColor: UIColor? = nil)
 
         /**
          Internal use for the navigationController to tell the state that it has completed the dismissal.
@@ -95,7 +98,7 @@ public extension Navigation {
 
          - parameter navigationModel: The navigationModel that has completed the dismissal
          */
-        case setNavigationDismsissed(Model)
+        case setNavigationDismissed(Model)
 
         /**
          Updates a detented presented action sheet with new detents
@@ -103,7 +106,7 @@ public extension Navigation {
          - parameter detentsModel: The options for the detents
          - parameter model: The model that is presenting the action sheet
          */
-        case setNewDetents([PresentationType.Detent], selected: PresentationType.Detent, in: Model)
+        case setNewDetents([Model.PresentationType.Detent], selected: Model.PresentationType.Detent, in: Model, largestUndimmedDetentIdentifier: SwiftRouter.Model.PresentationType.Detent? = nil, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true)
 
         /**
          Selects a path in a navigation
@@ -119,7 +122,7 @@ public extension Navigation {
          - parameter identifier: The value of the identifier
          - parameter model: The model representation of the tab
          */
-        case setTabTipIdentifier(to: String?, byNavigationModel: Navigation.Model)
+        case setTabTipIdentifier(to: String?, byNavigationModel: SwiftRouter.Model)
 
         /**
          Updates the URL of a path. It will update the path of routeViewModel in a route
@@ -127,15 +130,9 @@ public extension Navigation {
          - parameter path: The path to update
          - parameter newUrl: The new url replace the url of the path with
          - parameter model: The model that presents the path
+         - parameter withHapticFeedback: Indicates whether haptic feedback should be triggered for this action.
          */
-        case update(path: Path, withURL: URL?, in: Model)
-
-        /**
-         Sets the  entire state.
-         Note: In general, Use other actions to modify the state. This action might have unexpected behaviour.
-         - parameter state: The new State
-         */
-        case setLoadedState(to: Navigation.State)
+        case update(path: Path, withURL: URL?, in: Model, withHapticFeedback: Bool = false)
 
         /**
          Remove all untracked views such as action sheets, alerts, other presenting windows
@@ -147,14 +144,14 @@ public extension Navigation {
          - parameter accessLevel: Minimum required accessLevel required to access a matched route
          */
         public struct Deeplink: Sendable, Equatable, ActionProvider {
-            public init?(with url: URL?, accessLevel: RouteAccessLevel) {
+            public init?(with url: URL?, accessLevel: Route.AccessLevel) {
                 guard let url = url else { return nil }
                 self.url = url
                 self.accessLevel = accessLevel
             }
 
             let url: URL
-            let accessLevel: RouteAccessLevel
+            let accessLevel: Route.AccessLevel
 
             private func createNewURL(from url: URL, removeFromPath: String) -> URL? {
                 var urlComponents = URLComponents(string: url.absoluteString)
@@ -167,7 +164,7 @@ public extension Navigation {
                 return urlComponents?.url
             }
 
-            public func action(for state: State, preferredTarget: Navigation.Target? = nil) -> ActionProvider? {
+            public func action(for state: State, preferredTarget: SwiftRouter.Model.Target? = nil) -> ActionProvider? {
                 // Check if the url is supported by a tab
                 if preferredTarget == nil, let (model, route) = findNavigationModel(in: state) {
                     let newURL = createNewURL(from: url, removeFromPath: route.parentPath)
@@ -178,9 +175,10 @@ public extension Navigation {
                         let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.pattern }),
                         let currentPath = model.presentedPaths.first(where: { $0.path == newURL.path }),
                         let route = State.route(by: matchResult, in: state.observed.availableRoutes),
-                        route.accessLevel.grantAccess(for: .private)
+                        route.accessLevel.grantAccess(for: .private),
+                        !route.allowsDuplicates
                     {
-                        return Navigation.Action.setSelectedPath(to: currentPath, in: model)
+                        return SwiftRouter.Action.setSelectedPath(to: currentPath, in: model)
                     }
 
                     // Similar: URL has an similar match in a tab
@@ -190,9 +188,10 @@ public extension Navigation {
                         let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == newMatchResult.pattern }),
                         let route = State.route(by: newMatchResult, in: state.observed.availableRoutes),
                         !route.rules.isEmpty,
-                        route.validate(result: newMatchResult, forAccessLevel: .private)
+                        route.validate(result: newMatchResult, forAccessLevel: .private),
+                        !route.allowsDuplicates
                     {
-                        return Navigation.Action.update(path: currentPath, withURL: newURL, in: model)
+                        return SwiftRouter.Action.update(path: currentPath, withURL: newURL, in: model)
                     }
 
                     // Present new path to found model
@@ -248,39 +247,41 @@ public extension Navigation {
     }
 }
 
+// swiftlint:enable opening_brace
+
 @resultBuilder
 public enum MultiActionBuilder {
-    public static func buildEither(first component: [Navigation.Action]) -> [Navigation.Action] {
+    public static func buildEither(first component: [SwiftRouter.Action]) -> [SwiftRouter.Action] {
         return component
     }
 
-    public static func buildEither(second component: [Navigation.Action]) -> [Navigation.Action] {
+    public static func buildEither(second component: [SwiftRouter.Action]) -> [SwiftRouter.Action] {
         return component
     }
 
-    public static func buildOptional(_ component: [Navigation.Action]?) -> [Navigation.Action] {
+    public static func buildOptional(_ component: [SwiftRouter.Action]?) -> [SwiftRouter.Action] {
         return component ?? []
     }
 
-    public static func buildExpression(_ expression: Navigation.Action) -> [Navigation.Action] {
+    public static func buildExpression(_ expression: SwiftRouter.Action) -> [SwiftRouter.Action] {
         return [expression]
     }
 
-    public static func buildExpression(_: ()) -> [Navigation.Action] {
+    public static func buildExpression(_: ()) -> [SwiftRouter.Action] {
         return []
     }
 
-    public static func buildBlock(_ components: [Navigation.Action]...) -> [Navigation.Action] {
+    public static func buildBlock(_ components: [SwiftRouter.Action]...) -> [SwiftRouter.Action] {
         return components.flatMap { $0 }
     }
 
-    public static func buildArray(_ components: [[Navigation.Action]]) -> [Navigation.Action] {
+    public static func buildArray(_ components: [[SwiftRouter.Action]]) -> [SwiftRouter.Action] {
         Array(components.joined())
     }
 }
 
-public extension Navigation.Action {
-    init(@MultiActionBuilder _ actions: () -> [Navigation.Action]) {
+public extension SwiftRouter.Action {
+    init(@MultiActionBuilder _ actions: () -> [SwiftRouter.Action]) {
         self = .multiAction(actions())
     }
 }

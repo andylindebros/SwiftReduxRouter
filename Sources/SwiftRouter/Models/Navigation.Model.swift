@@ -1,6 +1,6 @@
 import Foundation
 
-public extension Navigation {
+public extension SwiftRouter {
     /**
      Represents a `UINavigationController`. This model defines how the controller should be presented and which `UIViewController` instances should be included in the navigation stack.
 
@@ -27,6 +27,10 @@ public extension Navigation {
             "\(type(of: self))(\(tab?.name ?? id.uuidString))"
         }
 
+        public var stringIdentifier: String {
+            "\(type(of: self))(\(tab?.name ?? id.uuidString))"
+        }
+
         public static func == (lhs: Model, rhs: Model) -> Bool {
             lhs.id == rhs.id
         }
@@ -45,8 +49,12 @@ public extension Navigation {
         var animate: Bool
         public var tipIdentifier: String?
 
-        public static func create(id: UUID = UUID(), routes: [Route]? = nil, selectedPath: Path, tab: Tab? = nil, isPresented: Bool = false) -> Model {
-            Model(id: id, routes: routes, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: isPresented)
+        public static func create(id: UUID = UUID(), routes: [Route]? = nil, selectedPath: Path, tab: Tab? = nil) -> Model {
+            Model(id: id, routes: routes, selectedPath: selectedPath, tab: tab, presentedPaths: [selectedPath], isPresented: false)
+        }
+
+        func clone(newID: UUID? = nil, newRoutes: [Route]? = nil) -> Self {
+            Model(id: newID ?? id, routes: newRoutes ?? routes, selectedPath: selectedPath, tab: tab, presentedPaths: presentedPaths, isPresented: isPresented, presentationType: presentationType, selectedDetentIdentifier: selectedDetentIdentifier, animate: animate)
         }
     }
 }

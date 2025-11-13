@@ -3,7 +3,7 @@ import SwiftUI
 #if os(iOS)
     import UIKit
 
-    public extension Navigation {
+    public extension SwiftRouter {
         protocol Window {}
         protocol TabControllerProvider: UIViewController {
             var onTabAlreadySelected: ((Path) -> Void)? { get set }
@@ -15,11 +15,11 @@ import SwiftUI
             var viewControllers: [UIViewController]? { get }
             func setViewControllers(_ viewControllers: [UIViewController]?, animated: Bool)
 
-            func showTip(withID: String, withNavigationModel: Navigation.Model)
+            func showTip(withID: String, withNavigationModel: SwiftRouter.Model)
         }
     }
 
-    public extension Navigation {
+    public extension SwiftRouter {
         class TabController: UITabBarController, TabControllerProvider, UITabBarControllerDelegate {
             override public func dismiss(animated flag: Bool, completion: (() -> Void)? = nil) {
                 super.dismiss(animated: flag, completion: completion)
@@ -42,13 +42,13 @@ import SwiftUI
                 return true
             }
 
-            public func showTip(withID _: String, withNavigationModel _: Navigation.Model) {
+            public func showTip(withID _: String, withNavigationModel _: SwiftRouter.Model) {
                 assertionFailure("💥 ❌ Tip support not implemented")
             }
         }
     }
 
-    extension Navigation {
+    extension SwiftRouter {
         open class Controller: UINavigationController, UINavigationControllerDelegate, UIAdaptivePresentationControllerDelegate {
             var navigationModel: Model?
             var willShow: ((_ navigationModel: Model, _ path: Path) -> Void)?
@@ -67,7 +67,7 @@ import SwiftUI
             }
 
             override public func viewWillDisappear(_ animated: Bool) {
-                super.viewDidDisappear(animated)
+                super.viewWillDisappear(animated)
                 if let coordinator = transitionCoordinator, coordinator.isInteractive {
                     // ViewController is being dismissed interactivly
                 } else if let navigationModel = navigationModel {
@@ -87,6 +87,9 @@ import SwiftUI
                         vc.viewModel?.path.navBarOptions?.hideNavigationBar ?? vc.hideNavigationBar ?? false,
                         animated: animated
                     )
+                    if let title = vc.viewModel?.path.navBarOptions?.title {
+                        vc.title = title
+                    }
 
                     vc.navigationItem.backButtonDisplayMode = .minimal
                     vc.navigationItem.largeTitleDisplayMode = .never
@@ -112,7 +115,7 @@ import SwiftUI
         }
     }
 
-    extension Navigation.Controller: UISheetPresentationControllerDelegate {
+    extension SwiftRouter.Controller: UISheetPresentationControllerDelegate {
         public func sheetPresentationControllerDidChangeSelectedDetentIdentifier(_ sheetPresentationController: UISheetPresentationController) {
             guard let navigationModel = navigationModel, let identifier = sheetPresentationController.selectedDetentIdentifier else { return }
             DispatchQueue.main.async { [weak self] in
@@ -121,23 +124,25 @@ import SwiftUI
         }
     }
 
-    public extension Navigation {
+    public extension SwiftRouter {
         @MainActor protocol UIRouteViewController: UIViewController {
             var hideNavigationBar: Bool? { get }
-            var viewModel: Navigation.RouteViewModel? { get set }
+            var viewModel: SwiftRouter.RouteViewModel? { get set }
         }
     }
 
-    public extension Navigation {
+    public extension SwiftRouter {
         final class RouteViewController<Content: View>: UIHostingController<Content>, UIRouteViewController {
             public init(
                 rootView: Content,
-                viewModel: Navigation.RouteViewModel? = nil,
-                hideNavigationBar: Bool? = nil
+                viewModel: SwiftRouter.RouteViewModel? = nil,
+                hideNavigationBar: Bool? = nil,
+                title: String? = nil
             ) {
                 self.viewModel = viewModel
                 self.hideNavigationBar = hideNavigationBar
                 super.init(rootView: rootView)
+                self.title = title
             }
 
             @available(*, unavailable)
@@ -145,7 +150,7 @@ import SwiftUI
                 fatalError("init(coder:) has not been implemented")
             }
 
-            public var viewModel: Navigation.RouteViewModel?
+            public var viewModel: SwiftRouter.RouteViewModel?
             public let hideNavigationBar: Bool?
         }
     }
@@ -161,4 +166,5 @@ import SwiftUI
             return viewControllers.count > 1
         }
     }
+
 #endif

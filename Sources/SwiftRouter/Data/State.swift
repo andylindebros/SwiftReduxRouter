@@ -4,9 +4,10 @@ import OSLog
 import UIKit
 #endif
 
-public extension Navigation {
+// swiftlint:disable opening_brace
+public extension SwiftRouter {
     struct State: Sendable, Equatable, Codable {
-        public init(observed: Navigation.ObservedState = .init()) {
+        public init(observed: SwiftRouter.ObservedState = .init()) {
             self.observed = observed
         }
 
@@ -14,28 +15,25 @@ public extension Navigation {
     }
 
     struct ObservedState: Sendable, Equatable, Codable {
-        public init(navigationModels: [Model] = [Model](), alerts: [AlertModel] = [], availableRoutes: [Route] = []) {
+        public init(navigationModels: [Model] = [Model](), alerts: [AlertModel] = [], availableRoutes: [Route] = [], selectedModelId: UUID? = nil, selectedRootModelId: UUID? = nil, lastModified: Date = .now) {
             self.availableRoutes = availableRoutes
             self.alerts = alerts
 
-            self.navigationModels = navigationModels.map { navigationModel in
-                var navigationModel = navigationModel
-                navigationModel.isPresented = false
-                return navigationModel
-            }
+            self.navigationModels = navigationModels
+            self.lastModified = lastModified
 
             let first = navigationModels.first?.id ?? UUID()
-            selectedModelId = first
-            rootSelectedModelID = first
+            self.selectedModelId = selectedModelId ?? first
+            rootSelectedModelID = selectedRootModelId ?? first
         }
 
-        /// Active navigationModel. It can only be one sessin at the time
+        /// Active navigationModel. It can only be one session at the time
         public var selectedModelId: UUID
         public var rootSelectedModelID: UUID
         public var navigationModels = [Model]()
         public var alerts: [AlertModel] = []
         public var availableRoutes: [Route] = []
-        public var lastModifiedID: UUID = .init()
+        public var lastModified: Date = Date.now
         public var tipIdentifier: String?
         public var tipNavigationModelID: UUID?
         public var removeUntrackedViews: Bool = false
@@ -43,7 +41,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation.State {
+public extension SwiftRouter.State {
     // swiftlint:disable cyclomatic_complexity function_body_length
 
     /**
@@ -53,11 +51,11 @@ public extension Navigation.State {
      - parameter state: The state to modify
      - returns: A new modified state
      */
-    static func reducer<Action>(action: Action, state: Navigation.State) -> Navigation.State {
+    static func reducer<Action>(action: Action, state: SwiftRouter.State) -> SwiftRouter.State {
         var state = state
-        guard let action = action as? Navigation.Action else { return state }
+        guard let action = action as? SwiftRouter.Action else { return state }
 
-        state.observed.lastModifiedID = UUID()
+        state.observed.lastModified = .now
 
         switch action {
         case let .multiAction(actions):
@@ -106,6 +104,17 @@ public extension Navigation.State {
 
         case let .dismiss(dismissTarget):
             switch dismissTarget {
+            case let .popToRoot(byModelId: modelId):
+                guard
+                    let index = state.observed.navigationModels.firstIndex(where: { $0.id == modelId }),
+                    let selectedPath = state.observed.navigationModels[index].presentedPaths.first
+                else {
+                    print("Cannot pop top root since the model or the root path does not exist", dismissTarget)
+                    return state
+                }
+                state.observed.navigationModels[index].selectedPath = selectedPath
+                state = Self.removeRedundantPaths(at: index, from: state)
+
             case let .currentModel(animated, completion):
                 if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == state.observed.selectedModelId }) {
                     if let completion {
@@ -143,6 +152,24 @@ public extension Navigation.State {
                         }
                     }
                 }
+
+            case let .currentPath(animated):
+                guard
+                    let model = state.observed.navigationModels.first(where: { $0.id == state.observed.selectedModelId }),
+                    let modelIndex = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId }),
+                    model.presentedPaths.count > 1,
+                    let deletionPathIndex = model.presentedPaths.firstIndex(where: { $0.id == model.selectedPath.id })
+                else {
+                    print("⚠️ Cannot pop current path since it does not exist or it is the root path of the navigation model")
+                    return state
+                }
+
+                state.observed.navigationModels[modelIndex].animate = animated
+                state.observed.navigationModels[modelIndex].presentedPaths = model.presentedPaths.filter({ $0.id != model.selectedPath.id })
+                state.observed.navigationModels[modelIndex].selectedPath = model.presentedPaths[deletionPathIndex - 1]
+
+                // Remove all indexes that comes after current path
+                state = Self.removeRedundantPaths(at: modelIndex, from: state)
 
             case let .path(navPath, animated, completion):
                 if let index = state.observed.navigationModels.firstIndex(where: { $0.presentedPaths.map { $0.id }.contains(navPath.id) }) {
@@ -201,7 +228,7 @@ public extension Navigation.State {
             state.observed.dismissAllCompletion?.completion?()
             state.observed.dismissAllCompletion = nil
 
-        case let .update(path, withURL: url, in: navigationModel):
+        case let .update(path, withURL: url, in: navigationModel, withHapticFeedback: hapticFeedback):
             guard
                 let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }),
                 let currentPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == path.id }),
@@ -212,12 +239,12 @@ public extension Navigation.State {
                 route.validate(result: matchResult, forAccessLevel: .private)
             else {
                 print(
-                    "⚠️ Cannot update path \(path) since it does not support \(url?.absoluteString ?? "unknown")"
+                    "Cannot update path \(path) since it does not support \(url?.absoluteString ?? "unknown")"
                 )
                 return state
             }
 
-            let path = Navigation.Path(
+            let path = SwiftRouter.Path(
                 id: currentPath.id,
                 url,
                 path.name,
@@ -227,11 +254,13 @@ public extension Navigation.State {
 
             state.observed.navigationModels[index].presentedPaths[currentPathIndex] = path
             state.observed.navigationModels[index].animate = false
-            state = Self.reducer(action: Navigation.Action.setSelectedPath(to: path, in: state.observed.navigationModels[index]), state: state)
+            state = Self.reducer(action: SwiftRouter.Action.setSelectedPath(to: path, in: state.observed.navigationModels[index]), state: state)
 
-            impactOccured()
+            if hapticFeedback {
+                impactOccured()
+            }
 
-        case let .open(path: navigationPath, in: target):
+        case let .open(path: navigationPath, in: target, withHapticFeedback: hapticFeedback):
             guard let navigationPath = Self.validate(path: navigationPath, in: state) else {
                 return state
             }
@@ -241,18 +270,31 @@ public extension Navigation.State {
                 guard
                     let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId })
                 else {
-                    assertionFailure("Cannot push a view to a navigationModel that does not exist")
+                    let meesage = "Cannot push a view to a navigationModel that does not exist"
+                    print(meesage, "state.observed.selectedModelId", state.observed.selectedModelId, "desired path", navigationPath, "target: .current()")
+                    assertionFailure(meesage)
                     return state
                 }
                 state.observed.navigationModels[index].animate = animate
 
                 state = Self.updateOrOpen(navigationPath, with: state.observed.navigationModels[index], in: state)
 
+            case let .modelId(id, animate):
+                guard
+                    let model = state.observed.navigationModels.first(where: { $0.id == id })
+                else {
+                    let message = "Cannot open a view in a navigationModel that does not exist"
+                    print(message, "state.observed.selectedModelId", state.observed.selectedModelId, "desired path", navigationPath, "target: .modelId(\(id)")
+                    return state
+                }
+                return Self.reducer(action: SwiftRouter.Action.open(path: navigationPath, in: .model(model, animate: animate), withHapticFeedback: hapticFeedback), state: state)
+
             case let .model(navigationModel, animate):
                 guard
                     let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id })
                 else {
-                    assertionFailure("Cannot push a view to a navigationModel that does not exist")
+                    let message = "Cannot push a view to a navigationModel that does not exist"
+                    print(message, "state.observed.selectedModelId", state.observed.selectedModelId, "desired path", navigationPath, "target: .model(\(navigationModel)")
                     return state
                 }
                 state.observed.selectedModelId = state.observed.navigationModels[index].id
@@ -264,9 +306,9 @@ public extension Navigation.State {
                 state = Self.updateOrOpen(navigationPath, with: navigationModel, in: state)
 
             case let .new(routes, presentationType):
-                let navigationModel = Navigation.Model(
+                let navigationModel = SwiftRouter.Model(
                     routes: routes,
-                    selectedPath: Navigation.Path(),
+                    selectedPath: SwiftRouter.Path(),
                     presentationType: presentationType,
                     selectedDetentIdentifier: presentationType.selectedDetent?.identifier ?? presentationType.detentItems?.first?.identifier,
                     animate: presentationType.options.animated
@@ -276,9 +318,11 @@ public extension Navigation.State {
 
                 state = Self.setSelectedPath(navigationPath, in: state)
             }
-            impactOccured()
+            if hapticFeedback {
+                impactOccured()
+            }
 
-        case let .setNavigationDismsissed(navigationModel):
+        case let .setNavigationDismissed(navigationModel):
             if let index = state.observed.navigationModels.firstIndex(where: { $0.isPresented && $0.id == navigationModel.id }) {
                 state.observed.navigationModels.remove(at: index)
 
@@ -319,20 +363,25 @@ public extension Navigation.State {
             guard let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id }) else { return state }
             state.observed.navigationModels[index].selectedDetentIdentifier = identifier
 
-        case let .setNewDetents(detents, selected, in: navigationModel):
+        case let .setNewDetents(detents, selected, in: navigationModel, largestUndimmedDetentIdentifier, prefersGrabberVisible, preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge):
             guard
                 let index = state.observed.navigationModels.firstIndex(where: { $0.id == navigationModel.id && $0.isPresented }),
                 detents.contains(selected),
                 detents.count > 0,
-                let model = state.observed.navigationModels.first(where: { $0.id == navigationModel.id }),
-                case Navigation.PresentationType.detents(var detentsModel, let options) = model.presentationType
+                let model = state.observed.navigationModels.first(where: { $0.id == navigationModel.id })
             else {
-                print("⚠️ Failed to set new detents to \(navigationModel). Desired navigationModel was not found or is not presented or the newDetents are invalid. Amount of detents needs to be at least one")
+                print("Failed to set new detents to \(navigationModel). Desired navigationModel was not found or is not presented or the newDetents are invalid. Amount of detents needs to be at least one")
                 return state
             }
 
-            detentsModel.detents = detents
-            detentsModel.selected = selected
+            var detentsModel = SwiftRouter.Model.PresentationType.DetentOptionsModel(detents: detents, selected: selected, largestUndimmedDetentIdentifier: largestUndimmedDetentIdentifier, prefersGrabberVisible: prefersGrabberVisible, preferredCornerRadius: preferredCornerRadius, prefersScrollingExpandsWhenScrolledToEdge: prefersScrollingExpandsWhenScrolledToEdge)
+            var options = SwiftRouter.Model.PresentationType.TransitionOptions()
+            if case SwiftRouter.Model.PresentationType.detents(let detentsModelOld, let optionsOld) = model.presentationType {
+                detentsModel = detentsModelOld
+                detentsModel.detents = detents
+                detentsModel.selected = selected
+                options = optionsOld
+            }
 
             state.observed.navigationModels[index].presentationType = .detents(detentsModel, options: options)
             state.observed.navigationModels[index].selectedDetentIdentifier = selected.identifier
@@ -346,8 +395,6 @@ public extension Navigation.State {
             state.observed.tipIdentifier = identifier
             state.observed.tipNavigationModelID = identifier != nil ? navigationModel.id : nil
 
-        case let .setLoadedState(to: newValue):
-            state = newValue
         }
 
         return state
@@ -355,7 +402,7 @@ public extension Navigation.State {
 
     // swiftlint:enable cyclomatic_complexity function_body_length
 
-    static func setSelectedPath(_ path: Navigation.Path, in state: Navigation.State) -> Navigation.State {
+    static func setSelectedPath(_ path: SwiftRouter.Path, in state: SwiftRouter.State) -> SwiftRouter.State {
         var state = state
         if let index = state.observed.navigationModels.firstIndex(where: { $0.id == state.observed.selectedModelId }) {
             state = Self.removeRedundantPaths(at: index, from: state)
@@ -367,7 +414,7 @@ public extension Navigation.State {
         return state
     }
 
-    static func removeRedundantPaths(at index: Int, from state: Navigation.State) -> Navigation.State {
+    static func removeRedundantPaths(at index: Int, from state: SwiftRouter.State) -> SwiftRouter.State {
         // Remove all indexes that comes after current path
         var state = state
         if let presentedPathIndex = state.observed.navigationModels[index].presentedPaths.firstIndex(where: { $0.id == state.observed.navigationModels[index].selectedPath.id }) {
@@ -378,17 +425,10 @@ public extension Navigation.State {
 
         return state
     }
-
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "Router")
-
-    private static func debug(_ items: Any...) {
-        let message = items.map { "\($0)" }.joined(separator: " ")
-        Self.logger.debug("\(message)")
-    }
 }
 
-extension Navigation.State {
-    static func route(by urlMatchResult: URLMatchResult, in availableRoutes: [Navigation.Route]) -> Navigation.Route? {
+extension SwiftRouter.State {
+    static func route(by urlMatchResult: URLMatchResult, in availableRoutes: [SwiftRouter.Route]) -> SwiftRouter.Route? {
         guard
             let route = availableRoutes.first(where: { $0.pattern == urlMatchResult.pattern })
         else {
@@ -398,13 +438,13 @@ extension Navigation.State {
         return route
     }
 
-    static func validate(path navigationPath: Navigation.Path?, in state: Navigation.State) -> Navigation.Path? {
+    static func validate(path navigationPath: SwiftRouter.Path?, in state: SwiftRouter.State, logger: SwiftRouter.Logger? = nil) -> SwiftRouter.Path? {
         guard
             let navigationPath,
             let urlMatchResult = navigationPath.urlMatchResult(of: state.observed.availableRoutes)
         else {
-            debug(
-                "⚠️ Cannot open \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "unknown") since it not supported by any route"
+            logger?.warning(
+                "Cannot open \(navigationPath?.path ?? navigationPath?.id.uuidString ?? "unknown") since it not supported by any route"
             )
             return nil
         }
@@ -413,54 +453,59 @@ extension Navigation.State {
             guard
                 route.validate(result: urlMatchResult, forAccessLevel: .private)
             else {
-                debug(
-                    "⚠️ Cannot open \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route"
+                logger?.warning(
+                    "Cannot open \(navigationPath.path ?? navigationPath.id.uuidString) since it not supported by any route"
                 )
                 return nil
             }
         }
 
-        return Navigation.Path(
+        return SwiftRouter.Path(
             id: navigationPath.id,
             navigationPath.url,
             navigationPath.name,
-            urlMatchResult
+            urlMatchResult,
+            navBarOptions: navigationPath.navBarOptions
         )
     }
 
-    static func updateOrOpen(_ navigationPath: Navigation.Path, with model: Navigation.Model, in state: Navigation.State) -> Navigation.State {
-        // Exact: 100% match in a tab
+    static func updateOrOpen(_ navigationPath: SwiftRouter.Path, with model: SwiftRouter.Model, in state: SwiftRouter.State) -> SwiftRouter.State {
+        // Exact: 100% match in a tab and duplicates are not allowed
         if
             let newURL = navigationPath.url,
             let matchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.pattern }),
             let currentPath = model.presentedPaths.first(where: { $0.path == newURL.path }),
             currentPath.path == newURL.path,
-            let route = Navigation.State.route(by: matchResult, in: state.observed.availableRoutes),
-            route.accessLevel.grantAccess(for: .private)
+            let route = SwiftRouter.State.route(by: matchResult, in: state.observed.availableRoutes),
+            route.accessLevel.grantAccess(for: .private),
+            !route.allowsDuplicates
         {
-            return reducer(action: Navigation.Action.setSelectedPath(to: currentPath, in: model), state: state)
+            return reducer(action: SwiftRouter.Action.setSelectedPath(to: currentPath, in: model), state: state)
         }
 
-        // Similar: URL has an similar match in a tab
+        // Similar: URL has an similar match in a tab and duplicates are not allowed
         if
             let newURL = navigationPath.url,
             let newMatchResult = URLMatcher().match(newURL.path, from: state.observed.availableRoutes.compactMap { $0.pattern }),
             let currentPath = model.presentedPaths.first(where: { $0.urlMatchResult(of: state.observed.availableRoutes)?.pattern == newMatchResult.pattern }),
-            let route = Navigation.State.route(by: newMatchResult, in: state.observed.availableRoutes),
+            let route = SwiftRouter.State.route(by: newMatchResult, in: state.observed.availableRoutes),
             !route.rules.isEmpty,
+            !route.allowsDuplicates,
             route.validate(result: newMatchResult, forAccessLevel: .private)
         {
-            return Self.reducer(action: Navigation.Action.update(path: currentPath, withURL: newURL, in: model), state: state)
+            return Self.reducer(action: SwiftRouter.Action.update(path: currentPath, withURL: newURL, in: model), state: state)
         }
 
+        // Add as new
         return Self.setSelectedPath(navigationPath, in: state)
     }
 
     private static func impactOccured() {
-        #if os(iOS)
         Task {
             await UIImpactFeedbackGenerator(style: .light).impactOccurred()
         }
-        #endif
     }
 }
+
+// swiftlint:enable opening_brace
+

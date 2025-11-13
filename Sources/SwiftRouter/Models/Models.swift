@@ -1,10 +1,7 @@
 import Foundation
-#if os(iOS)
-    import UIKit
-#endif
-import SwiftUICore
+import UIKit
 
-public extension Navigation {
+public extension SwiftRouter {
     /**
      Specifies how to dismiss a view
      */
@@ -14,7 +11,7 @@ public extension Navigation {
 
          - parameter animated:Indicates whether the dismissal should be animated.
          - parameter completion: closure to trigger when dismissal has completed
-          */
+         */
         case currentModel(animated: Bool = true, withCompletion: CodableClosure? = nil)
 
         /**
@@ -23,30 +20,41 @@ public extension Navigation {
          - parameter model: Desired navigationModel to dismiss
          - parameter animated:Indicates whether the dismissal should be animated.
          - parameter completion: closure to trigger when dismissal has completed
-          */
+         */
         case model(Model, animated: Bool = true, withCompletion: CodableClosure? = nil)
 
         /**
-          Dismisses a specified navigationPath.
+         Dismisses a specified navigationPath.
 
-          If the path is part of a navigation stack, it will be removed from the stack.
-          If it is the only path in the stack and the model is presented, the entire model will be dismissed.
-          -
+         If the path is part of a navigation stack, it will be removed from the stack.
+         If it is the only path in the stack and the model is presented, the entire model will be dismissed.
+         -
          - parameter path: Desired navigationPath to dismiss
          - parameter animated:Indicates whether the dismissal should be animated.
          - parameter completion: closure to trigger when dismissal has completed
-          */
-        case path(Navigation.Path, animated: Bool = true, withCompletion: CodableClosure? = nil)
+         */
+        case path(SwiftRouter.Path, animated: Bool = true, withCompletion: CodableClosure? = nil)
 
+
+        /**
+         Dismisses current path in the current navigationModel if it is not the first path in the model
+
+         - parameter animated:Indicates whether the dismissal should be animated.
+         */
+        case currentPath(animated: Bool = true)
         /**
          Dismisses all presented navigationModels
 
          - parameter includingUntracked: also dismiss untracked views
          - parameter completion: closure to trigger when dismissal has completed
-          */
+         */
         case allPresented(includingUntracked: Bool = true, withCompletion: CodableClosure? = nil)
-    }
 
+        case popToRoot(byModelId: UUID)
+    }
+}
+
+public extension SwiftRouter.Model {
     /**
      Specifies where and how a path should be presented.
      */
@@ -57,15 +65,23 @@ public extension Navigation {
          - parameter routes: Supported deep link routes.
          - parameter type: The presentation strategy.
          */
-        case new(routes: [Route]? = nil, type: PresentationType = .pageSheet())
+        case new(routes: [SwiftRouter.Route]? = nil, type: PresentationType = .pageSheet())
 
         /**
          Specifies an existing navigation stack to which the view should be added.
 
-         - parameter mode: Defines the target navigation stack.
+         - parameter model: Defines the target navigation stack.
          - parameter animate: Indicates whether the presentation should be animated
          */
-        case model(Model, animate: Bool = true)
+        case model(SwiftRouter.Model, animate: Bool = true)
+
+        /**
+         Specifies an existing navigation stack to which the view should be added.
+
+         - parameter id: Defines the id of the targeted navigation stack.
+         - parameter animate: Indicates whether the presentation should be animated
+         */
+        case modelId(UUID, animate: Bool = true)
 
         /**
          Specifies current selected navigation stack to which the view should be added.
@@ -74,33 +90,27 @@ public extension Navigation {
          */
         case current(animate: Bool = true)
     }
-}
 
-public extension Navigation {
     enum TransitionStyle: Equatable, Codable, Sendable {
         case coverVertical
         case flipHorizontal
         case crossDissolve
         case partialCurl
 
-        #if os(iOS)
-            var transistionStyle: UIModalTransitionStyle {
-                switch self {
-                case .coverVertical:
-                    return .coverVertical
-                case .flipHorizontal:
-                    return .flipHorizontal
-                case .crossDissolve:
-                    return .crossDissolve
-                case .partialCurl:
-                    return .partialCurl
-                }
+        var transistionStyle: UIModalTransitionStyle {
+            switch self {
+            case .coverVertical:
+                return .coverVertical
+            case .flipHorizontal:
+                return .flipHorizontal
+            case .crossDissolve:
+                return .crossDissolve
+            case .partialCurl:
+                return .partialCurl
             }
-        #endif
+        }
     }
-}
 
-public extension Navigation {
     /**
      Defines how the `UINavigationController` should be presented
      */
@@ -139,7 +149,7 @@ public extension Navigation {
          - parameter options: Modal options
          */
         case formSheet(options: TransitionOptions = .init())
-        #if os(iOS)
+
         var style: UIModalPresentationStyle {
             switch self {
             case .pageSheet, .detents:
@@ -152,7 +162,6 @@ public extension Navigation {
                 .formSheet
             }
         }
-        #endif
 
         var options: TransitionOptions {
             switch self {
@@ -186,7 +195,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation.PresentationType {
+public extension SwiftRouter.Model.PresentationType {
     /**
      Presents the modal with detents
 
@@ -198,7 +207,7 @@ public extension Navigation.PresentationType {
       - parameter prefersScrollingExpandsWhenScrolledToEdge: Allows to expand the view when scrolled to the edge
       */
     struct DetentOptionsModel: Equatable, Codable, Sendable {
-        public init(detents: [Navigation.PresentationType.Detent], selected: Navigation.PresentationType.Detent? = nil, largestUndimmedDetentIdentifier: Navigation.PresentationType.Detent? = nil, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true) {
+        public init(detents: [SwiftRouter.Model.PresentationType.Detent], selected: SwiftRouter.Model.PresentationType.Detent? = nil, largestUndimmedDetentIdentifier: SwiftRouter.Model.PresentationType.Detent? = nil, prefersGrabberVisible: Bool = false, preferredCornerRadius: Double? = nil, prefersScrollingExpandsWhenScrolledToEdge: Bool = true) {
             self.detents = detents
             self.selected = selected
             self.largestUndimmedDetentIdentifier = largestUndimmedDetentIdentifier
@@ -216,7 +225,7 @@ public extension Navigation.PresentationType {
     }
 
     struct TransitionOptions: Equatable, Codable, Sendable {
-        public init(animated: Bool = true, preventDismissal: Bool = false, transistionStyle: Navigation.TransitionStyle = .coverVertical) {
+        public init(animated: Bool = true, preventDismissal: Bool = false, transistionStyle: SwiftRouter.Model.TransitionStyle = .coverVertical) {
             self.animated = animated
             self.preventDismissal = preventDismissal
             self.transistionStyle = transistionStyle
@@ -224,7 +233,7 @@ public extension Navigation.PresentationType {
 
         var animated: Bool = true
         var preventDismissal: Bool = false
-        var transistionStyle: Navigation.TransitionStyle = .coverVertical
+        var transistionStyle: SwiftRouter.Model.TransitionStyle = .coverVertical
     }
 
     /**
@@ -259,7 +268,7 @@ public extension Navigation.PresentationType {
                 return identifier
             }
         }
-        #if os(iOS)
+
         @MainActor public var detent: UISheetPresentationController.Detent {
             switch self {
             case .medium:
@@ -273,39 +282,10 @@ public extension Navigation.PresentationType {
                 }
             }
         }
-        #endif
     }
 }
 
-public extension Navigation {
-    /**
-     Defines a rule for matching a path with a navigationRoute
-     */
-    enum Rule: Equatable, Codable, Sendable {
-        /**
-         Allows any params
-          */
-        case any
-
-        /**
-         The value needs to match one of given values in the list
-
-          - parameter matchValue: a list of valid values
-          */
-        case oneOf([URLPathMatchValue])
-
-        func match(value: URLPathMatchValue) -> Bool {
-            switch self {
-            case .any:
-                true
-            case let .oneOf(values):
-                values.contains(value)
-            }
-        }
-    }
-}
-
-public extension Navigation {
+public extension SwiftRouter {
     /**
      Defines a route and includes:
 
@@ -321,23 +301,30 @@ public extension Navigation {
      - parameter preExecutionDeeplinkOpenAction: Apply additional action before a path is added to the state.
      */
     struct Route: Equatable, Codable, Sendable, CustomStringConvertible {
-        public init(_ pattern: String, name: String? = nil, rules: [String: Rule] = [:], accessLevel: RouteAccessLevel = .private, nestedPaths: [String] = [], preExecutionDeeplinkOpenAction: Action? = nil) {
+        public init(_ pattern: String, name: String? = nil, rules: [String: Rule] = [:], accessLevel: AccessLevel = .private, nestedPaths: [String] = [], preExecutionDeeplinkOpenAction: Action? = nil, allowsDuplicates: Bool = true, preferredNavigationTarget: SwiftRouter.Model.Target? = nil) {
             self.pattern = pattern
             self.name = name
             self.rules = rules
             self.accessLevel = accessLevel
             self.nestedPaths = nestedPaths.count > 0 ? nestedPaths : [pattern]
             self.preExecutionDeeplinkOpenAction = preExecutionDeeplinkOpenAction
+            self.allowsDuplicates = allowsDuplicates
+            self.preferredNavigationTarget = preferredNavigationTarget
         }
 
         public let pattern: String
         public let name: String?
         public let rules: [String: Rule]
-        public let accessLevel: RouteAccessLevel
+        public let allowsDuplicates: Bool
+        public let accessLevel: AccessLevel
         public let nestedPaths: [String]
         public let preExecutionDeeplinkOpenAction: Action?
+        public let preferredNavigationTarget: SwiftRouter.Model.Target?
 
-        public func reverse(params: [String: URLPathMatchValue] = [:], navBarOptions: Path.NavBarOptions? = nil) -> Path? {
+        public var identifier: String {
+            pattern + (name ?? "")
+        }
+        public func reverse(params: [String: URLPathMatchValue] = [:], navBarOptions: SwiftRouter.Path.NavBarOptions? = nil) -> Path? {
             let urlMatcher = URLMatcher()
             let components = urlMatcher.pathComponents(from: pattern)
             var parameters: [String] = []
@@ -366,7 +353,7 @@ public extension Navigation {
             return .init(url, name, navBarOptions: navBarOptions)
         }
 
-        func validate(result: URLMatchResult, forAccessLevel candidate: RouteAccessLevel) -> Bool {
+        func validate(result: URLMatchResult, forAccessLevel candidate: AccessLevel) -> Bool {
             guard
                 result.pattern == pattern,
                 accessLevel.grantAccess(for: candidate)
@@ -395,15 +382,15 @@ public extension Navigation {
             rules.merge(child.rules) { _, new in new }
             var nestedPaths = nestedPaths
             nestedPaths.append(child.pattern)
-            return Route(pattern, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: preExecutionDeeplinkOpenAction)
+            return Route(pattern, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: preExecutionDeeplinkOpenAction, allowsDuplicates: allowsDuplicates, preferredNavigationTarget: child.preferredNavigationTarget ?? preferredNavigationTarget)
         }
 
-        public func with(access: RouteAccessLevel) -> Route {
-            Route(pattern, name: name, rules: rules, accessLevel: access, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: preExecutionDeeplinkOpenAction)
+        public func with(access: AccessLevel) -> Route {
+            Route(pattern, name: name, rules: rules, accessLevel: access, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: preExecutionDeeplinkOpenAction, allowsDuplicates: allowsDuplicates, preferredNavigationTarget: preferredNavigationTarget)
         }
 
         public func withPreExecutionDeeplinkOpenAction(_ action: Action) -> Route {
-            Route(pattern, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: action)
+            Route(pattern, name: name, rules: rules, accessLevel: accessLevel, nestedPaths: nestedPaths, preExecutionDeeplinkOpenAction: action, allowsDuplicates: allowsDuplicates, preferredNavigationTarget: preferredNavigationTarget)
         }
 
         var parentPath: String {
@@ -415,13 +402,39 @@ public extension Navigation {
     }
 }
 
-public extension Navigation {
-    enum RouteAccessLevel: Equatable, Codable, Sendable {
+public extension SwiftRouter.Route {
+    /**
+     Defines a rule for matching a path with a navigationRoute
+     */
+    enum Rule: Equatable, Codable, Sendable {
+        /**
+         Allows any params
+          */
+        case any
+
+        /**
+         The value needs to match one of given values in the list
+
+          - parameter matchValue: a list of valid values
+          */
+        case oneOf([URLPathMatchValue])
+
+        func match(value: URLPathMatchValue) -> Bool {
+            switch self {
+            case .any:
+                true
+            case let .oneOf(values):
+                values.contains(value)
+            }
+        }
+    }
+
+    enum AccessLevel: Equatable, Codable, Sendable {
         case `private`
         case `internal`
         case `public`
 
-        func grantAccess(for candidate: RouteAccessLevel) -> Bool {
+        func grantAccess(for candidate: AccessLevel) -> Bool {
             switch candidate {
             case .private:
                 true
@@ -434,7 +447,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation {
+public extension SwiftRouter {
     /**
      Represents a `UIViewController` that is added to the navigation stack. This model is also used to match a URL to a specific route.
 
@@ -510,7 +523,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation.Path {
+public extension SwiftRouter.Path {
     /**
      Provides options for the nav bar
 
@@ -523,12 +536,12 @@ public extension Navigation.Path {
             self.title = title
         }
 
-        let hideNavigationBar: Bool
-        let title: String?
+        public let hideNavigationBar: Bool
+        public let title: String?
     }
 }
 
-public extension Navigation {
+public extension SwiftRouter {
     /**
      Defines a tabBarItem
 
@@ -544,11 +557,11 @@ public extension Navigation {
         public var icon: Icon
         public var selectedIcon: Icon?
 
-        public var badgeColor: Color?
+        public var badgeColor: UIColor?
         public var badgeValue: String?
         public var tipIdentifier: String?
 
-        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: Color? = nil, tipIdentifier: String? = nil) {
+        public init(name: String, icon: Icon, selectedIcon: Icon? = nil, badgeValue: String? = nil, badgeColor: UIColor? = nil, tipIdentifier: String? = nil) {
             self.name = name
             self.icon = icon
             self.selectedIcon = selectedIcon
@@ -563,8 +576,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation.Tab {
-    #if os(iOS)
+public extension SwiftRouter.Tab {
     struct IconImage: Identifiable, Sendable {
         public init(id: String, image: UIImage) {
             self.id = id
@@ -574,7 +586,6 @@ public extension Navigation.Tab {
         public let id: String
         public let image: UIImage?
     }
-    #endif
 
     enum Icon: Codable, Sendable {
         case iconImage(id: String)
@@ -583,25 +594,9 @@ public extension Navigation.Tab {
     }
 }
 
-public extension Navigation {
-    enum AlertStyle: Codable, Equatable, Sendable {
-        case actionSheet
-        case alert
-
-        #if os(iOS)
-        var uiAlertControllerStyle: UIAlertController.Style {
-            switch self {
-            case .actionSheet:
-                .actionSheet
-            case .alert:
-                .alert
-            }
-        }
-        #endif
-    }
-
+public extension SwiftRouter {
     struct AlertModel: Identifiable, Codable, Equatable, Sendable {
-        public init(id: UUID = UUID(), type: AlertStyle = .alert, title: String? = nil, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
+        public init(id: UUID = UUID(), type: UIAlertController.Style = .alert, title: String? = nil, message: String? = nil, buttons: [AlertButtonModel]? = nil) {
             self.id = id
             self.type = type
             self.title = title
@@ -610,7 +605,7 @@ public extension Navigation {
         }
 
         public let id: UUID
-        public let type: AlertStyle
+        public let type: UIAlertController.Style
         public let title: String?
         public var message: String?
         public let buttons: [AlertButtonModel]?
@@ -621,26 +616,7 @@ public extension Navigation {
             lhs.id == rhs.id
         }
 
-        public enum AlertActionStyle: Equatable, Codable, Sendable {
-            case `default`
-            case cancel
-            case destructive
-
-            #if os(iOS)
-            public var uiAlertActionStyle: UIAlertAction.Style {
-                switch self {
-                case .default:
-                    return .default
-                case .cancel:
-                    return .cancel
-                case .destructive:
-                    return .destructive
-                }
-            }
-            #endif
-        }
-
-        public init(id: UUID = UUID(), label: String, type: AlertActionStyle = .default, action: (@Sendable () -> Void)? = nil) {
+        public init(id: UUID = UUID(), label: String, type: UIAlertAction.Style = .default, action: (@Sendable () -> Void)? = nil) {
             self.id = id
             self.label = label
             self.type = type
@@ -652,13 +628,13 @@ public extension Navigation {
 
             id = try values.decode(UUID.self, forKey: .id)
             label = try values.decode(String.self, forKey: .label)
-            type = try values.decode(AlertActionStyle.self, forKey: .type)
+            type = try values.decode(UIAlertAction.Style.self, forKey: .type)
             action = nil
         }
 
         public var id: UUID
         let label: String
-        let type: AlertActionStyle
+        let type: UIAlertAction.Style
         let action: (@Sendable () -> Void)?
 
         enum CodingKeys: CodingKey {
@@ -667,7 +643,7 @@ public extension Navigation {
     }
 }
 
-public extension Navigation {
+public extension SwiftRouter {
     struct CodableClosure: Sendable, Codable, Equatable {
         public init(id: UUID = UUID(), _ completion: (@Sendable () -> Void)? = nil) {
             self.completion = completion
@@ -691,3 +667,6 @@ public extension Navigation {
         }
     }
 }
+
+extension UIAlertAction.Style: Codable {}
+extension UIAlertController.Style: Codable {}

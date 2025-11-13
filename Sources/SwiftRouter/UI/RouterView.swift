@@ -3,7 +3,8 @@ import SwiftUI
 #if os(iOS)
     import UIKit
 
-    public extension Navigation {
+    public extension SwiftRouter {
+        // swiftlint:disable opening_brace
         /**
          RouterView provides a SwiftUI view based on a navigation state
          */
@@ -28,7 +29,9 @@ import SwiftUI
                     dispatch(Action.setSelectedPath(to: path, in: model))
                 }
                 onDismiss = { navigationModel in
-                    dispatch(Action.setNavigationDismsissed(navigationModel))
+                    if navigationModel.isPresented {
+                        dispatch(Action.setNavigationDismissed(navigationModel))
+                    }
                 }
 
                 selectedDetentDidChange = { identifier, navigationModel in
@@ -83,11 +86,12 @@ import SwiftUI
                 return crlr
             }
 
+            // swiftlint:disable cyclomatic_complexity function_body_length
             @discardableResult private func recreateViewControllerBasedOnState(rootController: UIViewController? = nil) -> UIViewController {
                 guard
                     navigationState.observed.navigationModels.contains(where: { $0.tab != nil })
                 else {
-                    return UINavigationController()
+                    fatalError("At least one tab must be implemented")
                 }
 
                 // Appear as a tabbar. Initial state has more than one navigationModel
@@ -149,8 +153,8 @@ import SwiftUI
                             selectedImage: selectedImage == nil ? icon : selectedImage
                         )
 
-                        if let (r, g, b, a) = try? tab.badgeColor?.colorComponents() {
-                            nc.tabBarItem.badgeColor = UIColor(red: r, green: g, blue: b, alpha: a)
+                        if let badgeColor = tab.badgeColor {
+                            nc.tabBarItem.badgeColor = badgeColor
                         }
                         nc.tabBarItem.badgeValue = tab.badgeValue
                         ncs.append(nc)
@@ -194,10 +198,12 @@ import SwiftUI
 
                 // Notify state that untracked view removal has completed.
                 if navigationState.observed.removeUntrackedViews {
-                    dispatch(Navigation.Action.untrackedViewsRemoved)
+                    dispatch(SwiftRouter.Action.untrackedViewsRemoved)
                 }
                 return tc
             }
+
+            // swiftlint:enable cyclomatic_complexity function_body_length
 
             private func recreateNavigation(nc: Controller, navigationModel: Model) {
                 // Update properties of NavigationController
@@ -208,8 +214,12 @@ import SwiftUI
 
                 // Map presentedPaths to UIViewControllers
                 let vcs = navigationModel.presentedPaths.compactMap { path in
-                    if let vc = nc.viewControllers.compactMap({ $0 as? UIRouteViewController }).first(where: { $0.viewModel?.path.id == path.id }) {
+                    if
+                        let vc = nc.viewControllers.compactMap({ $0 as? UIRouteViewController }).first(where: { $0.viewModel?.path.id == path.id })
+                    {
                         vc.viewModel?.setHasBeenShown(to: path.hasBeenShown)
+                        vc.viewModel?.setModel(to: navigationModel)
+
                         if vc.viewModel?.path.url != path.url {
                             Task {
                                 await vc.viewModel?.setPath(to: path)
@@ -223,7 +233,7 @@ import SwiftUI
                 }
 
                 // Apply viewControllers to navigationContoller
-                nc.setViewControllers(vcs, animated: navigationModel.animate && nc.presentedViewController == nil)
+                nc.setViewControllers(vcs, animated: (nc.viewControllers.count != vcs.count) && navigationModel.animate && nc.presentedViewController == nil)
             }
 
             private func findPresented(navigationModel: Model, in rootViewController: UIViewController, loopCount: Int = 0) -> Controller? {
@@ -242,7 +252,7 @@ import SwiftUI
 
             private func dismissPresentedViewsInOtherWindows() {
                 let dismissals = UIApplication.shared.getAllUIWindows()
-                    .filter { ($0 as? Navigation.Window) == nil }
+                    .filter { ($0 as? SwiftRouter.Window) == nil }
                     .compactMap { $0 }
                 for win in dismissals {
                     if let rootViewController = win.rootViewController {
@@ -286,13 +296,13 @@ import SwiftUI
                     if
                         controller.isDismissing == false,
 
-                        navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true
+                        navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id }) == nil || navigationState.observed.navigationModels.first(where: { $0.id == controller.navigationModel?.id })?.shouldBeDismsised == true // swiftlint:disable:this contains_over_first_not_nil
                     {
                         controller.isDismissing = true
                         controller.dismiss(animated: controller.navigationModel?.animate ?? true) {
                             if let removalModel = controller.navigationModel {
                                 DispatchQueue.main.async {
-                                    dispatch(Navigation.Action.dismiss(.model(removalModel)))
+                                    dispatch(SwiftRouter.Action.dismiss(.model(removalModel)))
                                 }
                             }
                             if let completion = controller.navigationModel?.dismissCompletionAction?.completion {
@@ -314,6 +324,7 @@ import SwiftUI
                 }
             }
 
+            // swiftlint:disable cyclomatic_complexity function_body_length
             private func presentViewControllers(rootViewController: UIViewController, ncs: [Controller], completion _: @escaping () -> Void) {
                 var topController = rootViewController
 
@@ -326,7 +337,7 @@ import SwiftUI
 
                         if
                             let type = controller.navigationModel?.presentationType,
-                            case let PresentationType.detents(model, _) = type,
+                            case let Model.PresentationType.detents(model, _) = type,
                             let sheet = controller.sheetPresentationController
                         {
                             if let detent = model.largestUndimmedDetentIdentifier?.detent {
@@ -373,7 +384,7 @@ import SwiftUI
                             controller.isModalInPresentation = true
                         }
 
-                        if let type = controller.navigationModel?.presentationType, case let PresentationType.detents(model, _) = type, let sheet = controller.sheetPresentationController {
+                        if let type = controller.navigationModel?.presentationType, case let Model.PresentationType.detents(model, _) = type, let sheet = controller.sheetPresentationController {
                             sheet.prefersGrabberVisible = model.prefersGrabberVisible
                             if let preferredCornerRadius = model.preferredCornerRadius {
                                 sheet.preferredCornerRadius = preferredCornerRadius
@@ -401,9 +412,11 @@ import SwiftUI
                 }
             }
 
+            // swiftlint:enable cyclomatic_complexity function_body_length
+
             // MARK: NavPath methods
 
-            static func view(for navigationPath: Path, in navigationModel: Model, andInRoutes routes: [RouterView.Config]) -> UIRouteViewController? {
+            @MainActor static func view(for navigationPath: Path, in navigationModel: Model, andInRoutes routes: [RouterView.Config]) -> UIRouteViewController? {
                 guard
                     let (route, urlMatchResult) = Self.route(for: navigationPath, in: routes),
                     let route = route
@@ -422,13 +435,13 @@ import SwiftUI
                 }
             }
 
-            private static func route(for navigationPath: Path, in routes: [RouterView.Config]) -> (RouterView.Config?, URLMatchResult?)? {
+            @MainActor public static func route(for navigationPath: Path, in routes: [RouterView.Config]) -> (RouterView.Config?, URLMatchResult?)? {
                 let patterns = routes.flatMap { $0.routes.map { $0.pattern } }
 
                 guard
                     let path = navigationPath.path,
                     let urlMatchResult = URLMatcher().match(path, from: patterns),
-                    let route = routes.filter({ $0.routes.first { $0.pattern == urlMatchResult.pattern } != nil }).first
+                    let route = routes.filter({ $0.routes.first { $0.pattern == urlMatchResult.pattern } != nil }).first // swiftlint:disable:this contains_over_first_not_nil first_where
                 else {
                     // provide first
                     return (Self.defaultRoute(in: routes), nil)
@@ -461,15 +474,16 @@ import SwiftUI
                 return nil
             }
         }
+        // swiftlint:enable opening_brace
     }
 
-    extension Navigation.RouterView {
-        func presentAlert(with model: Navigation.AlertModel, in viewController: UIViewController) {
-            let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: model.type.uiAlertControllerStyle)
+    extension SwiftRouter.RouterView {
+        func presentAlert(with model: SwiftRouter.AlertModel, in viewController: UIViewController) {
+            let alert = UIAlertController(title: model.title, message: model.message, preferredStyle: model.type)
 
             for button in model.buttons ?? [.init(label: "OK")] {
-                alert.addAction(UIAlertAction(title: button.label, style: button.type.uiAlertActionStyle) { _ in
-                    dispatch(Navigation.Action.dismissedAlert(with: model))
+                alert.addAction(UIAlertAction(title: button.label, style: button.type) { _ in
+                    dispatch(SwiftRouter.Action.dismissedAlert(with: model))
                     button.action?()
                 })
             }
@@ -480,12 +494,12 @@ import SwiftUI
 
     // MARK: Nested models
 
-    public extension Navigation.RouterView {
-        struct Config {
+    public extension SwiftRouter.RouterView {
+        struct Config: Sendable {
             public init(
                 name: String? = nil,
-                routes: [Navigation.Route],
-                render: (@MainActor (Navigation.RouteViewModel) -> Navigation.UIRouteViewController?)? = nil,
+                routes: [SwiftRouter.Route],
+                render: (@MainActor (SwiftRouter.RouteViewModel) -> SwiftRouter.UIRouteViewController?)? = nil,
                 defaultRoute: Bool = false
             ) {
                 self.name = name
@@ -495,8 +509,8 @@ import SwiftUI
             }
 
             public let name: String?
-            public let routes: [Navigation.Route]
-            public let render: (@MainActor (Navigation.RouteViewModel) -> Navigation.UIRouteViewController?)?
+            public let routes: [SwiftRouter.Route]
+            public let render: (@MainActor (SwiftRouter.RouteViewModel) -> SwiftRouter.UIRouteViewController?)?
             public let defaultRoute: Bool
 
             func validate(_ result: URLMatchResult) -> Bool {
@@ -511,18 +525,18 @@ import SwiftUI
         }
     }
 
-    public extension Navigation.RouterView {
+    public extension SwiftRouter.RouterView {
         struct NavigationControllerRoute {
-            public init(paths: [Navigation.Route], render: @escaping (Navigation.Model, [String: URLPathMatchValue]?) -> Navigation.Controller) {
+            public init(paths: [SwiftRouter.Route], render: @escaping (SwiftRouter.Model, [String: URLPathMatchValue]?) -> SwiftRouter.Controller) {
                 self.paths = paths
                 self.render = render
             }
 
-            public let paths: [Navigation.Route]
+            public let paths: [SwiftRouter.Route]
             public let render: (
-                Navigation.Model,
+                SwiftRouter.Model,
                 [String: URLPathMatchValue]?
-            ) -> Navigation.Controller
+            ) -> SwiftRouter.Controller
         }
     }
 
@@ -544,4 +558,5 @@ import SwiftUI
                 .flatMap { $0 as? UIWindowScene }
         }
     }
+
 #endif

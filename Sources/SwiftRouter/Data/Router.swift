@@ -1,115 +1,135 @@
 import Foundation
-import OSLog
 import SwiftUI
 
-@MainActor public protocol Router: Sendable {
-    /**
-     Dispatches an action to modify the state of the navigation
+public extension SwiftRouter.Router {
+    nonisolated func dispatch(_ action: SwiftRouter.Action, file: StaticString = #file, line: UInt = #line) {
+        dispatch(action, file: file, line: line)
+    }
 
-     - parameter action: The type of action to perform in order to modify the navigation state.
-     */
-    nonisolated func dispatch(_ action: Navigation.Action)
+    @MainActor func dispatch(_ action: SwiftRouter.Action, file: StaticString = #file, line: UInt = #line) async {
+        await dispatch(action, file: file, line: line)
+    }
 
-    /**
-     Dispatches an action to modify the state of the navigation
+    nonisolated func dispatch(_ actions: [SwiftRouter.Action], file: StaticString = #file, line: UInt = #line) {
+        dispatch(actions, file: file, line: line)
+    }
 
-     - parameter action: The type of action to perform in order to modify the navigation state.
-     */
-    func dispatch(_ action: Navigation.Action) async
-
-    /**
-     Dispatches multiple actions at once
-
-     - parameter action: The type of action to perform in order to modify the navigation state.
-     */
-    nonisolated func dispatch(_ actions: [Navigation.Action])
-
-    /**
-     Dispatches multiple actions at once
-
-     - parameter actions: A list of actions to perform in order to modify the navigation state.
-     */
-    func dispatch(_ actions: [Navigation.Action]) async
-    /**
-     The state of the navigation
-     */
-    var state: Navigation.State { get }
+    func dispatch(_ actions: [SwiftRouter.Action], file: StaticString = #file, line: UInt = #line) async {
+        await dispatch(actions, file: file, line: line)
+    }
 }
+public extension SwiftRouter {
+    @MainActor protocol Router: AnyObject, Sendable {
+        /**
+         Dispatches an action to modify the state of the navigation
 
-@MainActor public final class RouterImpl: ObservableObject, Router {
-    public init(initState: Navigation.State) {
-        state = initState
+         - parameter action: The type of action to perform in order to modify the navigation state.
+         */
+        nonisolated func dispatch(_ action: SwiftRouter.Action, file: StaticString, line: UInt)
+
+        /**
+         Dispatches an action to modify the state of the navigation
+
+         - parameter action: The type of action to perform in order to modify the navigation state.
+         */
+        func dispatch(_ action: SwiftRouter.Action, file: StaticString, line: UInt) async
+
+        /**
+         Dispatches multiple actions at once
+
+         - parameter action: The type of action to perform in order to modify the navigation state.
+         */
+        nonisolated func dispatch(_ actions: [SwiftRouter.Action], file: StaticString, line: UInt)
+
+        /**
+         Dispatches multiple actions at once
+
+         - parameter actions: A list of actions to perform in order to modify the navigation state.
+         */
+        func dispatch(_ actions: [SwiftRouter.Action], file: StaticString, line: UInt) async
+        /**
+         The state of the navigation
+         */
+        var state: SwiftRouter.State { get }
     }
 
-    @Published public private(set) var observedState: UUID = .init()
+    @MainActor final class RouterImpl: ObservableObject, Router {
+        public init(initState: SwiftRouter.State, logger: SwiftRouter.Logger? = nil) {
+            state = initState
+            self.logger = logger
+            logState(prefixString: "👊 Init")
+        }
 
-    private static let logger = Logger(subsystem: Bundle.main.bundleIdentifier!, category: "Router")
+        @Published public private(set) var observedState: UUID = .init()
 
-    private func debug(_ items: Any...) {
-        let message = items.map { "\($0)" }.joined(separator: " ")
-        Self.logger.debug("\(message)")
-    }
+        let logger: SwiftRouter.Logger?
 
-    public private(set) var state: Navigation.State { didSet {
-        var strings = [String]()
-        strings.append("👉 New navigation state")
-        for model in state.observed.navigationModels {
-            strings.append("🧭 \(model.tab?.name ?? model.id.uuidString)")
-            for path in model.presentedPaths {
-                strings.append("   - \(path.id == model.selectedPath.id && model.id == state.observed.selectedModelId ? "👀" : "") \(path.url?.absoluteString ?? "unknown")")
+        public private(set) var state: SwiftRouter.State { didSet {
+            logState(prefixString: "👉 New")
+        }}
+
+        /**
+         Dispatches an action to modify the state of the navigation
+
+         - parameter action: The type of action to perform in order to modify the navigation state.
+         */
+        public nonisolated func dispatch(_ action: SwiftRouter.Action, file: StaticString = #file, line: UInt = #line) {
+            Task { [weak self] in
+                await self?.dispatch(action, file: file, line: line)
             }
         }
-        debug(strings.joined(separator: "\n"))
-    }}
 
-    /**
-     Dispatches an action to modify the state of the navigation
+        /**
+         Dispatches an action to modify the state of the navigation
 
-     - parameter action: The type of action to perform in order to modify the navigation state.
-     */
-    public nonisolated func dispatch(_ action: Navigation.Action) {
-        Task { [weak self] in
-            await self?.dispatch(action)
+         - parameter action: The type of action to perform in order to modify the navigation state.
+         */
+        public func dispatch(_ action: SwiftRouter.Action, file: StaticString = #file, line: UInt = #line) async {
+            logger?.debug("⚡️", action, file: file, line: line)
+
+            await setState(SwiftRouter.State.reducer(action: action, state: state))
         }
-    }
 
-    /**
-     Dispatches an action to modify the state of the navigation
+        /**
+         Dispatches multiple actions at once
 
-     - parameter action: The type of action to perform in order to modify the navigation state.
-     */
-    public func dispatch(_ action: Navigation.Action) async {
-        debug("⚽️⚡️", action)
-
-        await setState(Navigation.State.reducer(action: action, state: state))
-    }
-
-    /**
-     Dispatches multiple actions at once
-
-     - parameter actions: A list of actions to perform in order to modify the navigation state.
-     */
-    public func dispatch(_ actions: [Navigation.Action]) {
-        Task { [weak self] in
-            await self?.dispatch(actions)
+         - parameter actions: A list of actions to perform in order to modify the navigation state.
+         */
+        public func dispatch(_ actions: [SwiftRouter.Action], file: StaticString = #file, line: UInt = #line) {
+            Task { [weak self] in
+                await self?.dispatch(actions, file: file, line: line)
+            }
         }
-    }
 
-    /**
-     Dispatches multiple actions at once
+        /**
+         Dispatches multiple actions at once
 
-     - parameter actions: A list of actions to perform in order to modify the navigation state.
-     */
-    public func dispatch(_ actions: [Navigation.Action]) async {
-        await setState(Navigation.State.reducer(action: Navigation.Action.multiAction(actions), state: state))
-    }
+         - parameter actions: A list of actions to perform in order to modify the navigation state.
+         */
+        public func dispatch(_ actions: [SwiftRouter.Action], file: StaticString = #file, line: UInt = #line) async {
+            logger?.debug("⚡️ Multi Actions", actions, file: file, line: line)
+            await setState(SwiftRouter.State.reducer(action: SwiftRouter.Action.multiAction(actions), state: state))
+        }
 
-    private func setState(_ newState: Navigation.State) async {
-        let oldState = state
-        state = newState
+        private func setState(_ newState: SwiftRouter.State) async {
+            let oldState = state
+            state = newState
 
-        if oldState.observed != newState.observed {
-            observedState = UUID()
+            if oldState.observed != newState.observed {
+                observedState = UUID()
+            }
+        }
+
+        private func logState(prefixString: String) {
+            var strings = [String]()
+            strings.append("\(prefixString) navigation state")
+            for model in state.observed.navigationModels {
+                strings.append("\(model.tab?.name ?? model.id.uuidString)")
+                for path in model.presentedPaths {
+                    strings.append("   - \(path.id == model.selectedPath.id && model.id == state.observed.selectedModelId ? "👀" : "") \(path.url?.absoluteString ?? "unknown")")
+                }
+            }
+            logger?.debug(strings.joined(separator: "\n"))
         }
     }
 }

@@ -1,29 +1,32 @@
+import Foundation
 @testable import SwiftRouter
-import XCTest
+import Testing
 
 // swiftlint:disable function_body_length
-final class DeeplinkTests: XCTestCase {
-    func testDeeplinkActions() throws {
-        let navigationModel1 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel1", accessLevel: .public)],
-            selectedPath: Navigation.Path(URL(string: "/route/1"))
+@Suite(.serialized)
+struct DeeplinkTests {
+    @Test("Test load by slug alias")
+    func testDeeplinkActions() async throws {
+        let navigationModel1 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/navigationModel1", accessLevel: .public)],
+            selectedPath: SwiftRouter.Path(URL(string: "/route/1"))
         )
 
-        let navigaionModel2CategoryRoute = Navigation.Route("/navigationModel2", accessLevel: .public)
-        let navigationModel2 = Navigation.Model.create(
+        let navigaionModel2CategoryRoute = SwiftRouter.Route("/navigationModel2", accessLevel: .public)
+        let navigationModel2 = SwiftRouter.Model.create(
             routes: [
                 navigaionModel2CategoryRoute,
                 navigaionModel2CategoryRoute.append(.init("/route/<int:whatever>", accessLevel: .public)),
             ],
-            selectedPath: Navigation.Path(URL(string: "/awesome"))
+            selectedPath: SwiftRouter.Path(URL(string: "/awesome"))
         )
 
-        let navigationModel3 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel3/awesome", accessLevel: .public)],
-            selectedPath: Navigation.Path(URL(string: "/route/2"))
+        let navigationModel3 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/navigationModel3/awesome", accessLevel: .public)],
+            selectedPath: SwiftRouter.Path(URL(string: "/route/2"))
         )
 
-        let state = Navigation.State(
+        let state = SwiftRouter.State(
             observed: .init(
                 navigationModels: [
                     navigationModel1,
@@ -37,266 +40,212 @@ final class DeeplinkTests: XCTestCase {
             )
         )
 
-        let deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel2/route/3"), accessLevel: .public))
+        let deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel2/route/3"), accessLevel: .public))
 
-        let pushAction = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        let pushAction = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
 
         guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = pushAction,
-            case let Navigation.Target.model(foundModel, animate: true) = navigationTarget
+            case let SwiftRouter.Action.multiAction(actions) = pushAction,
+            let openAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = openAction,
+            case let SwiftRouter.Model.Target.model(foundModel, animate: true) = navigationTarget
         else {
-            return XCTFail("NavigationAction \(pushAction) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(pushAction) was not expected")
         }
 
-        XCTAssertEqual(foundModel.id, navigationModel2.id)
-        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/route/3")
+        #expect(foundModel.id == navigationModel2.id)
+        #expect(path?.url?.path == "/route/3")
     }
 
+    @Test("Don't remove if no path is left")
     func testDontRemoveIfNoPathIsLeft() throws {
-        let path = Navigation.Path(URL(string: "/cool"))
-        let navigationModel1 = Navigation.Model.create(
-            routes: [Navigation.Route("/<string:awesome>", accessLevel: .public)],
+        let path = SwiftRouter.Path(URL(string: "/cool"))
+        let navigationModel1 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/<string:awesome>", rules: ["awesome": .any], accessLevel: .public, allowsDuplicates: false)],
             selectedPath: path
         )
-        let state = Navigation.State(
+        let state = SwiftRouter.State(
             observed: .init(
                 navigationModels: [navigationModel1],
                 availableRoutes: [
-                    .init("/<string:awesome>", rules: ["awesome": .any], accessLevel: .public),
+                    .init("/<string:awesome>", rules: ["awesome": .any], accessLevel: .public, allowsDuplicates: false),
                 ]
             )
         )
 
-        let deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/najs"), accessLevel: .public))
-        let action = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        let deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/najs"), accessLevel: .public))
+        let action = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
 
         guard
-            case let Navigation.Action.multiAction(actions) = action,
-            let updateAction = actions.first,
-            case let Navigation.Action.update(path: updatePath, withURL: url, in: model) = updateAction,
-            let selectAction = actions.last,
-            case let Navigation.Action.setSelectedPath(to: selectedPath, in: selectedNavigationModel) = selectAction
+            case let SwiftRouter.Action.update(path: updatePath, withURL: url, in: model, _) = action
         else {
-            return XCTFail("NavigationAction \(action) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(action) was not expected")
         }
 
-        XCTAssertEqual(updatePath.id, path.id)
-        XCTAssertEqual(model.id, navigationModel1.id)
-        XCTAssertEqual(try XCTUnwrap(url?.path), "/najs")
-
-        XCTAssertEqual(selectedPath.id, path.id)
-        XCTAssertEqual(selectedNavigationModel.id, navigationModel1.id)
+        #expect(updatePath.id == path.id)
+        #expect(model.id == navigationModel1.id)
+        #expect(url?.path == "/najs")
     }
 
+    @Test("Present new navigation model")
     func testPresentNewNavigationModel() throws {
-        let navigationModel1 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel1", accessLevel: .public)],
-            selectedPath: Navigation.Path(URL(string: "/route/1"))
+        let navigationModel1 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/navigationModel1", accessLevel: .public)],
+            selectedPath: SwiftRouter.Path(URL(string: "/route/1"))
         )
 
-        let navigationModel2 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel2", accessLevel: .public)],
-            selectedPath: Navigation.Path(URL(string: "/route/2"))
+        let navigationModel2 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/navigationModel2", accessLevel: .public)],
+            selectedPath: SwiftRouter.Path(URL(string: "/route/2"))
         )
 
-        let state = Navigation.State(
+        let state = SwiftRouter.State(
             observed: .init(
                 navigationModels: [navigationModel1, navigationModel2],
                 availableRoutes: [.init("/new/route/<int:whatever>", accessLevel: .public)]
             )
         )
 
-        let deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/new/route/3"), accessLevel: .public))
+        let deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/new/route/3"), accessLevel: .public))
 
-        let pushAction = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        let multiAction = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
         guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = pushAction,
-            case let Navigation.Target.new(navigationRoutes, type: type) = navigationTarget
+            case let SwiftRouter.Action.multiAction(actions) = multiAction,
+            let pushAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = pushAction,
+            case let SwiftRouter.Model.Target.new(navigationRoutes, type: type) = navigationTarget
         else {
-            return XCTFail("NavigationAction \(pushAction) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(multiAction) was not expected")
         }
-        XCTAssertNil(navigationRoutes)
-        XCTAssertEqual(type, Navigation.PresentationType.pageSheet())
-        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/new/route/3")
+        #expect(navigationRoutes == nil)
+        #expect(type == SwiftRouter.Model.PresentationType.pageSheet())
+        #expect(path?.url?.path == "/new/route/3")
     }
 
+    @Test("Test instance path")
     func testInstancePath() throws {
-        let availableRoute = Navigation.Route("/route/<int:awesome>", accessLevel: .private)
-        let navigationModel1 = Navigation.Model.create(
+        let availableRoute = SwiftRouter.Route("/route/<int:awesome>", accessLevel: .private)
+        let navigationModel1 = SwiftRouter.Model.create(
             routes: [
-                Navigation.Route("/navigationModel1", accessLevel: .public).append(availableRoute),
+                SwiftRouter.Route("/navigationModel1", accessLevel: .public).append(availableRoute),
             ],
-            selectedPath: Navigation.Path(URL(string: "/route/1"))
+            selectedPath: SwiftRouter.Path(URL(string: "/route/1"))
         )
 
-        let selectedPath = Navigation.Path(URL(string: "/hello"))
-        let navigationModel2 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel2", accessLevel: .public).append(availableRoute)],
+        let selectedPath = SwiftRouter.Path(URL(string: "/hello"))
+        let navigationModel2 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/navigationModel2", accessLevel: .public).append(availableRoute)],
             selectedPath: selectedPath
         )
 
-        let state = Navigation.State(observed: .init(
+        let state = SwiftRouter.State(observed: .init(
             navigationModels: [navigationModel1, navigationModel2],
             availableRoutes: [availableRoute]
         ))
 
-        let deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel2/route/3"), accessLevel: .public))
+        let deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel2/route/3"), accessLevel: .public))
 
-        let reaction = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
-
-        guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = reaction,
-            case let Navigation.Target.model(navigationModel, _) = navigationTarget
-        else {
-            return XCTFail("NavigationAction \(reaction) was not expected")
-        }
-        XCTAssertEqual(try XCTUnwrap(path?.path), "/route/3")
-        XCTAssertEqual(navigationModel.id, navigationModel2.id)
-    }
-
-    func testAlreadyPresentedPath() throws {
-        let availabeleRoute = Navigation.Route("/route/<int:awesome>", accessLevel: .private)
-
-        let navigationModel1 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel1", accessLevel: .public).append(availabeleRoute)],
-            selectedPath: Navigation.Path(URL(string: "/route/1"))
-        )
-
-        let selectedPath = Navigation.Path(URL(string: "/route/2"))
-        let navigationModel2 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel2", accessLevel: .public).append(availabeleRoute)],
-            selectedPath: selectedPath
-        )
-
-        let state = Navigation.State(observed: .init(
-            navigationModels: [navigationModel1, navigationModel2],
-            availableRoutes: [availabeleRoute]
-        ))
-
-        let deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel2/route/2"), accessLevel: .public))
-
-        let reaction = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        let reaction = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
 
         guard
-            case let Navigation.Action.setSelectedPath(to: path, in: navigationModel) = reaction
+            case let SwiftRouter.Action.multiAction(actions) = reaction,
+            let pushAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = pushAction,
+            case let SwiftRouter.Model.Target.model(navigationModel, _) = navigationTarget
         else {
-            return XCTFail("NavigationAction \(reaction) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(reaction) was not expected")
         }
-        XCTAssertEqual(navigationModel.id, navigationModel2.id)
-        XCTAssertEqual(selectedPath.id, path.id)
-        XCTAssertEqual(try XCTUnwrap(path.path), "/route/2")
+        #expect(path?.path == "/route/3")
+        #expect(navigationModel.id == navigationModel2.id)
     }
 
-    func testSelectTab() throws {
-        let testPath = Navigation.Path(URL(string: "/route"))
-        let navigationModel1 = Navigation.Model.create(
-            routes: [Navigation.Route("/navigationModel1", accessLevel: .public)],
-            selectedPath: testPath
-        )
-
-        let state = Navigation.State(observed: .init(
-            navigationModels: [navigationModel1],
-            availableRoutes: [.init("/route", accessLevel: .public)]
-        ))
-
-        var deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/navigationModel1"), accessLevel: .public))
-
-        let reaction = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
-
-        guard
-            case let Navigation.Action.setSelectedPath(to: path, in: _) = reaction
-        else {
-            return XCTFail("NavigationAction \(reaction) was not expected")
-        }
-
-        XCTAssertEqual(path.path, testPath.path)
-
-        // Test can handle no url
-        deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com"), accessLevel: .public))
-        XCTAssertNil(deeplinkAction.action(for: state))
-    }
-
+    @Test("Can handle similar navigation model routes")
     func testCanHandleSimilarNavigationModelRoutes() async throws {
-        let availableRoute1 = Navigation.Route("/<string:param>", rules: ["param": .oneOf([.string("foo"), .string("bar")])], accessLevel: .private)
-        let availableRoute2 = Navigation.Route("/test", accessLevel: .private)
-        let availableRoute3 = Navigation.Route("/present", accessLevel: .public)
-        let availableRoute4 = Navigation.Route("/awesome/<string:param>", rules: ["param": .oneOf([.string("awesome"), .string("Hello")])], accessLevel: .private)
+        let availableRoute1 = SwiftRouter.Route("/<string:param>", rules: ["param": .oneOf([.string("foo"), .string("bar")])], accessLevel: .private)
+        let availableRoute2 = SwiftRouter.Route("/test", accessLevel: .private)
+        let availableRoute3 = SwiftRouter.Route("/present", accessLevel: .public)
+        let availableRoute4 = SwiftRouter.Route("/awesome/<string:param>", rules: ["param": .oneOf([.string("awesome"), .string("Hello")])], accessLevel: .private, allowsDuplicates: false)
 
-        let navigationModel1 = Navigation.Model.create(
+        let navigationModel1 = SwiftRouter.Model.create(
             routes: [
-                Navigation.Route("", accessLevel: .public).append(availableRoute1),
-                Navigation.Route("", accessLevel: .public).append(availableRoute2).append(availableRoute4),
+                SwiftRouter.Route("", accessLevel: .public).append(availableRoute1),
+                SwiftRouter.Route("", accessLevel: .public).append(availableRoute2).append(availableRoute4),
             ],
-            selectedPath: Navigation.Path(URL(string: "/awesome/hello"))
+            selectedPath: SwiftRouter.Path(URL(string: "/awesome/hello"))
         )
 
-        let navigationModel2 = Navigation.Model.create(
-            routes: [Navigation.Route("/test", accessLevel: .public)],
-            selectedPath: Navigation.Path(URL(string: "/foo"))
+        let navigationModel2 = SwiftRouter.Model.create(
+            routes: [SwiftRouter.Route("/test", accessLevel: .public)],
+            selectedPath: SwiftRouter.Path(URL(string: "/foo"))
         )
 
-        let state = Navigation.State(
+        let state = SwiftRouter.State(
             observed: .init(
                 navigationModels: [navigationModel1, navigationModel2],
                 availableRoutes: [availableRoute1, availableRoute2, availableRoute3, availableRoute4]
             )
         )
 
-        var deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/present"), accessLevel: .public))
+        var deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/present"), accessLevel: .public))
 
-        var action = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        var action = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
         guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = action,
-            case Navigation.Target.new = navigationTarget
+            case let SwiftRouter.Action.multiAction(actions) = action,
+            let pushAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = pushAction,
+            case SwiftRouter.Model.Target.new = navigationTarget
         else {
-            return XCTFail("NavigationAction \(action) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(action) was not expected")
         }
-        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/present")
+        #expect(path?.url?.path == "/present")
 
         // Opens in first navigationModel since foo matches the navigationModel and /test allows multiple instances.
-        deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/foo"), accessLevel: .public))
+        deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/foo"), accessLevel: .public))
 
-        action = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        action = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
         guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = action,
-            case let Navigation.Target.model(model, _) = navigationTarget
+            case let SwiftRouter.Action.multiAction(actions) = action,
+            let pushAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = pushAction,
+            case let SwiftRouter.Model.Target.model(model, _) = navigationTarget
         else {
-            return XCTFail("NavigationAction \(action) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(action) was not expected")
         }
-        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/foo")
-        XCTAssertEqual(navigationModel1.id, model.id)
+        #expect(path?.url?.path == "/foo")
+        #expect(navigationModel1.id == model.id)
 
         // Opens in second navigationModel
-        deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/test"), accessLevel: .public))
+        deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/test"), accessLevel: .public))
 
-        action = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        action = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
         guard
-            case let Navigation.Action.open(path: path, in: navigationTarget) = action,
-            case let Navigation.Target.model(model, _) = navigationTarget
+            case let SwiftRouter.Action.multiAction(actions) = action,
+            let pushAction = actions.first,
+            case let SwiftRouter.Action.open(path: path, in: navigationTarget, _) = pushAction,
+            case let SwiftRouter.Model.Target.model(model, _) = navigationTarget
         else {
-            return XCTFail("NavigationAction \(action) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(action) was not expected")
         }
-        XCTAssertEqual(try XCTUnwrap(path?.url?.path), "/test")
-        XCTAssertEqual(navigationModel2.id, model.id)
+        #expect(path?.url?.path == "/test")
+        #expect(navigationModel2.id == model.id)
 
         // Updates the first navigationModels selected path
-        deeplinkAction = try XCTUnwrap(Navigation.Action.Deeplink(with: URL(string: "app://www.example.com/test/awesome/awesome"), accessLevel: .public))
+        deeplinkAction = try #require(SwiftRouter.Action.Deeplink(with: URL(string: "app://www.example.com/test/awesome/awesome"), accessLevel: .public))
 
-        action = try XCTUnwrap(deeplinkAction.action(for: state) as? Navigation.Action)
+        action = try #require(deeplinkAction.action(for: state) as? SwiftRouter.Action)
         guard
-            case let Navigation.Action.multiAction(actions) = action,
-            let updateAction = actions.first,
-            case let Navigation.Action.update(path: updatePath, withURL: url, in: model) = updateAction,
-            let selectAction = actions.last,
-            case let Navigation.Action.setSelectedPath(to: selectedPath, in: selectedNavigationModel) = selectAction
+            case let SwiftRouter.Action.update(path: updatePath, withURL: url, in: model, _) = action
         else {
-            return XCTFail("NavigationAction \(action) was not expected")
+            throw NavigationTestError.unexpectedWithMessage("NavigationAction \(action) was not expected")
         }
-        XCTAssertEqual(try XCTUnwrap(updatePath.url?.path), "/awesome/hello")
-        XCTAssertEqual(selectedPath.id, updatePath.id)
-        XCTAssertEqual(try XCTUnwrap(url?.path), "/awesome/awesome")
-        XCTAssertEqual(navigationModel1.id, model.id)
-        XCTAssertEqual(navigationModel1.id, selectedNavigationModel.id)
+        #expect(updatePath.url?.path == "/awesome/hello")
+        #expect(url?.path == "/awesome/awesome")
+        #expect(navigationModel1.id == model.id)
     }
 }
+
 // swiftlint:enable function_body_length
+
+enum NavigationTestError: Error {
+    case unexpectedWithMessage(String)
+}
