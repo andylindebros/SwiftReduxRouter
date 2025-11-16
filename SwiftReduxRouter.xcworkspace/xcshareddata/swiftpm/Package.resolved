@@ -23,8 +23,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/andylindebros/SwiftUIRedux",
       "state" : {
-        "revision" : "07ade816ddd464111964f52fa9587ed1f078f36b",
-        "version" : "0.2.0"
+        "revision" : "a68556643b4d94158ee1bc4af24f1c54eb005ae0",
+        "version" : "1.0.1"
       }
     }
   ],
