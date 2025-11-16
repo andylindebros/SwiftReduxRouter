@@ -1,6 +1,6 @@
 # SwiftRouter
 
-SwiftRouter maps navigation to routes that provides SwiftUI views controlled by a Redux NavigationState.
+SwiftRouter maps navigation to routes that provides SwiftUI views controlled by a NavigationState.
 
 ![Demo](https://github.com/andylindebros/SwiftReduxRouter/blob/master/SwiftReduxRouterExample/SwiftReduxRouter.gif)
 
@@ -30,14 +30,14 @@ Setup your scheme and deep links will be opened by the router.
 
 Following rules apply to the example implementation above:
 
-- `swiftreduxrouter://example.com/tab1/page/2` will be pushed to the first tab
-- `swiftreduxrouter://example.com/tab1/page/1` will be selected in the first tab
-- `swiftreduxrouter:///tab2/page/2` will be selected in and will select the second tab. 
-- `swiftreduxrouter:///tab2/page/1` will be pushed to the second tab
-- `swiftreduxrouter:///standalone/page/1` will be presented in the standalone navigationController on top of the tab bar
-- `swiftreduxrouter:///standalone/page/2` will be pushed to the presented standalone navigationController
+- `swiftrouter://example.com/tab1/page/2` will be pushed to the first tab
+- `swiftrouter://example.com/tab1/page/1` will be selected in the first tab
+- `swiftrouter:///tab2/page/2` will be selected in and will select the second tab. 
+- `swiftrouter:///tab2/page/1` will be pushed to the second tab
+- `swiftrouter:///standalone/page/1` will be presented in the standalone navigationController on top of the tab bar
+- `swiftrouter:///standalone/page/2` will be pushed to the presented standalone navigationController
 - `swiftreduxrouter:///page/1` will be presented in a new navigationController on top of the tab bar
-- `swiftreduxrouter:///tab1` will select the first tab
+- `swiftrouter:///tab1` will select the first tab
 
 You can dispatch the Deeplink anywhere in your app to navigate to any desired route.
 ```Swift
@@ -80,43 +80,23 @@ Supported dynamic parameters are:
 - path - `somepath/<path:mypath>` will match everything after `somepath/`
 
 ## TabBar or a single UINavigationController
-If you set the tab property of the NavigationModel in the init state, the RouterView will render a UITabBar.
+If you set the tab property of the SwiftRouter.Model in the init state, the SwiftRouter.RouterView will render a UITabBar.
 
 ## Presenting views.
-A view gets presented by setting the navigationTarget to NavigationTarget.new(). 
+A view gets presented by setting the navigationTarget to SwiftRouter.Target.new(). 
 ```Swift
-dispatch(NavigationAction.add(path: NavPath("some path to a route"), to: .new()))
+dispatch(SwiftRouter.Action.add(path: NavPath("some path to a route"), to: .new()))
 ```
 To dismiss it, you simply use the Dismiss action:
 ``` Swift
-dispatch(NavigationAction.Dismiss(navigationModel: The navigationModel to dismiss))
-```
-You can access the navigationModel object from the renderView method. 
-``` Swift
-Route(
-    ...
-    render: { navigationModel, params in
-        RouteViewController(rootView:
-            Text("Awesome")
-            .navigationTitle("\(presentedName)")
-            .navigationBarItems(trailing: Button(action: {
-                dispatch(
-                    NavigationAction.dismiss(navigationModel)
-                )
-            }) {
-                Text(navigationModel.tab == nil ? "Close" : "")
-            })
-        )
-    }
-    ...
-)
+dispatch(SwiftRouter.Action.Dismiss(navigationModel: The navigationModel to dismiss))
 ```
 
 ### Alerts
-You can trigger alerts by dispatching `NavigationAction.alert`
+You can trigger alerts by dispatching `SwiftRouter.Action.alert`
 ```Swift
     dispatch(
-        Navigation.alert(AlertModel(
+        SwiftRouter.alert(AlertModel(
            type: .alert // .alert || .actionSheet, default is .alert
            label: "The label of the alert", // Optional
            message: "Optional message", // Optional
@@ -133,18 +113,5 @@ You can trigger alerts by dispatching `NavigationAction.alert`
     extension SomeAction: NavigationActionsProvider {}
 ```
 
-## Support for ReduxMonitor
-SwiftReduxRouter supports monitoring with [ReduxMonitor](https://github.com/andylindebros/ReduxMonitor). 
-Just let your JumpState action conform `NavigationJumpStateAction`
-``` Swift
-struct JumpState: NavigationJumpStateAction, Action {
-    let navigationState: NavigationState
-}
-```
-
 ### Example app.
-Try the example app `SwiftReduxRouterExample` to find out more
-
-## Links
-
-- SwiftUIRedux: https://github.com/andylindebros/SwiftUIRedux
+Try the example app `RouterExample` to find out more
